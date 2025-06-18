@@ -1,5 +1,5 @@
 
-import AdminLayout from '../layouts/adminLayout'
+import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/admin/Dashboard'
 
 const adminRoutes = {

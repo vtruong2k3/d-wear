@@ -1,5 +1,5 @@
 
-import ClientLayout from '../layouts/clientLayout'
+import ClientLayout from '../layouts/ClientLayout'
 import Home from '../pages/client/Home'
 
 
