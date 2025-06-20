@@ -3,7 +3,7 @@ import { avatarFake } from "../../../utils/constants/mockData";
 
 // Định nghĩa kiểu cho props
 interface BoxCategoryProps {
-  data: { name: string }; // bạn có thể mở rộng thêm nếu data có nhiều thuộc tính
+  data: { name: string };
   idx: number;
   type: number;
 }

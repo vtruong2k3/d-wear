@@ -91,7 +91,7 @@ const BoxProduct = ({ item }) => {
             </button>
           </li>
         </ul>
-        <Link className="bg-red">
+        <Link to={`/product/${item.id}`} className="bg-red">
           <div
             className="rounded-xl overflow-hidden bg-white lg:h-[385px]"
             onClick={() => navigate(`/product/${item.id}`)}
