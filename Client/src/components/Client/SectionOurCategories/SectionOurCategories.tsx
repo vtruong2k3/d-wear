@@ -1,12 +1,19 @@
 import React from "react";
 import BoxCategory from "./BoxCategory";
 import useFetchGetDataAllCategory from "../../../hooks/Client/useFetchGetDataAllCategory";
-type SectionOurCategoriesProps = {
-  type: number;
-};
 
-const SectionOurCategories: React.FC<SectionOurCategoriesProps> = ({ type })  => {
-  const { categories } = useFetchGetDataAllCategory();
+// Định nghĩa kiểu cho props
+interface SectionOurCategoriesProps {
+  type: number;
+}
+
+interface CategoryType {
+  name: string;
+  // bạn có thể thêm các trường khác nếu cần
+}
+
+const SectionOurCategories: React.FC<SectionOurCategoriesProps> = ({ type }) => {
+  const { categories }: { categories: CategoryType[] } = useFetchGetDataAllCategory();
 
   return type === 1 ? (
     <section className="mt-8 lg:mt-24">
