@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ico_heart from "../../../assets/images/ico_heart.png";
 import ico_reload from "../../../assets/images/ico_reload.png";
 import ico_search from "../../../assets/images/ico_search.png";
 import { Link, useNavigate } from "react-router-dom";
 import Skeleton from "@mui/material/Skeleton";
 import { Grow, Rating } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { addToCart } from "../../../redux/features/cartSlice";
 import { toast } from "react-toastify";
 import useAuth from "../../../hooks/Client/useAuth";
+
 const BoxProduct = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -52,12 +53,12 @@ const BoxProduct = ({ item }) => {
             <button
               //   onClick={handleWishList}
               type="button"
-              //   disabled={wishList.map((i) => i.id).includes(item.id)}
-              //   className={`shadow-lg p-3 rounded-full ${
-              //     wishList.map((i) => i.id).includes(item.id)
-              //       ? "bg-red-500"
-              //       : "bg-white block hover:bg-slate-200"
-              //   }   transition-all`}
+            //   disabled={wishList.map((i) => i.id).includes(item.id)}
+            //   className={`shadow-lg p-3 rounded-full ${
+            //     wishList.map((i) => i.id).includes(item.id)
+            //       ? "bg-red-500"
+            //       : "bg-white block hover:bg-slate-200"
+            //   }   transition-all`}
             >
               <img
                 src={ico_heart}

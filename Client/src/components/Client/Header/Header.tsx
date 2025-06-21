@@ -1,4 +1,3 @@
-import React from "react";
 import logo from "../../../assets/images/logo.png";
 import ico_search from "../../../assets/images/ico_search.png";
 import ico_heart from "../../../assets/images/ico_heart.png";
@@ -10,7 +9,7 @@ import AccountMenu from "./MenuAccount";
 const Header = () => {
   const cartItems = useSelector((state) => state.cartSlice.cartItems);
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
-  
+
   const listMenu = [
     {
       title: "Home",

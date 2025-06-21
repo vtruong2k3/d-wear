@@ -14,9 +14,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import apiServiceProduct from "../../../services/apiServiceProduct";
 import { Backdrop, CircularProgress, Grow } from "@mui/material";
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
-import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "../../../redux/features/cartSlice";
-import { toast } from "react-toastify";
+import { useDispatch, } from "react-redux";
+
+
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import useAuth from "../../../hooks/Client/useAuth";
 

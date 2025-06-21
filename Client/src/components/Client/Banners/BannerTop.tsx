@@ -1,4 +1,4 @@
-import React from "react";
+
 import img_banner from "../../../assets/images/img_banner.png";
 import { Link } from "react-router-dom";
 

@@ -16,7 +16,7 @@ import { toast } from "react-toastify";
 
 export default function AccountMenu() {
   const userName = useSelector((state) => state.authenSlice.userName);
-  
+
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -26,7 +26,7 @@ export default function AccountMenu() {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  
+
   const handleLogout = () => {
     dispatch(doLogout())
     toast.success("logout thành công")

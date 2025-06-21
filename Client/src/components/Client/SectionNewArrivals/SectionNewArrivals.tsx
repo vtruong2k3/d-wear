@@ -1,5 +1,4 @@
-import React from "react";
-// @ts-ignore
+
 import BoxProduct from "../BoxProduct/BoxProduct";
 
 const SectionNewArrivals = ({ products }) => {
@@ -21,7 +20,7 @@ const SectionNewArrivals = ({ products }) => {
           </a>
         </div>
         <ul className="gap-5 mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-          {products.slice(10,18).map((item) => (
+          {products.slice(10, 18).map((item) => (
             <BoxProduct key={item.id} item={item} />
           ))}
         </ul>

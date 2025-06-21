@@ -1,5 +1,5 @@
-import React from "react";
-// @ts-ignore
+
+
 import BoxProduct from "../BoxProduct/BoxProduct";
 
 const SectionBestseller = ({ products }) => {
