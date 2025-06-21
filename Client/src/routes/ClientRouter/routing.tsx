@@ -1,9 +1,8 @@
-import { createBrowserRouter } from "react-router-dom";
 import Layout from "../../layouts/ClientLayout";
 import Home from "../../pages/client/Home/Home";
 import DetailProduct from "../../pages/client/ProductDetail/DetailProduct";
 
-const router = createBrowserRouter([
+const clientRoutes = [
   {
     path: "/",
     element: <Layout />,
@@ -13,11 +12,11 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/product/:id",
+        path: "product/:id",
         element: <DetailProduct />,
       }
-      
     ],
   },
-]);
-export default router;
+]
+
+export default clientRoutes;
