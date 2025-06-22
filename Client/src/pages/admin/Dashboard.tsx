@@ -1,3 +1,9 @@
-export default function doashBoard() {
-    return <h1>hello</h1>
+import React from 'react'
+
+const Dashboard = () => {
+  return (
+    <div>Dashboard</div>
+  )
 }
+
+export default Dashboard
