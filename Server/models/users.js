@@ -2,9 +2,10 @@ const mongoose = require("mongoose");
 
 const userShema = new mongoose.Schema(
   {
-    ussername: { type: String, require: true },
+    username: { type: String, require: true },
     email: { type: String, require: true, unique: true },
-    password: { type: String, require: true },
+    password: { type: String, require: false },
+    isGoogleAccount: { type: Boolean, default: false },
     phone: { type: String, require: true },
     addresses: [
       {

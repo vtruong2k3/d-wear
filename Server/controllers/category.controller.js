@@ -3,7 +3,14 @@ const categoryValidate = require("../validate/categoryValidate");
 
 exports.createCategory = async (req, res) => {
   try {
-    await categoryValidate.create.validateAsync(req.body);
+    // validate req.body
+    const { error } = categoryValidate.create.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      const errors = error.details.map((err) => err.message);
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+    }
     const { category_name } = req.body;
     // Kiểm tra category_name đã tồn tại hay chưa
     const existingCategory = await Category.findOne({ category_name });
@@ -16,7 +23,10 @@ exports.createCategory = async (req, res) => {
       .status(201)
       .json({ message: "Tạo Category thành công", data: newCategory });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -27,7 +37,10 @@ exports.getAllCategories = async (req, res) => {
       .status(200)
       .json({ message: "Lấy danh sách Category thành công", data: categories });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -45,41 +58,62 @@ exports.getCategoryById = async (req, res) => {
       .status(200)
       .json({ message: "Lấy Category thành công", data: category });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 exports.updateCategory = async (req, res) => {
   const { id } = req.params;
-  categoryValidate.update.validateAsync(req.body);
-  const { category_name } = req.body;
 
   if (!id) {
     return res.status(400).json({ message: "ID không được để trống" });
   }
 
   try {
-    await categoryValidate.update.validateAsync(req.body);
+    // Validate đầu vào
+    const { error } = categoryValidate.update.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if (error) {
+      const errors = error.details.map((err) => err.message);
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+    }
+
     const { category_name } = req.body;
-    // Kiểm tra category_name đã tồn tại hay chưa
+
+    // Kiểm tra trùng tên category (ngoại trừ chính nó)
     const existingCategory = await Category.findOne({ category_name });
+
     if (existingCategory && existingCategory._id.toString() !== id) {
       return res.status(400).json({ message: "Category đã tồn tại" });
     }
+
+    // Cập nhật
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
       { category_name },
       { new: true }
     );
+
     if (!updatedCategory) {
       return res.status(404).json({ message: "Category không tồn tại" });
     }
-    res
-      .status(200)
-      .json({ message: "Cập nhật Category thành công", data: updatedCategory });
+
+    res.status(200).json({
+      message: "Cập nhật Category thành công",
+      data: updatedCategory,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
+
 exports.deleteCategory = async (req, res) => {
   const { id } = req.params;
   try {
@@ -94,6 +128,9 @@ exports.deleteCategory = async (req, res) => {
       .status(200)
       .json({ message: "Xoá Category thành công", data: deletedCategory });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };

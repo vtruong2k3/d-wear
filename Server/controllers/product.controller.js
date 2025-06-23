@@ -4,20 +4,30 @@ const productValidate = require("../validate/productValidate");
 
 exports.getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find()
-      .populate("brand_id", "brand_name") // Lấy brandName từ bảng brand
-      .populate("category_id", "category_name") // Lấy categoryName từ bảng category
-      .sort({ createdAt: -1 }); // Sắp xếp sản phẩm mới nhất lên đầu
+    // Lấy query page và limit từ req.query (mặc định nếu không có)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    // Lấy danh sách _id của các sản phẩm để truy vấn variants
+    // Tổng số lượng sản phẩm (cho client biết có bao nhiêu sản phẩm)
+    const totalProducts = await Product.countDocuments();
+
+    // Lấy sản phẩm có phân trang, sắp xếp và populate
+    const products = await Product.find()
+      .populate("brand_id", "brand_name")
+      .populate("category_id", "category_name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Lấy danh sách _id để query các variant liên quan
     const productIds = products.map((p) => p._id);
 
-    // Lấy tất cả biến thể liên quan đến các sản phẩm đó
     const variants = await Variant.find({
       product_id: { $in: productIds },
     });
 
-    // Gộp biến thể tương ứng vào từng sản phẩm
+    // Gộp variants vào từng sản phẩm
     const productList = products.map((product) => {
       const productVariants = variants.filter(
         (v) => v.product_id.toString() === product._id.toString()
@@ -29,13 +39,19 @@ exports.getAllProducts = async (req, res) => {
       };
     });
 
-    // Trả kết quả về client
     return res.status(200).json({
       message: "Lấy danh sách sản phẩm thành công",
+      total: totalProducts,
+      page,
+      limit,
+      totalPages: Math.ceil(totalProducts / limit),
       products: productList,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -77,24 +93,31 @@ exports.createProduct = async (req, res) => {
       ? req.files.productImage.map((file) => file.path)
       : [];
 
-    // Parse variants nếu là chuỗi JSON
-    if (typeof req.body.variants === "string") {
-      req.body.variants = JSON.parse(req.body.variants);
-    }
+    // // Parse variants nếu là chuỗi JSON
+    // if (typeof req.body.variants === "string") {
+    //   req.body.variants = JSON.parse(req.body.variants);
+    // }
 
-    // Gán ảnh cho từng variant
-    const variantsImages = req.files.variantsImage
-      ? req.files.variantsImage.map((file) => file.path)
-      : [];
-    if (Array.isArray(req.body.variants)) {
-      req.body.variants = req.body.variants.map((variant, idx) => ({
-        ...variant,
-        image: variantsImages.length > idx ? [variantsImages[idx]] : [],
-      }));
-    }
+    // // Gán ảnh cho từng variant
+    // const variantsImages = req.files.variantsImage
+    //   ? req.files.variantsImage.map((file) => file.path)
+    //   : [];
+    // if (Array.isArray(req.body.variants)) {
+    //   req.body.variants = req.body.variants.map((variant, idx) => ({
+    //     ...variant,
+    //     image: variantsImages.length > idx ? [variantsImages[idx]] : [],
+    //   }));
+    // }
 
     // Validate dữ liệu đầu vào
-    await productValidate.createProduct.validateAsync(req.body);
+
+    const { error } = productValidate.createProduct.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      const errors = error.details.map((err) => err.message);
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+    }
 
     // Tạo sản phẩm
     const {
@@ -120,19 +143,20 @@ exports.createProduct = async (req, res) => {
       material,
     });
 
-    // Tạo variants
-    const variantsWithProductId = variants.map((variant) => ({
-      ...variant,
-      product_id: product._id,
-    }));
-    const createdVariants = await Variant.insertMany(variantsWithProductId);
+    // // Tạo variants
+    // const variantsWithProductId = variants.map((variant) => ({
+    //   ...variant,
+    //   product_id: product._id,
+    // }));
+    // const createdVariants = await Variant.insertMany(variantsWithProductId);
 
     return res.status(201).json({
       message: "Thêm sản phẩm thành công",
-      product: {
-        ...product.toObject(),
-        variants: createdVariants,
-      },
+      product,
+      // product: {
+      //   ...product.toObject(),
+      //   variants: createdVariants,
+      // },
     });
   } catch (error) {
     return res.status(400).json({ message: error.message || "Server error" });
@@ -148,25 +172,32 @@ exports.updateProduct = async (req, res) => {
       req.body.imageUrls = req.files.productImage.map((file) => file.path);
     }
 
-    // Parse variants nếu là chuỗi JSON
-    if (typeof req.body.variants === "string") {
-      req.body.variants = JSON.parse(req.body.variants);
-    }
+    // // Parse variants nếu là chuỗi JSON
+    // if (typeof req.body.variants === "string") {
+    //   req.body.variants = JSON.parse(req.body.variants);
+    // }
 
-    // Nếu có upload ảnh variants mới thì gán vào từng variant
-    let variantsImages = [];
-    if (req.files && req.files.variantsImage) {
-      variantsImages = req.files.variantsImage.map((file) => file.path);
-    }
-    if (Array.isArray(req.body.variants)) {
-      req.body.variants = req.body.variants.map((variant, idx) => ({
-        ...variant,
-        image: variantsImages.length > idx ? [variantsImages[idx]] : [],
-      }));
-    }
+    // // Nếu có upload ảnh variants mới thì gán vào từng variant
+    // let variantsImages = [];
+    // if (req.files && req.files.variantsImage) {
+    //   variantsImages = req.files.variantsImage.map((file) => file.path);
+    // }
+    // if (Array.isArray(req.body.variants)) {
+    //   req.body.variants = req.body.variants.map((variant, idx) => ({
+    //     ...variant,
+    //     image: variantsImages.length > idx ? [variantsImages[idx]] : [],
+    //   }));
+    // }
 
     // Validate dữ liệu đầu vào
-    await productValidate.createProduct.validateAsync(req.body);
+
+    const { error } = productValidate.createProduct.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      const errors = error.details.map((err) => err.message);
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+    }
 
     // Cập nhật sản phẩm
     const {
@@ -178,7 +209,6 @@ exports.updateProduct = async (req, res) => {
       category_id,
       gender,
       material,
-      variants,
     } = req.body;
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -200,30 +230,31 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
 
-    // Chỉ xử lý variants nếu client gửi trường variants
-    let updatedVariants = await Variant.find({ product_id: id });
-    if (req.body.variants !== undefined) {
-      // Xóa hết variants cũ
-      await Variant.deleteMany({ product_id: id });
+    // // Chỉ xử lý variants nếu client gửi trường variants
+    // let updatedVariants = await Variant.find({ product_id: id });
+    // if (req.body.variants !== undefined) {
+    //   // Xóa hết variants cũ
+    //   await Variant.deleteMany({ product_id: id });
 
-      // Nếu mảng variants mới không rỗng thì thêm mới
-      if (Array.isArray(variants) && variants.length > 0) {
-        const variantsWithProductId = variants.map((variant) => ({
-          ...variant,
-          product_id: id,
-        }));
-        updatedVariants = await Variant.insertMany(variantsWithProductId);
-      } else {
-        updatedVariants = [];
-      }
-    }
+    //   // Nếu mảng variants mới không rỗng thì thêm mới
+    //   if (Array.isArray(variants) && variants.length > 0) {
+    //     const variantsWithProductId = variants.map((variant) => ({
+    //       ...variant,
+    //       product_id: id,
+    //     }));
+    //     updatedVariants = await Variant.insertMany(variantsWithProductId);
+    //   } else {
+    //     updatedVariants = [];
+    //   }
+    // }
 
     return res.status(200).json({
       message: "Cập nhật sản phẩm thành công",
-      product: {
-        ...updatedProduct.toObject(),
-        variants: updatedVariants,
-      },
+      product: updatedProduct,
+      // product: {
+      //   ...updatedProduct.toObject(),
+      //   variants: updatedVariants,
+      // },
     });
   } catch (error) {
     return res.status(400).json({ message: error.message || "Server error" });

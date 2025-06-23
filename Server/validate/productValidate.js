@@ -51,15 +51,6 @@ const productValidate = {
     material: Joi.string().allow("").messages({
       "string.base": "Chất liệu phải là chuỗi.",
     }),
-    variants: Joi.array().items(
-      Joi.object({
-        color: Joi.string().required(),
-        size: Joi.string().required(),
-        stock: Joi.number().required(),
-        price: Joi.number().required(),
-        image: Joi.array().items(Joi.string().required()).min(0),
-      })
-    ),
   }),
 };
 
