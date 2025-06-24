@@ -1,7 +1,7 @@
 import { useRoutes } from "react-router-dom";
 
-import clientRouter from "./ClientRouter";
-import adminRoutes from "../routes/AdminRouter";
+import clientRoutes from "./ClientRouter/routing";
+import adminRoutes from "./AdminRouter/AdminRouter";
 export default function RoutesManager() {
-    return useRoutes([...clientRouter, ...adminRoutes]);
+    return useRoutes([...clientRoutes, ...adminRoutes]);
 }
