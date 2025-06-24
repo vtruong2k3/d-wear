@@ -1,10 +1,7 @@
-import { Layout } from 'antd';
-const { Footer } = Layout;
-
 const AdminFooter = () => (
-  <Footer className="text-center bg-white border-t py-4">
-    Footer
-  </Footer>
+  <footer className="bg-white shadow p-4 text-center">
+    <p>&copy; 2025 TuoCRM</p>
+  </footer>
 );
 
 export default AdminFooter;

@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import AdminHeader from "../pages/admin/PageAdmin/Header/HeaderAdmin";
-import AsideAdmin from "../pages/admin/PageAdmin/Aside/AsideAdmin";
+import AsideAdmin from "../pages/admin/PageAdmin/Aside/SideBar";
 import AdminFooter from "../pages/admin/PageAdmin/Footer/FooterAdmin";
 
 export default function adminLayout() {

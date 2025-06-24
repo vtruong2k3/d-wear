@@ -8,7 +8,8 @@ import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
 import api from "../../../configs/AxiosConfig";
-
+import { MdDelete } from "react-icons/md";
+import { FaPen } from "react-icons/fa6";
 const Products: React.FC = () => {
   //Điều hướng
   const navigate = useNavigate();
@@ -86,9 +87,9 @@ const Products: React.FC = () => {
       ),
     },
     {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
+      title: "Brands",
+      dataIndex: "brand",
+      key: "brand",
     },
     {
       title: "Danh mục",
@@ -102,13 +103,13 @@ const Products: React.FC = () => {
         <Space size="middle">
           <Space>
             <Button onClick={() => navigate(`/admin/products/edit/${record.id}`)}>
-              Sửa
+              <FaPen/>
             </Button>
             <Popconfirm
               title="Bạn có chắc muốn xoá?"
               onConfirm={() => handleDelete(record.id)}
             >
-              <Button danger>Xoá</Button>
+              <Button danger><MdDelete /></Button>
             </Popconfirm>
           </Space>
         </Space>
@@ -140,8 +141,9 @@ const Products: React.FC = () => {
   };
   return (
     <div>
-      <h1 className="text-center text-2xl">Danh sách sản phẩm</h1>
-      <Space wrap>
+      <h1 className="text-center text-2xl ">Danh sách sản phẩm</h1>
+      <div className="flex gap-3 p-3">
+          <Space wrap>
         <Search
           placeholder="input search text"
           onChange={(e) => handleSearch(e.target.value)}
@@ -157,6 +159,7 @@ const Products: React.FC = () => {
       <Button type="primary" onClick={() => navigate("/admin/products/add")}>
         Thêm sản phẩm
       </Button>
+      </div>
       <Table
         loading={loading}
         dataSource={products}
