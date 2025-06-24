@@ -1,7 +1,9 @@
 import Layout from "../../layouts/ClientLayout";
 import Home from "../../pages/client/Home/Home";
 import DetailProduct from "../../pages/client/ProductDetail/DetailProduct";
+
 import ShoppingCart from "../../pages/client/Cart/ShoppingCart";
+
 const clientRoutes = [
   {
     path: "/",
@@ -14,6 +16,7 @@ const clientRoutes = [
       {
         path: "product/:id",
         element: <DetailProduct />,
+
       },
       {
         path: "shopping-cart",

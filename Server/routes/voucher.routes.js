@@ -7,4 +7,5 @@ voucherRouter.get("/voucher", voucherController.getAllVouchers);
 voucherRouter.get("/voucher/:id", voucherController.getVoucherById);
 voucherRouter.put("/voucher/:id", voucherController.updateVoucher);
 voucherRouter.delete("/voucher/:id", voucherController.deleteVoucher);
+
 module.exports = voucherRouter;

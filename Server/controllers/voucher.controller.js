@@ -3,7 +3,13 @@ const voucherValidate = require("../validate/voucherValidate");
 
 exports.createVoucher = async (req, res) => {
   try {
-    await voucherValidate.create.validateAsync(req.body);
+    const { error } = voucherValidate.create.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      const errors = error.details.map((err) => err.message);
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+    }
     const {
       code,
       discountType,
@@ -39,7 +45,10 @@ exports.createVoucher = async (req, res) => {
       voucher,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -51,7 +60,10 @@ exports.getAllVouchers = async (req, res) => {
       data: vouchers,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -68,7 +80,10 @@ exports.getVoucherById = async (req, res) => {
       data: voucher,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -78,7 +93,13 @@ exports.updateVoucher = async (req, res) => {
     return res.status(400).json({ message: "ID không được để trống" });
   }
   try {
-    await voucherValidate.update.validateAsync(req.body);
+    const { error } = voucherValidate.update.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      const errors = error.details.map((err) => err.message);
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+    }
     const {
       code,
       discountType,
@@ -116,7 +137,10 @@ exports.updateVoucher = async (req, res) => {
       data: vouher,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -131,6 +155,9 @@ exports.deleteVoucher = async (req, res) => {
       message: "Xoá thành công.",
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error: ", error });
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };

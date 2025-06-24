@@ -14,13 +14,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import apiServiceProduct from "../../../services/apiServiceProduct";
 import { Backdrop, CircularProgress, Grow } from "@mui/material";
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
+
 import { useDispatch } from "react-redux";
+
+
 
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import useAuth from "../../../hooks/Client/useAuth";
 
+
 import { addToCart } from "../../../redux/features/cartSlice";
 import { toast } from "react-toastify";
+
 
 interface Products {
   id: number;
@@ -69,6 +74,7 @@ const DetailProduct = () => {
     }
   }, [id, divRef]);
 
+
   const handleAddToCart = (item: Products) => {
     requireAuth(() => {
       dispatch(
@@ -81,6 +87,7 @@ const DetailProduct = () => {
       navigate("/shopping-cart");
     });
   };
+
 
   return (
     <>

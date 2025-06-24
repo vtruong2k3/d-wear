@@ -5,10 +5,7 @@ const productControler = require("../controllers/product.controller");
 
 productRouter.post(
   "/product",
-  upload.fields([
-    { name: "productImage", maxCount: 5 },
-    { name: "variantsImage", maxCount: 10 },
-  ]),
+  upload.fields([{ name: "productImage", maxCount: 5 }]),
   productControler.createProduct
 );
 
@@ -17,10 +14,7 @@ productRouter.get("/product/:id", productControler.getProductById);
 
 productRouter.put(
   "/product/:id",
-  upload.fields([
-    { name: "productImage", maxCount: 5 },
-    { name: "variantsImage", maxCount: 10 },
-  ]),
+  upload.fields([{ name: "productImage", maxCount: 5 }]),
   productControler.updateProduct
 );
 
