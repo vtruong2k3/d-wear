@@ -12,7 +12,7 @@ exports.login = async (req, res) => {
       const errors = error.details.map((err) => err.message);
       return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
     }
-    const { v, password } = req.body;
+    const { email, password } = req.body;
 
     // Kiểm tra email đã tồn tại chưa
     const user = await User.findOne({ email });

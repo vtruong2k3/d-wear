@@ -2,7 +2,7 @@ const Joi = require("joi");
 
 const productValidate = {
   createProduct: Joi.object({
-    product_name: Joi.string().min(3).max(100).required().messages({
+    product_name: Joi.string().min(3).max(500).required().messages({
       "string.base": "Tên sản phẩm phải là chuỗi.",
       "string.empty": "Tên sản phẩm không được để trống.",
       "string.min": "Tên sản phẩm phải có ít nhất {#limit} ký tự.",

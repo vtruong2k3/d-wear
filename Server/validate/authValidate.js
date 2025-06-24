@@ -14,7 +14,7 @@ const authValidate = {
       "any.required": "Email là bắt buộc",
     }),
 
-    password: Joi.string().min(6).required().messages({
+    password: Joi.string().min(5).required().messages({
       "string.min": "Password phải có ít nhất {#limit} ký tự",
       "string.empty": "Password không được để trống",
       "any.required": "Password là bắt buộc",
@@ -27,7 +27,7 @@ const authValidate = {
       "any.required": "Email là bắt buộc",
     }),
 
-    password: Joi.string().min(6).required().messages({
+    password: Joi.string().min(5).required().messages({
       "string.min": "Password phải có ít nhất {#limit} ký tự",
       "string.empty": "Password không được để trống",
       "any.required": "Password là bắt buộc",
