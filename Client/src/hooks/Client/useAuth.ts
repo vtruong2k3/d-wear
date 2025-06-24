@@ -5,8 +5,10 @@ const useAuth = () => {
   //   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
-  console.log(isLogin,'isLoginisLogin');
-  
+<<<<<<< HEAD
+  console.log(isLogin, "isLoginisLogin");
+
+
   const requireAuth = (action) => {
     if (isLogin) {
       action();
@@ -14,7 +16,10 @@ const useAuth = () => {
       navigate("/login");
     }
   };
-  return { requireAuth };
+
+  return { requireAuth, isAuthenticated: isLogin };
+
+ 
 };
 
 export default useAuth;

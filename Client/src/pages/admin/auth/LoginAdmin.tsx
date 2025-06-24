@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Eye, EyeOff, Lock, Mail, Shield } from 'lucide-react';
-import '../../../styles/adminLogin.css'
+
+import { useState } from "react";
+import { Eye, EyeOff, Lock, Mail, Shield } from "lucide-react";
+import "../../../styles/adminLogin.css";
+
 export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -15,11 +17,11 @@ export default function AdminLogin() {
             <Shield color="white" size={30} />
           </div>
           <h1 className="login-title">Admin Portal</h1>
-          <p className="login-subtitle">Đăng nhập để truy cập hệ thống quản trị</p>
+
+          <p className="login-subtitle">
+            Đăng nhập để truy cập hệ thống quản trị
+          </p>
         </div>
-
-
-
 
 
         {/* Login Form */}
@@ -51,7 +53,8 @@ export default function AdminLogin() {
             <div className="input-wrapper">
               <Lock className="input-icon" size={20} />
               <input
-                type={showPassword ? 'text' : 'password'}
+
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
 
@@ -70,16 +73,11 @@ export default function AdminLogin() {
           </div>
 
           {/* Login Button */}
-          <button
-            type="submit"
+          <button type="submit" className={`login-button`}>
 
-            className={`login-button`}
-
-          >
             Đăng Nhập
           </button>
         </div>
-
 
 
         {/* Footer */}
@@ -206,5 +204,5 @@ export default function AdminLogin() {
   //     <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-purple-500/20 rounded-full blur-xl -z-10"></div>
   //   </div>
   // </div>
-
 }
+
