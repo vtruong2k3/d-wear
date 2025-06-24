@@ -18,19 +18,21 @@ export const authenSlice = createSlice({
       if (email === "nghiemtv@gmail.com" && password === "123456") {
         const userName = email.split("@")[0];
         localStorage.setItem("userName", userName);
+        // toast.success("Đăng nhập thành công!");
         return {
           ...state,
           userName,
           isLogin: true,
         };
       }
-      toast.error("Login thất bại!");
+      toast.error("Đăng nhập thất bại!");
       return {
         ...state,
         userName: "",
         isLogin: false,
       };
     },
+
     doLogout: (state) => {
       localStorage.removeItem("userName");
       return {
@@ -39,8 +41,23 @@ export const authenSlice = createSlice({
         isLogin: false,
       };
     },
+
+    doRegister: (state, action) => {
+      const { email, password } = action.payload;
+
+      //lưu tài khoản vào localStorage hoặc gọi API ở đây
+      const userName = email.split("@")[0];
+      localStorage.setItem("userName", userName);
+
+      toast.success("Đăng ký thành công!");
+      return {
+        ...state,
+        userName,
+        isLogin: true,
+      };
+    },
   },
 });
 
-export const { doLogin, doLogout } = authenSlice.actions;
+export const { doLogin, doLogout, doRegister } = authenSlice.actions;
 export default authenSlice.reducer;
