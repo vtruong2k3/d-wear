@@ -64,7 +64,7 @@ const Sidebar: React.FC = () => {
       path: "/admin/settings",
     },
   ];
-   const handleItemClick = (path: string) => {
+  const handleItemClick = (path: string) => {
     navigate(path);
   };
 
@@ -73,11 +73,11 @@ const Sidebar: React.FC = () => {
     return location.pathname.startsWith(path);
   };
   return (
-    <aside className="bg-white border-r border-gray-200 w-64 h-screen">
-      <nav className="mt-8">
+    <aside className="bg-white border-r border-gray-200 w-64 h-screen shadow-md">
+      <nav className="pt-6 px-4 space-y-1">
         {menuItems.map((item, index) => (
-          <SidebarItem 
-            key={index} 
+          <SidebarItem
+            key={index}
             icon={item.icon}
             label={item.label}
             isActive={isActive(item.path)}
@@ -86,6 +86,7 @@ const Sidebar: React.FC = () => {
         ))}
       </nav>
     </aside>
+
   );
 };
 

@@ -15,7 +15,7 @@ function App() {
         autoClose={1000}
         hideProgressBar={false}
       />
-      
+
     </Provider>
   );
 }

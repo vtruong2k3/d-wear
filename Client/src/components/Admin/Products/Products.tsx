@@ -103,7 +103,7 @@ const Products: React.FC = () => {
         <Space size="middle">
           <Space>
             <Button onClick={() => navigate(`/admin/products/edit/${record.id}`)}>
-              <FaPen/>
+              <FaPen />
             </Button>
             <Popconfirm
               title="Bạn có chắc muốn xoá?"
@@ -141,24 +141,24 @@ const Products: React.FC = () => {
   };
   return (
     <div>
-      <h1 className="text-center text-2xl ">Danh sách sản phẩm</h1>
+      <h1 className="text-center mt-5 mb-5 text-4xl ">Danh sách sản phẩm</h1>
       <div className="flex gap-3 p-3">
-          <Space wrap>
-        <Search
-          placeholder="input search text"
-          onChange={(e) => handleSearch(e.target.value)}
-          enterButton
-        />
-        <Select
-          defaultValue={sortOptions[0]}
-          style={{ width: 120 }}
-          onChange={handleSort}
-          options={sortOptions}
-        />
-      </Space>
-      <Button type="primary" onClick={() => navigate("/admin/products/add")}>
-        Thêm sản phẩm
-      </Button>
+        <Space wrap>
+          <Search
+            placeholder="Tìm kiếm ..."
+            onChange={(e) => handleSearch(e.target.value)}
+            enterButton
+          />
+          <Select
+            defaultValue={sortOptions[0]}
+            style={{ width: 120 }}
+            onChange={handleSort}
+            options={sortOptions}
+          />
+        </Space>
+        <Button type="primary" onClick={() => navigate("/admin/products/add")}>
+          Thêm sản phẩm
+        </Button>
       </div>
       <Table
         loading={loading}
