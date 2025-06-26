@@ -1,0 +1,32 @@
+# Môi trường
+.env
+.env.*   # ví dụ: .env.local, .env.dev
+
+# Node Modules
+node_modules/
+
+# Bản build
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Test
+jest-html-reporters-*

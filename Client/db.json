@@ -1,0 +1,62 @@
+{
+  "categories": [
+    { "id": 1, "name": "Cafe chair","image":"/image 1.jpg" },
+    { "id": 2, "name": "Sofa","image":"/image 2.jpg" },
+    { "id": 3, "name": "Lamp","image":"/image 3.jpg" },
+    { "id": 4, "name": "Carpet","image":"/image 4.jpg" },
+    { "id": 5, "name": "Cabinet","image":"/image 3.jpg" },
+    { "id": 6, "name": "Tea table","image":"/image 2.jpg" }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Sản phẩm 1",
+      "description": "Stylish cafe chair",
+      "price": 2500000,
+      "image": "/image 1.jpg",
+      "categoryId": 1
+    },
+    {
+      "id": 2,
+      "name": "Leviosa",
+      "description": "Elegant modern sofa",
+      "price": 1800000,
+      "image": "/image 2.jpg",
+      "categoryId": 2
+    },
+    {
+      "id": 3,
+      "name": "Lolito",
+      "description": "Luxury big sofa",
+      "price": 2000000,
+      "image": "/image 3.jpg",
+      "categoryId": 2
+    },
+    {
+      "id": 4,
+      "name": "Luxe Lamp",
+      "description": "Modern table lamp",
+      "price": 500000,
+      "image": "/image 4.jpg",
+      "categoryId": 3
+    },
+    {
+      "id": 5,
+      "name": "Classic Carpet",
+      "description": "Handmade Persian carpet",
+      "price": 3200000,
+      "image": "/image 4.jpg",
+      "categoryId": 4
+    }
+    ,
+    {
+      "id": 6,
+      "name": "Classic Carpet",
+      "description": "Handmade Persian carpet",
+      "price": 3200000,
+      "image": "/image 4.jpg",
+      "categoryId": 4
+    }
+  ],
+  "user": []
+}

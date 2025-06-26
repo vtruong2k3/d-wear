@@ -1,0 +1,44 @@
+.product-image-upload .ant-upload-select {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 120px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.product-image-upload .ant-upload-select:hover {
+  border-color: #9ca3af;
+  background-color: #f3f4f6;
+}
+
+.product-image-upload .ant-upload-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-image-upload .ant-upload-list-item {
+  width: calc(50% - 4px) !important;
+  height: 120px !important;
+  margin: 0 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .product-image-upload .ant-upload-list-item {
+    width: calc(33.333% - 6px) !important;
+  }
+}
+
+.product-image-upload .ant-upload-list-item-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.ant-upload-wrapper {
+  width: 100%;
+}
