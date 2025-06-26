@@ -1,10 +1,10 @@
 import { useState } from "react";
-import api from "../../../configs/AxiosConfig";
+import api from "../../../../configs/AxiosConfig";
 import { useNavigate } from "react-router-dom";
 import { Button, Form, Input, InputNumber, Select, Upload } from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import type { IProduct } from "../../../types/IProducts";
-import "../../../styles/addProduct.css"
+import type { IProduct } from "../../../../types/IProducts";
+import "../../../../styles/addProduct.css"
 const { Option } = Select;
 const { TextArea } = Input;
 

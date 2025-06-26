@@ -1,14 +1,14 @@
 
 
 import AdminLayout from '../../layouts/AdminLayout'
-import Categories from '../../components/Admin/Categories/Categories';
-import Dashboard from '../../pages/admin/Dashboard'
-import Products from '../../components/Admin/Products/Products';
+import Categories from '../../pages/admin/PageAdmin/Categories/Categories';
+import Dashboard from '../../pages/admin/PageAdmin/Dashboard/Dashboard'
+import Products from '../../pages/admin/PageAdmin/Products/Products';
 import LoginAdmin from '../../pages/admin/auth/LoginAdmin'
-import ProductEdit from '../../components/Admin/Products/ProductEdit';
-import ProductAdd from '../../components/Admin/Products/ProductAdd';
-import Orders from '../../components/Admin/Oders/Oders';
-import Orderdetail from '../../components/Admin/Oders/OrderDetail';
+import ProductEdit from '../../pages/admin/PageAdmin/Products/ProductEdit';
+import ProductAdd from '../../pages/admin/PageAdmin/Products/ProductAdd';
+import Orders from '../../pages/admin/PageAdmin/Oders/Oders';
+import Orderdetail from '../../pages/admin/PageAdmin/Oders/OrderDetail';
 const adminRouter = [
     {
         path: "/admin",

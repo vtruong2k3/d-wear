@@ -1,8 +1,8 @@
 // components/StatCard.tsx
 import React from 'react';
-import type { StatCardProps } from '../../../types/IProducts';
+import type { StatCardProps } from '../../../../types/IProducts';
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, change, changeType, icon, bgColor }) => {
+const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, bgColor }) => {
   return (
     <div className={`${bgColor} rounded-xl p-6 text-white relative overflow-hidden`}>
       <div className="flex items-start justify-between">
