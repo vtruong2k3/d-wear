@@ -1,0 +1,15 @@
+.custom-table .ant-table-thead > tr > th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.custom-table .ant-table-tbody > tr:hover > td {
+  background: #f1f5f9;
+}
+
+.custom-modal .ant-modal-header {
+  border-bottom: 2px solid #e5e7eb;
+  padding: 20px 24px;
+}

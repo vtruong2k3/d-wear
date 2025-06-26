@@ -12,7 +12,11 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, bgColor
           <p className="text-sm mt-2 text-white/90">{change}</p>
         </div>
         <div className="text-white/20 absolute right-4 top-4">
-          {React.cloneElement(icon as React.ReactElement, { className: 'w-8 h-8' })}
+          {React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
+            className: 'w-8 h-8',
+          })
+          }
+
         </div>
       </div>
     </div>
