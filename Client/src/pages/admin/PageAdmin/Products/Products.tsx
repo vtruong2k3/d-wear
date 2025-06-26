@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button, Popconfirm, Select, Space, Table } from "antd";
-import useFetchList from "../../../hooks/useFetchList";
-import useQuery from "../../../hooks/useQuery";
+import useFetchList from "../../../../hooks/useFetchList";
+import useQuery from "../../../../hooks/useQuery";
 import type { ColumnsType } from "antd/es/table";
 import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
-import type { IProduct } from "../../../types/IProducts";
+import type { IProduct } from "../../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
-import api from "../../../configs/AxiosConfig";
+import api from "../../../../configs/AxiosConfig";
 import { MdDelete } from "react-icons/md";
 import { FaPen } from "react-icons/fa6";
 const Products: React.FC = () => {
