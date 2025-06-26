@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../../../../configs/AxiosConfig";
 import { useNavigate } from "react-router-dom";
-import { Button, Form, Input, InputNumber, Select, Upload } from "antd";
-import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { Button, Form, Input, InputNumber, Select, Upload, Modal } from "antd";
+import { PlusOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
 import type { IProduct } from "../../../../types/IProducts";
 import "../../../../styles/addProduct.css"
 const { Option } = Select;
@@ -13,6 +13,10 @@ const ProductAdd = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [imageList, setImageList] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [currentImages, setCurrentImages] = useState([]);
 
   const onFinish = async (values: IProduct) => {
     console.log(values);
@@ -22,7 +26,10 @@ const ProductAdd = () => {
       // Xử lý mảng ảnh từ upload component
       const productData = {
         ...values,
-        productImage: imageList.map(img => img.url || img.response?.url).filter(Boolean)
+        productImage: [
+          ...currentImages, // Giữ lại ảnh cũ
+          ...imageList.map(img => img.url || img.response?.url).filter(Boolean) // Thêm ảnh mới
+        ]
       };
 
       await api.post(`/products/add`, productData);
@@ -39,6 +46,58 @@ const ProductAdd = () => {
   const handleImageChange = ({ fileList }) => {
     setImageList(fileList);
   };
+
+  // Hàm xử lý preview ảnh
+  const handlePreview = async (file) => {
+    if (!file.url && !file.preview) {
+      file.preview = await getBase64(file.originFileObj);
+    }
+    setPreviewImage(file.url || file.preview);
+    setPreviewTitle(file.name || file.url.substring(file.url.lastIndexOf('/') + 1));
+    setPreviewOpen(true);
+  };
+
+  // Hàm chuyển đổi file thành base64
+  const getBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleCancel = () => setPreviewOpen(false);
+
+  // Hàm xử lý preview ảnh hiện tại từ database
+  const handleCurrentImagePreview = (imageUrl) => {
+    setPreviewImage(imageUrl);
+    setPreviewTitle('Ảnh sản phẩm hiện tại');
+    setPreviewOpen(true);
+  };
+
+  // Hàm xóa ảnh hiện tại
+  const handleRemoveCurrentImage = (index) => {
+    const newCurrentImages = [...currentImages];
+    newCurrentImages.splice(index, 1);
+    setCurrentImages(newCurrentImages);
+  };
+
+  // Giả lập data ảnh hiện tại từ database (thay thế bằng API call thực tế)
+  useEffect(() => {
+    // Gọi API để lấy thông tin sản phẩm hiện tại
+    // const fetchProductData = async () => {
+    //   const response = await api.get(`/products/${productId}`);
+    //   setCurrentImages(response.data.productImage || []);
+    // };
+    // fetchProductData();
+
+    // Demo data - để test khung ảnh
+    setCurrentImages([
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=300&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=300&fit=crop'
+    ]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -208,23 +267,73 @@ const ProductAdd = () => {
                   </Form.Item>
                 </div>
 
-                {/* Hình ảnh sản phẩm - Fixed CSS */}
+                {/* Hình ảnh sản phẩm - With Preview */}
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
                     <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
                     Hình Ảnh Sản Phẩm
                   </h3>
 
+                  {/* Hiển thị ảnh hiện tại từ database */}
+                  {currentImages.length > 0 && (
+                    <div className="mb-6">
+                      <div className="text-gray-800 font-semibold text-sm mb-3">Ảnh hiện tại</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {currentImages.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-orange-400 transition-all duration-200">
+                              <img
+                                src={imageUrl}
+                                alt={`Current product ${index + 1}`}
+                                className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                                onClick={() => handleCurrentImagePreview(imageUrl)}
+                              />
+                            </div>
+
+                            {/* Overlay buttons */}
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCurrentImagePreview(imageUrl)}
+                                  className="bg-white text-gray-700 hover:text-orange-600 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+                                >
+                                  <EyeOutlined className="text-lg" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveCurrentImage(index)}
+                                  className="bg-white text-gray-700 hover:text-red-600 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+                                >
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Indicator for main image */}
+                            {index === 0 && (
+                              <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                Ảnh chính
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Ảnh sản phẩm</span>}
+                    label={<span className="text-gray-800 font-semibold text-sm">Thêm ảnh mới</span>}
                     name="productImage"
-                    rules={[{ required: true, message: 'Vui lòng tải lên ít nhất 1 ảnh!' }]}
                   >
                     <div className="ant-upload-wrapper">
                       <Upload
                         listType="picture-card"
                         fileList={imageList}
                         onChange={handleImageChange}
+                        onPreview={handlePreview}
                         multiple
                         beforeUpload={() => false}
                         className="product-image-upload"
@@ -246,7 +355,12 @@ const ProductAdd = () => {
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-xs text-blue-700 flex items-start">
                       <span className="mr-2">💡</span>
-                      <span>Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ là ảnh chính.</span>
+                      <span>
+                        {currentImages.length > 0
+                          ? "Bạn có thể giữ ảnh cũ hoặc thêm ảnh mới. Ảnh mới sẽ được thêm vào danh sách ảnh hiện tại."
+                          : "Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ là ảnh chính."
+                        }
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -276,8 +390,28 @@ const ProductAdd = () => {
             </div>
           </Form>
         </div>
-      </div>
 
+        {/* Modal Preview Image */}
+        <Modal
+          open={previewOpen}
+          title={previewTitle}
+          footer={null}
+          onCancel={handleCancel}
+          centered
+          width={800}
+          className="image-preview-modal"
+        >
+          <img
+            alt="preview"
+            style={{
+              width: '100%',
+              maxHeight: '70vh',
+              objectFit: 'contain',
+            }}
+            src={previewImage}
+          />
+        </Modal>
+      </div>
     </div>
   );
 };

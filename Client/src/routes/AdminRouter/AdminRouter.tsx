@@ -9,6 +9,7 @@ import ProductEdit from '../../pages/admin/PageAdmin/Products/ProductEdit';
 import ProductAdd from '../../pages/admin/PageAdmin/Products/ProductAdd';
 import Orders from '../../pages/admin/PageAdmin/Oders/Oders';
 import Orderdetail from '../../pages/admin/PageAdmin/Oders/OrderDetail';
+import Brand from '../../pages/admin/PageAdmin/Brand/Brand';
 const adminRouter = [
     {
         path: "/admin",
@@ -21,6 +22,7 @@ const adminRouter = [
             { path: "categories", element: <Categories /> },
             { path: "orders", element: <Orders /> },
             { path: "orders/detail/:id", element: <Orderdetail /> },
+            { path: "brands", element: <Brand /> }
         ],
     },
     { path: "/admin/login", element: <LoginAdmin /> }

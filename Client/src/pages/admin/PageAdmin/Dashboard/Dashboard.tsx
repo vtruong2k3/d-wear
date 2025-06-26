@@ -200,7 +200,7 @@ const Content = () => {
       title: 'Mã đơn hàng',
       dataIndex: 'orderId',
       key: 'orderId',
-      render: (text) => <span className="font-medium text-blue-600">{text}</span>,
+      render: (text: string) => <span className="font-medium text-blue-600">{text}</span>,
     },
     {
       title: 'Khách hàng',
@@ -216,13 +216,13 @@ const Content = () => {
       title: 'Số tiền',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount) => `₫${amount.toLocaleString()}`,
+      render: (amount: string) => `₫${amount.toLocaleString()}`,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
+      render: (status: string) => {
         const statusConfig = {
           pending: { color: 'orange', text: 'Chờ xử lý' },
           shipped: { color: 'blue', text: 'Đang giao' },
@@ -261,13 +261,13 @@ const Content = () => {
       title: 'Số đơn hàng',
       dataIndex: 'orders',
       key: 'orders',
-      render: (orders) => <span className="font-medium">{orders}</span>,
+      render: (orders: string) => <span className="font-medium">{orders}</span>,
     },
     {
       title: 'Tổng chi tiêu',
       dataIndex: 'totalSpent',
       key: 'totalSpent',
-      render: (amount) => <span className="font-medium text-green-600">₫{amount.toLocaleString()}</span>,
+      render: (amount: string) => <span className="font-medium text-green-600">₫{amount.toLocaleString()}</span>,
     },
   ];
 
