@@ -7,8 +7,8 @@ import Products from '../../components/Admin/Products/Products';
 import LoginAdmin from '../../pages/admin/auth/LoginAdmin'
 import ProductEdit from '../../components/Admin/Products/ProductEdit';
 import ProductAdd from '../../components/Admin/Products/ProductAdd';
-import Orders from '../../components/Admin/Oders/Oders';
-import Orderdetail from '../../components/Admin/Oders/OrderDetail';
+import Orders from '../../components/Admin/Orders/Orders';
+import Orderdetail from '../../components/Admin/Orders/OrderDetail';
 const adminRouter = [
     {
         path: "/admin",
