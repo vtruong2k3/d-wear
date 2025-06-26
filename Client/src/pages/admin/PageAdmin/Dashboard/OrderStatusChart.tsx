@@ -2,7 +2,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { TrendingUp } from 'lucide-react';
-import type { OrderStatusData } from '../../../types/IProducts';
+import type { OrderStatusData } from '../../../../types/IProducts';
 
 const orderStatusData: OrderStatusData[] = [
   { name: 'Completed', value: 65, color: '#10B981' },
@@ -17,7 +17,7 @@ const OrderStatusChart: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900">Order Status</h3>
         <TrendingUp className="w-5 h-5 text-gray-400" />
       </div>
-      
+
       <div className="h-64 flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -37,7 +37,7 @@ const OrderStatusChart: React.FC = () => {
           </PieChart>
         </ResponsiveContainer>
       </div>
-      
+
       <div className="mt-4 space-y-2">
         {orderStatusData.map((item, index) => (
           <div key={index} className="flex items-center justify-between">
