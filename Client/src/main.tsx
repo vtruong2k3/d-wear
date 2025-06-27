@@ -4,7 +4,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
-
+import { configAxios } from './configs/AxiosConfig.tsx'
+configAxios();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>

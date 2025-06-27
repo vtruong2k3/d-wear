@@ -7,7 +7,7 @@ import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
-import api from "../../../../configs/AxiosConfig";
+import { api } from "../../../../configs/AxiosConfig";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
 

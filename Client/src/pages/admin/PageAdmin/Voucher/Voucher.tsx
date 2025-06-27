@@ -1,103 +1,133 @@
 // VoucherManagement.jsx
-import { useState } from 'react';
-import { Table, Button, Space, Tag, Popconfirm, message, Input, Select, Row, Col } from 'antd';
+import { useEffect, useState } from 'react';
+import { Table, Button, Space, Tag, Popconfirm, Input, Select, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import AddVoucherForm from './VoucherFomAdd';
 import EditVoucherForm from './VoucherFormUpadate';
+import { formatCurrency, formatDate } from '../../../../utils/Format';
+import type { IVoucher } from '../../../../types/voucher/IVoucher';
+import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/voucherService';
+import type { ErrorType } from '../../../../types/error/IError';
+import { toast } from 'react-toastify';
 
 const { Search } = Input;
 const { Option } = Select;
 
 const VoucherManagement = () => {
-    const [vouchers, setVouchers] = useState([
-        {
-            id: 1,
-            code: 'SALE2024',
-            discountType: 'percentage',
-            discountValue: 20,
-            minOrderValue: 100000,
-            maxDiscountValue: 50000,
-            maxUser: 100,
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
-            isActive: true
-        },
-        {
-            id: 2,
-            code: 'FIXED50K',
-            discountType: 'fixed',
-            discountValue: 50000,
-            minOrderValue: 200000,
-            maxDiscountValue: 0,
-            maxUser: 50,
-            startDate: '2024-06-01',
-            endDate: '2024-08-31',
-            isActive: false
-        },
-        {
-            id: 3,
-            code: 'NEWUSER10',
-            discountType: 'percentage',
-            discountValue: 10,
-            minOrderValue: 50000,
-            maxDiscountValue: 30000,
-            maxUser: 200,
-            startDate: '2024-01-15',
-            endDate: '2024-06-30',
-            isActive: true
-        }
-    ]);
+    const [vouchers, setVouchers] = useState<IVoucher[]>([]);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editingVoucher, setEditingVoucher] = useState(null);
-
+    const [editingVoucher, setEditingVoucher] = useState<IVoucher | null>(null);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [total, setTotal] = useState(0);
     // State cho tìm kiếm
     const [searchText, setSearchText] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
 
+    const getAllVoucher = async (page = 1, limit = 10) => {
+        try {
+            const res = await fetchGetAllVouchers(page, limit); // <-- truyền page, limit
+            setVouchers(res.vouchers);
+            setTotal(res.pagination.total);  // set thêm nếu bạn dùng Antd Pagination
+            setPage(res.pagination.page);    // nếu dùng useState để track trang
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            console.error("Lỗi:", errorMessage);
+            toast.error(errorMessage);
+        }
+    };
+
+    useEffect(() => {
+        getAllVoucher(page, limit);
+    }, [page, limit]);
+    const handlePageChange = (page: number) => {
+        getAllVoucher(page); // gọi lại khi chuyển trang
+    };
+    const handlePageSizeChange = (_: number, newSize: number) => {
+        setLimit(newSize);
+        getAllVoucher(1, newSize); // reset về trang 1 khi đổi pageSize
+    };
     const handleAdd = () => {
         setIsAddModalOpen(true);
     };
 
-    const handleEdit = (record) => {
+    const handleEdit = (record: IVoucher) => {
         setEditingVoucher(record);
         setIsEditModalOpen(true);
     };
 
-    const handleDelete = (id: number) => {
-        setVouchers(vouchers.filter(v => v.id !== id));
-        message.success('Xóa voucher thành công!');
+    const handleDelete = async (id: string) => {
+        try {
+            const { message } = await fetchDeleteVoucher(id);
+            setVouchers((prev) => prev.filter((v) => v._id !== id));
+            toast.success(message);
+        } catch (error) {
+            const err = error as ErrorType;
+            const errorMessage =
+                err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi xoá";
+            toast.error(errorMessage);
+        }
     };
 
-    const handleAddSubmit = (values) => {
-        setVouchers([...vouchers, { ...values, id: Date.now() }]);
-        message.success('Thêm voucher thành công!');
-        setIsAddModalOpen(false);
+
+    const handleAddSubmit = async (
+        values: Omit<IVoucher, '_id' | 'createdAt' | 'updatedAt'>
+    ) => {
+        try {
+            const { message, voucher } = await fetchCreateVoucher(values);
+            setVouchers([...vouchers, voucher]);
+            setIsAddModalOpen(false);
+            toast.success(message);
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                'Đã xảy ra lỗi, vui lòng thử lại.';
+            console.error('Lỗi:', errorMessage);
+            toast.error(errorMessage);
+        }
     };
 
-    const handleEditSubmit = (values) => {
-        setVouchers(vouchers.map(v =>
-            v.id === editingVoucher.id
-                ? { ...values, id: editingVoucher.id }
-                : v
-        ));
-        message.success('Cập nhật voucher thành công!');
-        setIsEditModalOpen(false);
+    const handleEditSubmit = async (
+        values: Omit<IVoucher, "_id" | "createdAt" | "updatedAt">
+    ) => {
+        // Kiểm tra chắc chắn có editingVoucher và _id là string
+        if (!editingVoucher || !editingVoucher._id) {
+            toast.error("Không tìm thấy voucher để cập nhật");
+            return;
+        }
+
+        try {
+            const { message, voucher } = await fetchUpdateVoucher(editingVoucher._id, values);
+
+            setVouchers((prev) =>
+                prev.map((v) => (v._id === editingVoucher._id ? voucher : v))
+            );
+
+            setIsEditModalOpen(false);
+            toast.success(message);
+        } catch (error) {
+            const err = error as ErrorType;
+            const errorMessage =
+                err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi cập nhật voucher";
+            console.error("Lỗi cập nhật voucher:", errorMessage);
+            toast.error(errorMessage);
+        }
     };
+
+
 
     // Hàm lọc dữ liệu voucher
     const getFilteredVouchers = () => {
         return vouchers.filter(voucher => {
-            // Lọc theo text tìm kiếm (mã voucher)
-            const matchesSearch = searchText === '' ||
-                voucher.code.toLowerCase().includes(searchText.toLowerCase());
-
-            // Lọc theo loại giảm giá
+            const matchesSearch = voucher.code.toLowerCase().includes(searchText.toLowerCase());
             const matchesType = filterType === 'all' || voucher.discountType === filterType;
-
-            // Lọc theo trạng thái
             const matchesStatus = filterStatus === 'all' ||
                 (filterStatus === 'active' && voucher.isActive) ||
                 (filterStatus === 'inactive' && !voucher.isActive);
@@ -106,23 +136,13 @@ const VoucherManagement = () => {
         });
     };
 
-    // Hàm reset tất cả bộ lọc
     const handleResetFilters = () => {
         setSearchText('');
         setFilterType('all');
         setFilterStatus('all');
     };
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(amount);
-    };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('vi-VN');
-    };
 
     const columns = [
         {
@@ -145,7 +165,7 @@ const VoucherManagement = () => {
             title: 'Giá Trị Giảm',
             dataIndex: 'discountValue',
             key: 'discountValue',
-            render: (value, record) => (
+            render: (value: number, record: IVoucher) => (
                 <span className="font-medium">
                     {record.discountType === 'percentage'
                         ? `${value}%`
@@ -175,7 +195,7 @@ const VoucherManagement = () => {
         {
             title: 'Thời Gian Hiệu Lực',
             key: 'duration',
-            render: (_, record) => (
+            render: (_value: string, record: IVoucher) => (
                 <div className="text-sm">
                     <div>{formatDate(record.startDate)}</div>
                     <div className="text-gray-500">đến {formatDate(record.endDate)}</div>
@@ -195,7 +215,7 @@ const VoucherManagement = () => {
         {
             title: 'Thao Tác',
             key: 'action',
-            render: (_, record) => (
+            render: (_value: string, record: IVoucher) => (
                 <Space size="middle">
                     <Button
                         type="text"
@@ -208,7 +228,7 @@ const VoucherManagement = () => {
                     <Popconfirm
                         title="Xóa voucher"
                         description="Bạn có chắc chắn muốn xóa voucher này?"
-                        onConfirm={() => handleDelete(record.id)}
+                        onConfirm={() => handleDelete(record._id!)}
                         okText="Xóa"
                         cancelText="Hủy"
                         okButtonProps={{ danger: true }}
@@ -301,15 +321,22 @@ const VoucherManagement = () => {
                     <Table
                         columns={columns}
                         dataSource={filteredVouchers}
-                        rowKey="id"
+                        rowKey="_id" // Nếu dùng MongoDB thì thường là _id
                         pagination={{
+                            current: page,
+                            pageSize: limit,
+                            total: total,
                             showSizeChanger: true,
                             showQuickJumper: true,
                             showTotal: (total, range) =>
                                 `${range[0]}-${range[1]} của ${total} voucher`,
+                            onChange: handlePageChange,
+                            onShowSizeChange: handlePageSizeChange,
                         }}
                         scroll={{ x: 1200 }}
+
                     />
+
 
                     <AddVoucherForm
                         open={isAddModalOpen}

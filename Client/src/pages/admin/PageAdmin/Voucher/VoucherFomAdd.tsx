@@ -1,4 +1,4 @@
-import React from 'react';
+
 import {
     Modal,
     Form,
@@ -10,11 +10,16 @@ import {
     Row,
     Col
 } from 'antd';
+import type { IVoucher } from '../../../../types/voucher/IVoucher';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-
-const AddVoucherForm = ({ open, onCancel, onSubmit }) => {
+type AddVoucherFormProps = {
+    open: boolean;
+    onCancel: () => void;
+    onSubmit: (values: Omit<IVoucher, "_id" | "createdAt" | "updatedAt">) => void;
+};
+const AddVoucherForm = ({ open, onCancel, onSubmit }: AddVoucherFormProps) => {
     const [form] = Form.useForm();
 
     const handleSubmit = async () => {
@@ -109,17 +114,18 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }) => {
                                 { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' }
                             ]}
                         >
-                            <InputNumber
+                            <InputNumber<number>
                                 placeholder="Nhập giá trị giảm"
                                 className="w-full"
                                 min={1}
                                 formatter={(value) =>
                                     form.getFieldValue('discountType') === 'percentage'
                                         ? `${value}%`
-                                        : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                        : `${value}`?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                 }
-                                parser={(value) => value.replace(/[^\d]/g, '')}
+                                parser={(value) => (value ? parseInt(value.replace(/[^\d]/g, ''), 10) : 0)}
                             />
+
                         </Form.Item>
                     </Col>
 
@@ -131,13 +137,14 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }) => {
                                 { type: 'number', min: 0, message: 'Giá trị phải lớn hơn hoặc bằng 0!' }
                             ]}
                         >
-                            <InputNumber
-                                placeholder="Nhập đơn hàng tối thiểu"
+                            <InputNumber<number>
+                                placeholder="0 = Không giới hạn"
                                 className="w-full"
                                 min={0}
                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                                parser={(value) => (value ? parseInt(value.replace(/[^\d]/g, ''), 10) : 0)}
                             />
+
                         </Form.Item>
                     </Col>
                 </Row>
@@ -151,13 +158,18 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }) => {
                                 { type: 'number', min: 0, message: 'Giá trị phải lớn hơn hoặc bằng 0!' }
                             ]}
                         >
-                            <InputNumber
+                            <InputNumber<number>
                                 placeholder="0 = Không giới hạn"
                                 className="w-full"
                                 min={0}
-                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                                formatter={(value) =>
+                                    value != null ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''
+                                }
+                                parser={(value) =>
+                                    value ? parseInt(value.replace(/[^\d]/g, ''), 10) : 0
+                                }
                             />
+
                         </Form.Item>
                     </Col>
 

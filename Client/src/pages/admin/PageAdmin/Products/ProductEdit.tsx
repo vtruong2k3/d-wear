@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../../../../configs/AxiosConfig";
+import { api } from "../../../../configs/AxiosConfig";
 import { useNavigate } from "react-router-dom";
 import { Button, Form, Input, InputNumber, Select, Upload, Modal } from "antd";
 import { PlusOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
