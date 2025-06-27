@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AdminHeader from "../components/Admin/Header/Headers";
 import AsideAdmin from "../components/Admin/SideBar/SideBar";
 import { LoadingProvider } from '../contexts/LoadingContext';
 import GlobalLoading from '../components/Loading/GlobalLoading';
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = () => {
