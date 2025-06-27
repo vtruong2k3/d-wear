@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -11,10 +11,14 @@ import {
     TeamOutlined,
     TagsOutlined,
     BranchesOutlined,
+    GiftOutlined,
     AppstoreOutlined,
 } from '@ant-design/icons';
-
-const AsideAdmin = ({ collapsed, onCollapse }) => {
+interface SidebarProps {
+    collapsed: boolean;
+    onCollapse: () => void;
+}
+const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
     const location = useLocation();
 
     const menuItems = [
@@ -54,6 +58,11 @@ const AsideAdmin = ({ collapsed, onCollapse }) => {
             key: '/admin/brands',
             icon: <BranchesOutlined />,
             label: <Link to="/admin/brands">Thương hiệu</Link>,
+        },
+        {
+            key: '/admin/voucher',
+            icon: <GiftOutlined />,
+            label: <Link to="/admin/voucher">Voucher</Link>
         },
         {
             key: '/admin/customers',

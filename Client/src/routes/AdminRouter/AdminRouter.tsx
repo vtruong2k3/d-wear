@@ -10,6 +10,7 @@ import ProductAdd from '../../pages/admin/PageAdmin/Products/ProductAdd';
 import Orders from '../../pages/admin/PageAdmin/Orders/Orders';
 import Orderdetail from '../../pages/admin/PageAdmin/Orders/OrderDetail';
 import Brand from '../../pages/admin/PageAdmin/Brand/Brand';
+import Voucher from '../../pages/admin/PageAdmin/Voucher/Voucher';
 const adminRouter = [
     {
         path: "/admin",
@@ -22,7 +23,10 @@ const adminRouter = [
             { path: "categories", element: <Categories /> },
             { path: "orders", element: <Orders /> },
             { path: "orders/detail/:id", element: <Orderdetail /> },
-            { path: "brands", element: <Brand /> }
+            { path: "brands", element: <Brand /> },
+            { path: "voucher", element: <Voucher /> }
+
+
         ],
     },
     { path: "/admin/login", element: <LoginAdmin /> }

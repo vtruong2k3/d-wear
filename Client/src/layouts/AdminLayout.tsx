@@ -20,7 +20,7 @@ export default function AdminLayout() {
       {/* Phần bên phải chứa header và main */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header cố định trên cùng */}
-        <header className="shrink-0 shadow-sm border-b">
+        <header className="shrink-0 shadow-sm ">
           <AdminHeader collapsed={collapsed} onCollapse={toggleCollapsed} />
         </header>
 
