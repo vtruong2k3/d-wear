@@ -9,6 +9,7 @@ import type { IVoucher } from '../../../../types/voucher/IVoucher';
 import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/voucherService';
 import type { ErrorType } from '../../../../types/error/IError';
 import { toast } from 'react-toastify';
+import { useLoading } from '../../../../contexts/LoadingContext';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -26,9 +27,12 @@ const VoucherManagement = () => {
     const [searchText, setSearchText] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const { setLoading } = useLoading();
 
     const getAllVoucher = async (page = 1, limit = 10) => {
+
         try {
+            setLoading(true)
             const res = await fetchGetAllVouchers(page, limit); // <-- truyền page, limit
             setVouchers(res.vouchers);
             setTotal(res.pagination.total);  // set thêm nếu bạn dùng Antd Pagination
@@ -40,6 +44,8 @@ const VoucherManagement = () => {
                 "Đã xảy ra lỗi, vui lòng thử lại.";
             console.error("Lỗi:", errorMessage);
             toast.error(errorMessage);
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -64,6 +70,7 @@ const VoucherManagement = () => {
 
     const handleDelete = async (id: string) => {
         try {
+            setLoading(true)
             const { message } = await fetchDeleteVoucher(id);
             setVouchers((prev) => prev.filter((v) => v._id !== id));
             toast.success(message);
@@ -72,6 +79,8 @@ const VoucherManagement = () => {
             const errorMessage =
                 err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi xoá";
             toast.error(errorMessage);
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -80,6 +89,7 @@ const VoucherManagement = () => {
         values: Omit<IVoucher, '_id' | 'createdAt' | 'updatedAt'>
     ) => {
         try {
+            setLoading(true)
             const { message, voucher } = await fetchCreateVoucher(values);
             setVouchers([...vouchers, voucher]);
             setIsAddModalOpen(false);
@@ -91,12 +101,15 @@ const VoucherManagement = () => {
                 'Đã xảy ra lỗi, vui lòng thử lại.';
             console.error('Lỗi:', errorMessage);
             toast.error(errorMessage);
+        } finally {
+            setLoading(false)
         }
     };
 
     const handleEditSubmit = async (
         values: Omit<IVoucher, "_id" | "createdAt" | "updatedAt">
     ) => {
+
         // Kiểm tra chắc chắn có editingVoucher và _id là string
         if (!editingVoucher || !editingVoucher._id) {
             toast.error("Không tìm thấy voucher để cập nhật");
@@ -104,6 +117,7 @@ const VoucherManagement = () => {
         }
 
         try {
+            setLoading(true)
             const { message, voucher } = await fetchUpdateVoucher(editingVoucher._id, values);
 
             setVouchers((prev) =>
@@ -118,6 +132,8 @@ const VoucherManagement = () => {
                 err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi cập nhật voucher";
             console.error("Lỗi cập nhật voucher:", errorMessage);
             toast.error(errorMessage);
+        } finally {
+            setLoading(false)
         }
     };
 
