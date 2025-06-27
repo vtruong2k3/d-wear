@@ -5,6 +5,7 @@ import Login from "../../pages/client/Login/Login";
 import Register from "../../pages/client/Login/Register";
 
 import ShoppingCart from "../../pages/client/Cart/ShoppingCart";
+import Checkout from "../../pages/client/Order/Checkout";
 
 const clientRoutes = [
   {
@@ -23,6 +24,10 @@ const clientRoutes = [
       {
         path: "shopping-cart",
         element: <ShoppingCart />,
+      },
+      {
+        path: "checkout",
+        element: <Checkout />,
       },
       {
         path: "/login",

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Table, Button, Select, DatePicker, message, Pagination, Tag } from "antd";
 import { EyeOutlined, DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
+import Title from "antd/es/typography/Title";
 
 const { Option } = Select;
 
@@ -264,7 +265,9 @@ const OrderList = () => {
 
   return (
     <div>
-      <h2>📦 Danh sách đơn hàng</h2>
+      <Title level={2} style={{ textAlign: 'center', margin: '0 0 40px 0', color: '#262626' }}>
+        📦 Danh sách đơn hàng
+      </Title>
       <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
         <Select
           placeholder="Lọc theo trạng thái đơn"

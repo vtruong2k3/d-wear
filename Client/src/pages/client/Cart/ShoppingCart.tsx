@@ -54,7 +54,7 @@ const ShoppingCart = () => {
       toast.info("Vui lòng đăng nhập để thanh toán");
       navigate("/login");
     } else {
-      navigate("/order");
+      navigate("/checkout");
     }
   };
 

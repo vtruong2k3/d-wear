@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import api from "../configs/AxiosConfig";
+import { api } from "../configs/AxiosConfig";
 interface UseFetchListResult<T> {
   data: T[];
   loading: boolean;
   error: any;
-  refetch:()=> Promise<void>
+  refetch: () => Promise<void>
 }
 
-export const useFetchList = <T= any>(
+export const useFetchList = <T = any>(
   path: string,
   query: Record<string, any> = {},
   config: Record<string, any> = {}
@@ -17,22 +17,22 @@ export const useFetchList = <T= any>(
   const [error, setError] = useState<any>(null);
 
 
-    const fetchApi = async () => {
-      try {
-        const queryString = new URLSearchParams(query).toString();
-        const res = await api.get(`${path}/search?${queryString}`, config);
-        console.log(res.data);
-        setData(res.data[path] || res.data);
-      } catch (err) {
-        setError(err);
-      }finally {
-        setLoading(false);
-      }
-    };
+  const fetchApi = async () => {
+    try {
+      const queryString = new URLSearchParams(query).toString();
+      const res = await api.get(`${path}/search?${queryString}`, config);
+      console.log(res.data);
+      setData(res.data[path] || res.data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     fetchApi();
   }, [path, JSON.stringify(query), JSON.stringify(config)]);
-  return {data,loading,error,refetch: fetchApi};
+  return { data, loading, error, refetch: fetchApi };
 };
 
 export default useFetchList;

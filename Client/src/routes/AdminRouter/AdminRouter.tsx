@@ -1,14 +1,16 @@
 
 
 import AdminLayout from '../../layouts/AdminLayout'
-import Categories from '../../components/Admin/Categories/Categories';
-import Dashboard from '../../pages/admin/Dashboard'
-import Products from '../../components/Admin/Products/Products';
-import LoginAdmin from '../../pages/admin/auth/LoginAdmin'
-import ProductEdit from '../../components/Admin/Products/ProductEdit';
-import ProductAdd from '../../components/Admin/Products/ProductAdd';
-import Orders from '../../components/Admin/Oders/Oders';
-import Orderdetail from '../../components/Admin/Oders/OrderDetail';
+import Categories from '../../pages/admin/PageAdmin/Categories/CategoriesList';
+import Dashboard from '../../pages/admin/PageAdmin/Dashboard/Dashboards'
+import Products from '../../pages/admin/PageAdmin/Products/Products';
+import LoginAdmin from '../../pages/admin/auth/LoginAdmin';
+import ProductEdit from '../../pages/admin/PageAdmin/Products/ProductEdit';
+import ProductAdd from '../../pages/admin/PageAdmin/Products/ProductAdd';
+import Orders from '../../pages/admin/PageAdmin/Orders/Orders';
+import Orderdetail from '../../pages/admin/PageAdmin/Orders/OrderDetail';
+import Brand from '../../pages/admin/PageAdmin/Brand/Brand';
+import Voucher from '../../pages/admin/PageAdmin/Voucher/Voucher';
 const adminRouter = [
     {
         path: "/admin",
@@ -21,6 +23,10 @@ const adminRouter = [
             { path: "categories", element: <Categories /> },
             { path: "orders", element: <Orders /> },
             { path: "orders/detail/:id", element: <Orderdetail /> },
+            { path: "brands", element: <Brand /> },
+            { path: "voucher", element: <Voucher /> }
+
+
         ],
     },
     { path: "/admin/login", element: <LoginAdmin /> }
