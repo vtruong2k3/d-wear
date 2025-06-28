@@ -1,5 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Button, Popconfirm, Select, Space, Table, Card, Row, Col, Tag, Typography, Divider } from "antd";
+import {
+  Button,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Card,
+  Row,
+  Col,
+  Tag,
+  Typography,
+  Divider,
+} from "antd";
 import useFetchList from "../../../../hooks/useFetchList";
 import useQuery from "../../../../hooks/useQuery";
 import type { ColumnsType } from "antd/es/table";
@@ -7,7 +19,8 @@ import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../../../configs/AxiosConfig";
+// import {api} from "../../../../configs/AxiosConfig";
+import axios from "axios";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
 
@@ -53,10 +66,33 @@ const Products: React.FC = () => {
 
   //Lấy API
   const {
-    data: products,
+    data: rawProducts,
     loading,
     refetch,
-  } = useFetchList<IProduct>("products", query, {});
+  } = useFetchList<IProduct>("product", query, {});
+
+  // Map lại dữ liệu từ MongoDB sang định dạng IProduct
+  const products: IProduct[] =
+    rawProducts?.map((item: any) => {
+      const rawPath = item.imageUrls?.[0] ?? "";
+
+      // gắn domain vào
+      const fullPath = rawPath.startsWith("http")
+        ? rawPath
+        : `http://localhost:5000/${rawPath.replace(/\\/g, "/")}`;
+
+      return {
+        _id: item._id,
+        id: item._id,
+        title: item.product_name,
+        price: item.basePrice,
+        thumbnail: fullPath,
+        category: item.category_id?.category_name || "Chưa phân loại",
+        brand: item.brand_id?.brand_name || "Không rõ",
+      };
+    }) || [];
+
+  // console.log("Products from DB:", products);
 
   //Cấu hình cột bảng bằng ANTD
   const columns: ColumnsType<IProduct> = [
@@ -65,15 +101,15 @@ const Products: React.FC = () => {
       dataIndex: "id",
       key: "id",
       width: 80,
-      align: 'center',
-      render: (id) => <Tag color="blue">#{id}</Tag>
+      align: "center",
+      render: (id) => <Tag color="blue">#{id}</Tag>,
     },
     {
       title: "Sản phẩm",
       key: "product",
       width: 300,
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <img
             src={record.thumbnail}
             alt="product"
@@ -81,15 +117,15 @@ const Products: React.FC = () => {
               width: 50,
               height: 50,
               objectFit: "cover",
-              borderRadius: '8px',
-              border: '1px solid #f0f0f0'
+              borderRadius: "8px",
+              border: "1px solid #f0f0f0",
             }}
           />
           <div>
-            <div style={{ fontWeight: '600', color: '#262626' }}>
+            <div style={{ fontWeight: "600", color: "#262626" }}>
               {record.title}
             </div>
-            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
               {record.brand}
             </div>
           </div>
@@ -101,14 +137,24 @@ const Products: React.FC = () => {
       dataIndex: "price",
       key: "price",
       width: 150,
-      align: 'right',
+      align: "right",
+      // render: (price) => (
+      //   <span style={{
+      //     fontWeight: '600',
+      //     color: '#52c41a',
+      //     fontSize: '16px'
+      //   }}>
+      //     {price.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+      //   </span>
+      // ),
       render: (price) => (
-        <span style={{
-          fontWeight: '600',
-          color: '#52c41a',
-          fontSize: '16px'
-        }}>
-          {price.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+        <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
+          {typeof price === "number"
+            ? price.toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              })
+            : "N/A"}
         </span>
       ),
     },
@@ -118,27 +164,27 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
-        <Tag color="geekblue" style={{ borderRadius: '12px' }}>
+        <Tag color="geekblue" style={{ borderRadius: "12px" }}>
           {category}
         </Tag>
-      )
+      ),
     },
     {
       title: "Thao tác",
       key: "action",
       width: 120,
-      align: 'center',
+      align: "center",
       render: (_, record: any) => (
         <Space size="small">
           <Button
             type="text"
-            icon={<FaPen />}
+            icon={<FaPen  />}
             onClick={() => navigate(`/admin/products/edit/${record.id}`)}
             style={{
-              color: '#1890ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              color: "#1890ff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             title="Chỉnh sửa"
           />
@@ -154,9 +200,9 @@ const Products: React.FC = () => {
               danger
               icon={<MdDelete />}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
               title="Xóa"
             />
@@ -170,7 +216,7 @@ const Products: React.FC = () => {
   const handleDelete = async (id: number) => {
     console.log(id);
     try {
-      await api.delete(`/products/${id}`);
+      await axios.delete(`http://localhost:5000/api/product/${id}`);
       alert("Xoá sản phẩm thành công");
       refetch();
     } catch (error) {
@@ -190,25 +236,38 @@ const Products: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', minHeight: '100vh' }} className="bg-gray-50">
-      <Card style={{ marginBottom: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <Title level={2} style={{ textAlign: 'center', margin: '0 0 24px 0', color: '#262626' }}>
+    <div style={{ padding: "24px", background: "#f5f5f5", minHeight: "100vh" }}>
+      <Card
+        style={{
+          marginBottom: "24px",
+          borderRadius: "12px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+      >
+        <Title
+          level={2}
+          style={{
+            textAlign: "center",
+            margin: "0 0 24px 0",
+            color: "#262626",
+          }}
+        >
           📦 Danh sách sản phẩm
         </Title>
 
-        <Row gutter={16} align="middle" style={{ marginBottom: '16px' }}>
+        <Row gutter={16} align="middle" style={{ marginBottom: "16px" }}>
           <Col flex="auto">
             <Space size="middle" wrap>
               <Search
                 placeholder="Tìm kiếm sản phẩm..."
                 onChange={(e) => handleSearch(e.target.value)}
                 enterButton={<FaSearch />}
-                style={{ minWidth: '300px' }}
+                style={{ minWidth: "300px" }}
                 size="large"
               />
               <Select
                 placeholder="Sắp xếp theo"
-                style={{ minWidth: '180px' }}
+                style={{ minWidth: "180px" }}
                 size="large"
                 onChange={handleSort}
                 options={sortOptions}
@@ -223,11 +282,11 @@ const Products: React.FC = () => {
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
               style={{
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                borderRadius: "8px",
+                boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
               Thêm sản phẩm
@@ -235,12 +294,12 @@ const Products: React.FC = () => {
           </Col>
         </Row>
 
-        <Divider style={{ margin: '16px 0' }} />
+        <Divider style={{ margin: "16px 0" }} />
 
         <Table
           loading={loading}
           dataSource={products}
-          rowKey="id"
+          rowKey={(record) => record.id || record._id || record.title}
           columns={columns}
           pagination={{
             pageSize: 10,
@@ -248,12 +307,12 @@ const Products: React.FC = () => {
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} của ${total} sản phẩm`,
-            style: { marginTop: '16px' }
+            style: { marginTop: "16px" },
           }}
           style={{
-            background: 'white',
-            borderRadius: '8px',
-            overflow: 'hidden'
+            background: "white",
+            borderRadius: "8px",
+            overflow: "hidden",
           }}
           scroll={{ x: 800 }}
           rowHoverable

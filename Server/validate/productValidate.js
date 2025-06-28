@@ -43,7 +43,7 @@ const productValidate = {
       "string.length": "ID danh mục không hợp lệ.",
       "any.required": "ID danh mục là bắt buộc.",
     }),
-    gender: Joi.string().valid("male", "famale", "unisex").messages({
+    gender: Joi.string().valid("male", "female", "unisex").messages({
       "string.base": "Giới tính phải là chuỗi.",
       "any.only":
         "Giới tính phải là một trong các giá trị: male, famale, unisex.",

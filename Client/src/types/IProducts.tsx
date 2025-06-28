@@ -1,10 +1,33 @@
+// get products
 export interface IProduct {
-  id: number;
-  title: string;
-  price: number;
-  thumbnail: string;
+  id: string;      
+  _id:string;           
+  title: string;              
+  price: number;              
+  thumbnail: string;          
+  category: string;           
+  brand?: string;              
+}
+// add  product
+export interface IProducts {
+  product_name: string;
   description: string;
-  category?: string;
+  basePrice: number;
+  brand_id: string;
+  category_id: string;
+  gender: string;
+  material: string;
+  variants?: any;
+}
+//brand
+export interface Brand {
+  _id: string;
+  brand_name: string;
+}
+//catagory
+export interface Category {
+  _id: string;
+  category_name: string;
 }
 // types/interfaces.ts
 export interface StatCardProps {
