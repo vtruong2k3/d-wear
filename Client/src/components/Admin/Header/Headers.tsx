@@ -9,6 +9,8 @@ import {
     SearchOutlined,
 } from '@ant-design/icons';
 import NotificationDropdown from '../Notification/Notification'; // Import component thông báo
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const { Search } = Input;
 interface AdminHeaderProps {
@@ -35,12 +37,22 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
     ];
 
 
+
+    const navigate = useNavigate();
+
     const handleLogout = () => {
-        console.log('Đăng xuất');
+        localStorage.removeItem("token");
+
+        toast.success("Đăng xuất thành công");
+
+        // ⏳ Đợi 300ms rồi mới navigate
+        setTimeout(() => {
+            navigate("/admin/login");
+        }, 300);
     };
 
     const handleMenuClick = ({ key }: { key: string }) => {
-        if (key === '3') {
+        if (key === 'logout') {
             handleLogout();
         }
     };

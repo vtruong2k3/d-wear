@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-interface LoadingContextType {
+export interface LoadingContextType {
     loading: boolean;
     setLoading: (value: boolean) => void;
 }
