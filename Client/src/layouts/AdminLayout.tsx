@@ -4,6 +4,7 @@ import AdminHeader from "../components/Admin/Header/Headers";
 import AsideAdmin from "../components/Admin/SideBar/SideBar";
 import { LoadingProvider } from '../contexts/LoadingContext';
 import GlobalLoading from '../components/Loading/GlobalLoading';
+
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
