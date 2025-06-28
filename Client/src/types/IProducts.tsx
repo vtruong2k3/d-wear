@@ -1,12 +1,12 @@
 // get products
 export interface IProduct {
-  id: string;      
-  _id:string;           
-  title: string;              
-  price: number;              
-  thumbnail: string;          
-  category: string;           
-  brand?: string;              
+  id: string;
+  _id: string;
+  title: string;
+  price: number;
+  thumbnail: string;
+  category: string;
+  brand?: string;
 }
 // add  product
 export interface IProducts {
@@ -17,7 +17,19 @@ export interface IProducts {
   category_id: string;
   gender: string;
   material: string;
-  variants?: any;
+  variants?: Variant[];
+}
+interface Variant {
+  color: string;
+  size: string;
+  stock: number;
+  price?: number;
+  image: string[];
+}
+export interface CurrentImage {
+  uid: string;
+  name: string;
+  url: string;
 }
 //brand
 export interface Brand {
@@ -43,7 +55,7 @@ export interface SidebarItemProps {
   icon: React.ReactNode;
   label: string;
   isActive?: boolean;
-  onClick?: ()=>void;
+  onClick?: () => void;
 }
 
 export interface RevenueDataPoint {

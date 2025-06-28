@@ -23,6 +23,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
+import { toast } from "react-toastify";
+import type { ErrorType } from "../../../../types/error/IError";
+import { formatCurrency } from "../../../../utils/Format";
 
 const { Title } = Typography;
 
@@ -139,23 +142,11 @@ const Products: React.FC = () => {
       key: "price",
       width: 150,
       align: "right",
-      // render: (price) => (
-      //   <span style={{
-      //     fontWeight: '600',
-      //     color: '#52c41a',
-      //     fontSize: '16px'
-      //   }}>
-      //     {price.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-      //   </span>
-      // ),
+
       render: (price) => (
         <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
-          {typeof price === "number"
-            ? price.toLocaleString("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              })
-            : "N/A"}
+          {typeof price === "number" ? formatCurrency(price) : "N/A"}
+
         </span>
       ),
     },
@@ -179,7 +170,7 @@ const Products: React.FC = () => {
         <Space size="small">
           <Button
             type="text"
-            icon={<FaPen  />}
+            icon={<FaPen />}
             onClick={() => navigate(`/admin/products/edit/${record.id}`)}
             style={{
               color: "#1890ff",
@@ -217,11 +208,16 @@ const Products: React.FC = () => {
   const handleDelete = async (id: number) => {
     console.log(id);
     try {
-      await axios.delete(`/api/product/${id}`);
-      alert("Xoá sản phẩm thành công");
+      const { data } = await axios.delete(`/api/product/${id}`);
+      toast.success(data.message);
       refetch();
+
     } catch (error) {
-      console.log(error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
@@ -237,7 +233,7 @@ const Products: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: "24px", background: "#f5f5f5", minHeight: "100vh" }}>
+    <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
       <Card
         style={{
           marginBottom: "24px",

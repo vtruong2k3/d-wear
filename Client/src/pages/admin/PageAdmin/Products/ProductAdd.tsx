@@ -2,13 +2,16 @@ import { useState } from "react";
 // import {api} from "../../../../configs/AxiosConfig";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Button, Form, Input, InputNumber, Select, Upload } from "antd";
+import { Button, Form, Input, InputNumber, Select, Upload, type UploadFile } from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import type { IProducts } from "../../../../types/IProducts";
 import type { Category } from "../../../../types/IProducts";
 import type { Brand } from "../../../../types/IProducts";
 import { useEffect } from "react";
 import "../../../../styles/addProduct.css";
+import type { UploadChangeParam } from "antd/es/upload";
+import type { ErrorType } from "../../../../types/error/IError";
+import { toast } from "react-toastify";
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -16,7 +19,7 @@ const ProductAdd = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [imageList, setImageList] = useState<any[]>([]);
+  const [imageList, setImageList] = useState<UploadFile[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -72,24 +75,27 @@ const ProductAdd = () => {
       });
 
       // Gửi request POST tới server để tạo sản phẩm
-      await axios.post("/api/product", formData, {
+      const { data } = await axios.post("/api/product", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      alert("Tạo sản phẩm thành công!");
+      toast.success(data.message)
       navigate("/admin/products");
     } catch (error) {
-      console.error("Lỗi khi thêm sản phẩm:", error);
-      alert("Có lỗi xảy ra khi thêm sản phẩm");
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageChange = ({ fileList }) => {
-    setImageList(fileList);
+  const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
+    setImageList(info.fileList);
   };
 
   return (
@@ -177,7 +183,7 @@ const ProductAdd = () => {
                     name="basePrice"
                     rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
                   >
-                    <InputNumber
+                    <InputNumber<number>
                       min={0}
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       size="large"
@@ -185,7 +191,7 @@ const ProductAdd = () => {
                       formatter={(value) =>
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
-                      parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                      parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, "") || 0)}
                       placeholder="0"
                     />
                   </Form.Item>

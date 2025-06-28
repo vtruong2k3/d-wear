@@ -3,12 +3,15 @@ import { useParams } from "react-router-dom";
 // import {api} from "../../../../configs/AxiosConfig";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Button, Form, Input, InputNumber, Select, Upload, Modal } from "antd";
+import { Button, Form, Input, InputNumber, Select, Upload, Modal, type UploadFile } from "antd";
 import { PlusOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
-import type { IProducts } from "../../../../types/IProducts";
+import type { CurrentImage, IProducts } from "../../../../types/IProducts";
 import type { Category } from "../../../../types/IProducts";
 import type { Brand } from "../../../../types/IProducts";
 import "../../../../styles/addProduct.css";
+import type { UploadChangeParam } from "antd/es/upload";
+import { toast } from "react-toastify";
+import type { ErrorType } from "../../../../types/error/IError";
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -16,14 +19,15 @@ const ProductEdit = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [imageList, setImageList] = useState([]);
+  const [imageList, setImageList] = useState<UploadFile[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [previewTitle, setPreviewTitle] = useState("");
-  const [currentImages, setCurrentImages] = useState([]);
+  const [currentImages, setCurrentImages] = useState<CurrentImage[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams();
+
 
   //Load brands và categories 
   useEffect(() => {
@@ -33,25 +37,20 @@ const ProductEdit = () => {
           axios.get("/api/brand"),
           axios.get("/api/category"),
         ]);
-
         setBrands(brandRes.data.data || []);
         setCategories(categoryRes.data.data || []);
       } catch (error) {
         console.error("Lỗi khi lấy brand/category:", error);
       }
     };
-
     fetchSelectOptions();
   }, []);
 
-  //call api theo id sản phẩm
-  //Load sản phẩm sau khi đã có brand/category
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(`/api/product/${id}`);
         const product = res.data.product;
-
         form.setFieldsValue({
           product_name: product.product_name,
           description: product.description,
@@ -61,15 +60,11 @@ const ProductEdit = () => {
           gender: product.gender,
           material: product.material,
         });
-
         setCurrentImages(
-          (product.imageUrls || []).map((url:string, index:number) => {
-            const isFullUrl = url.startsWith("http");
-            const fullUrl = isFullUrl
+          (product.imageUrls || []).map((url: string, index: number) => {
+            const fullUrl = url.startsWith("http")
               ? url
               : `http://localhost:5000/${url.replace(/\\/g, "/")}`;
-              // : `/${url.replace(/\\/g, "/")}`;
-
             return {
               uid: `current-${index}`,
               name: `image-${index}`,
@@ -81,19 +76,15 @@ const ProductEdit = () => {
         console.error("Lỗi khi lấy dữ liệu sản phẩm:", err);
       }
     };
-
     if (brands.length > 0 && categories.length > 0 && id) {
       fetchProduct();
     }
-  }, [brands, categories, id]);
+  }, [brands, categories, id, form]);
 
-  // Submit form để cập nhật sản phẩm
   const onFinish = async (values: IProducts) => {
     try {
       setLoading(true);
       const formData = new FormData();
-
-      // Gửi các trường thông tin sản phẩm
       formData.append("product_name", values.product_name);
       formData.append("description", values.description);
       formData.append("basePrice", String(values.basePrice));
@@ -102,82 +93,68 @@ const ProductEdit = () => {
       formData.append("gender", values.gender);
       formData.append("material", values.material);
 
-      // Gửi ảnh cũ dưới key `existingImageUrls`
       currentImages.forEach((img) => {
         formData.append("existingImageUrls", img.url);
       });
 
-      //Gửi ảnh mới dưới key `productImage`
       imageList.forEach((file) => {
         if (file.originFileObj) {
           formData.append("productImage", file.originFileObj);
         }
       });
 
-      await axios.put(`/api/product/${id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const { data } = await axios.put(`/api/product/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("Cập nhật sản phẩm thành công!");
+      toast.success(data.message)
       navigate("/admin/products");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        console.error("Chi tiết lỗi:", err.response?.data);
-        alert(
-          err.response?.data?.errors?.join("\n") ||
-            "Có lỗi khi cập nhật sản phẩm"
-        );
-      } else {
-        console.error("Lỗi không xác định:", err);
-        alert("Có lỗi không xác định khi cập nhật sản phẩm");
-      }
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageChange = ({ fileList }) => {
-    setImageList(fileList);
+  const handleImageChange = (info: UploadChangeParam<UploadFile>) => {
+    setImageList(info.fileList);
   };
 
-  // Hàm xử lý preview ảnh
-  const handlePreview = async (file) => {
-    if (!file.url && !file.preview) {
+  const handlePreview = async (file: UploadFile) => {
+    if (!file.url && !file.preview && file.originFileObj) {
       file.preview = await getBase64(file.originFileObj);
     }
-    setPreviewImage(file.url || file.preview);
+    setPreviewImage(file.url || (file.preview as string));
     setPreviewTitle(
-      file.name || file.url.substring(file.url.lastIndexOf("/") + 1)
+      file.name || file.url?.substring(file.url.lastIndexOf("/") + 1) || ""
     );
     setPreviewOpen(true);
   };
 
-  // Hàm chuyển đổi file thành base64
-  const getBase64 = (file) =>
+  const getBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
+      reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
 
   const handleCancel = () => setPreviewOpen(false);
-
-  // Hàm xử lý preview ảnh hiện tại từ database
-  const handleCurrentImagePreview = (imageUrl) => {
-    setPreviewImage(imageUrl);
+  const handleCurrentImagePreview = (url: string) => {
+    setPreviewImage(url);
     setPreviewTitle("Ảnh sản phẩm hiện tại");
     setPreviewOpen(true);
   };
-
-  // Hàm xóa ảnh hiện tại
-  const handleRemoveCurrentImage = (index) => {
-    const newCurrentImages = [...currentImages];
-    newCurrentImages.splice(index, 1);
-    setCurrentImages(newCurrentImages);
+  const handleRemoveCurrentImage = (index: number) => {
+    const newImages = [...currentImages];
+    newImages.splice(index, 1);
+    setCurrentImages(newImages);
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -189,7 +166,7 @@ const ProductEdit = () => {
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
                 <PlusOutlined className="text-white text-lg" />
               </div>
-              Sửa Sản Phẩm
+              Upadate Sản Phẩm
             </h1>
             <p className="text-gray-600 mt-2 ml-14">
               Điền thông tin chi tiết để sửa sản phẩm
@@ -264,7 +241,7 @@ const ProductEdit = () => {
                     name="basePrice"
                     rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
                   >
-                    <InputNumber
+                    <InputNumber<number>
                       min={0}
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       size="large"
@@ -272,9 +249,10 @@ const ProductEdit = () => {
                       formatter={(value) =>
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
-                      parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                      parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ""))}
                       placeholder="0"
                     />
+
                   </Form.Item>
                 </div>
 
@@ -531,7 +509,7 @@ const ProductEdit = () => {
                   size="large"
                   className="min-w-[140px] h-12 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  {loading ? "Đang tạo..." : "Sửa sản phẩm"}
+                  {loading ? "Đang tạo..." : "Cập nhật"}
                 </Button>
               </div>
             </div>
