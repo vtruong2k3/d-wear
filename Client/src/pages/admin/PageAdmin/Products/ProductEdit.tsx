@@ -30,8 +30,8 @@ const ProductEdit = () => {
     const fetchSelectOptions = async () => {
       try {
         const [brandRes, categoryRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/brand"),
-          axios.get("http://localhost:5000/api/category"),
+          axios.get("/api/brand"),
+          axios.get("/api/category"),
         ]);
 
         setBrands(brandRes.data.data || []);
@@ -49,7 +49,7 @@ const ProductEdit = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/product/${id}`);
+        const res = await axios.get(`/api/product/${id}`);
         const product = res.data.product;
 
         form.setFieldsValue({
@@ -62,13 +62,13 @@ const ProductEdit = () => {
           material: product.material,
         });
 
-        // const BASE_IMAGE_URL = "http://localhost:5000/";
         setCurrentImages(
           (product.imageUrls || []).map((url:string, index:number) => {
             const isFullUrl = url.startsWith("http");
             const fullUrl = isFullUrl
               ? url
               : `http://localhost:5000/${url.replace(/\\/g, "/")}`;
+              // : `/${url.replace(/\\/g, "/")}`;
 
             return {
               uid: `current-${index}`,
@@ -114,7 +114,7 @@ const ProductEdit = () => {
         }
       });
 
-      await axios.put(`http://localhost:5000/api/product/${id}`, formData, {
+      await axios.put(`/api/product/${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

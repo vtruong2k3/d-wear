@@ -79,6 +79,7 @@ const Products: React.FC = () => {
       // gắn domain vào
       const fullPath = rawPath.startsWith("http")
         ? rawPath
+        // : `/${rawPath.replace(/\\/g, "/")}`;
         : `http://localhost:5000/${rawPath.replace(/\\/g, "/")}`;
 
       return {
@@ -216,7 +217,7 @@ const Products: React.FC = () => {
   const handleDelete = async (id: number) => {
     console.log(id);
     try {
-      await axios.delete(`http://localhost:5000/api/product/${id}`);
+      await axios.delete(`/api/product/${id}`);
       alert("Xoá sản phẩm thành công");
       refetch();
     } catch (error) {

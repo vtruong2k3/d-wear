@@ -25,8 +25,8 @@ const ProductAdd = () => {
     const fetchSelectOptions = async () => {
       try {
         const [brandRes, categoryRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/brand"),
-          axios.get("http://localhost:5000/api/category"),
+          axios.get("/api/brand"),
+          axios.get("/api/category"),
         ]);
 
         const brandsData = Array.isArray(brandRes.data.data)
@@ -72,7 +72,7 @@ const ProductAdd = () => {
       });
 
       // Gửi request POST tới server để tạo sản phẩm
-      await axios.post("http://localhost:5000/api/product", formData, {
+      await axios.post("/api/product", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
