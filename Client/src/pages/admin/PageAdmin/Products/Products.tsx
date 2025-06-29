@@ -1,5 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Button, Popconfirm, Select, Space, Table, Card, Row, Col, Tag, Typography, Divider } from "antd";
+import {
+  Button,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Card,
+  Row,
+  Col,
+  Tag,
+  Typography,
+  Divider,
+} from "antd";
 import useFetchList from "../../../../hooks/useFetchList";
 import useQuery from "../../../../hooks/useQuery";
 import type { ColumnsType } from "antd/es/table";
@@ -7,91 +19,76 @@ import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../../../configs/AxiosConfig";
+import axios from "axios";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
+import { toast } from "react-toastify";
+import type { ErrorType } from "../../../../types/error/IError";
+import { formatCurrency } from "../../../../utils/Format";
 
 const { Title } = Typography;
 
 const Products: React.FC = () => {
-  //Điều hướng
   const navigate = useNavigate();
 
-  //Khởi tạo điều kiện để tìm kiếm API
   const [query, updateQuery] = useQuery({
     page: 1,
     limit: 30,
-    sortBy: "",
-    order: "",
+    sortBy: "createdAt",
+    order: "desc",
     q: "",
   });
 
-  //Mảng danh sách để chọn sắp xếp
   const sortOptions: DefaultOptionType[] = [
-    //Dùng Stringify để chuyển value object sang dạng chuỗi
-    {
-      value: JSON.stringify({ sortBy: "price", order: "asc" }),
-      label: "Giá tăng dần",
-    },
-    {
-      value: JSON.stringify({ sortBy: "price", order: "desc" }),
-      label: "Giá giảm dần",
-    },
-    {
-      value: JSON.stringify({ sortBy: "title", order: "asc" }),
-      label: "Tên A-Z",
-    },
-    {
-      value: JSON.stringify({ sortBy: "title", order: "desc" }),
-      label: "Tên Z-A",
-    },
-    {
-      value: JSON.stringify({ sortBy: "review", order: "desc" }),
-      label: "Đánh giá cao nhất",
-    },
+    { value: JSON.stringify({ sortBy: "basePrice", order: "asc" }), label: "Giá tăng dần" },
+    { value: JSON.stringify({ sortBy: "basePrice", order: "desc" }), label: "Giá giảm dần" },
+    { value: JSON.stringify({ sortBy: "product_name", order: "asc" }), label: "Tên A-Z" },
+    { value: JSON.stringify({ sortBy: "product_name", order: "desc" }), label: "Tên Z-A" },
   ];
 
-  //Lấy API
-  const {
-    data: products,
-    loading,
-    refetch,
-  } = useFetchList<IProduct>("products", query, {});
+  const { data: rawProducts, loading, refetch } = useFetchList<IProduct>("product", query, {});
 
-  //Cấu hình cột bảng bằng ANTD
+  const products: IProduct[] =
+    rawProducts?.map((item: any) => {
+      const rawPath = item.imageUrls?.[0] ?? "";
+      const fullPath = rawPath.startsWith("http")
+        ? rawPath
+        : `http://localhost:5000/${rawPath.replace(/\\/g, "/")}`;
+
+      return {
+        _id: item._id,
+        id: item._id,
+        title: item.product_name,
+        price: item.basePrice,
+        thumbnail: fullPath,
+        category: item.category_id?.category_name || "Chưa phân loại",
+        brand: item.brand_id?.brand_name || "Không rõ",
+      };
+    }) || [];
+
   const columns: ColumnsType<IProduct> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
       width: 80,
-      align: 'center',
-      render: (id) => <Tag color="blue">#{id}</Tag>
+      align: "center",
+      render: (id) => <Tag color="blue">#{id}</Tag>,
     },
     {
       title: "Sản phẩm",
       key: "product",
       width: 300,
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <img
             src={record.thumbnail}
             alt="product"
-            style={{
-              width: 50,
-              height: 50,
-              objectFit: "cover",
-              borderRadius: '8px',
-              border: '1px solid #f0f0f0'
-            }}
+            style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }}
           />
           <div>
-            <div style={{ fontWeight: '600', color: '#262626' }}>
-              {record.title}
-            </div>
-            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-              {record.brand}
-            </div>
+            <div style={{ fontWeight: "600", color: "#262626" }}>{record.title}</div>
+            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>{record.brand}</div>
           </div>
         </div>
       ),
@@ -101,14 +98,10 @@ const Products: React.FC = () => {
       dataIndex: "price",
       key: "price",
       width: 150,
-      align: 'right',
+      align: "right",
       render: (price) => (
-        <span style={{
-          fontWeight: '600',
-          color: '#52c41a',
-          fontSize: '16px'
-        }}>
-          {price.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+        <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
+          {typeof price === "number" ? formatCurrency(price) : "N/A"}
         </span>
       ),
     },
@@ -118,28 +111,21 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
-        <Tag color="geekblue" style={{ borderRadius: '12px' }}>
-          {category}
-        </Tag>
-      )
+        <Tag color="geekblue" style={{ borderRadius: "12px" }}>{category}</Tag>
+      ),
     },
     {
       title: "Thao tác",
       key: "action",
       width: 120,
-      align: 'center',
+      align: "center",
       render: (_, record: any) => (
         <Space size="small">
           <Button
             type="text"
             icon={<FaPen />}
             onClick={() => navigate(`/admin/products/edit/${record.id}`)}
-            style={{
-              color: '#1890ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            style={{ color: "#1890ff" }}
             title="Chỉnh sửa"
           />
           <Popconfirm
@@ -149,70 +135,62 @@ const Products: React.FC = () => {
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button
-              type="text"
-              danger
-              icon={<MdDelete />}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Xóa"
-            />
+            <Button type="text" danger icon={<MdDelete />} title="Xóa" />
           </Popconfirm>
         </Space>
       ),
     },
   ];
 
-  // handleDelete : Xóa sản phẩm
   const handleDelete = async (id: number) => {
-    console.log(id);
     try {
-      await api.delete(`/products/${id}`);
-      alert("Xoá sản phẩm thành công");
+      const { data } = await axios.delete(`/api/product/${id}`);
+      toast.success(data.message);
       refetch();
     } catch (error) {
-      console.log(error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
-  //Tìm kiếm
-  const handleSearch = (data: any) => {
-    updateQuery({ q: data });
+  const handleSearch = (value: string) => {
+    updateQuery({ q: value, page: 1 });
   };
 
-  //Bộ lọc
-  const handleSort = (data: string) => {
-    const sortObject = JSON.parse(data);
-    updateQuery(sortObject);
+  const handleSort = (value: string) => {
+    const sort = JSON.parse(value);
+    updateQuery({ sortBy: sort.sortBy, order: sort.order, page: 1 });
   };
 
   return (
-    <div style={{ padding: '24px', minHeight: '100vh' }} className="bg-gray-50">
-      <Card style={{ marginBottom: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <Title level={2} style={{ textAlign: 'center', margin: '0 0 24px 0', color: '#262626' }}>
+    <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
+      <Card style={{ marginBottom: 24, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+        <Title level={2} style={{ textAlign: "center", margin: "0 0 24px 0", color: "#262626" }}>
           📦 Danh sách sản phẩm
         </Title>
 
-        <Row gutter={16} align="middle" style={{ marginBottom: '16px' }}>
+        <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
           <Col flex="auto">
             <Space size="middle" wrap>
               <Search
                 placeholder="Tìm kiếm sản phẩm..."
                 onChange={(e) => handleSearch(e.target.value)}
                 enterButton={<FaSearch />}
-                style={{ minWidth: '300px' }}
+                style={{ minWidth: 300 }}
                 size="large"
+                allowClear
               />
               <Select
                 placeholder="Sắp xếp theo"
-                style={{ minWidth: '180px' }}
+                style={{ minWidth: 180 }}
                 size="large"
                 onChange={handleSort}
                 options={sortOptions}
                 suffixIcon={<FaFilter />}
+                allowClear
               />
             </Space>
           </Col>
@@ -222,41 +200,29 @@ const Products: React.FC = () => {
               size="large"
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
-              style={{
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
+              style={{ borderRadius: 8, boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)" }}
             >
               Thêm sản phẩm
             </Button>
           </Col>
         </Row>
 
-        <Divider style={{ margin: '16px 0' }} />
+        <Divider />
 
         <Table
           loading={loading}
           dataSource={products}
-          rowKey="id"
+          rowKey={(record) => record.id || record._id || record.title}
           columns={columns}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} của ${total} sản phẩm`,
-            style: { marginTop: '16px' }
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sản phẩm`,
+            style: { marginTop: 16 },
           }}
-          style={{
-            background: 'white',
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}
+          style={{ background: "white", borderRadius: 8 }}
           scroll={{ x: 800 }}
-          rowHoverable
           size="middle"
         />
       </Card>
