@@ -7,7 +7,7 @@ interface UseFetchListResult<T> {
   refetch: () => Promise<void>
 }
 
-export const useFetchList = <T = any>(
+export const useFetchList= <T= any>(
   path: string,
   query: Record<string, any> = {},
   config: Record<string, any> = {}
