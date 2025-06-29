@@ -81,7 +81,7 @@ const VariantsPage: React.FC = () => {
       setLoading(true)
       await deleteVariant(id);
       setVariants(prev => prev.filter(v => v._id !== id));
-      message.success('Xóa biến thể thành công!');
+      toast.success('Xóa biến thể thành công!');
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -113,8 +113,9 @@ const VariantsPage: React.FC = () => {
 
     try {
       setLoading(true)
-      const { data } = await createVariant(values, imageFiles); // ✅ dùng imageFiles chứ KHÔNG dùng values.imageVariant
-      toast.success(data.message);
+      const res = await createVariant(values, imageFiles);
+      // ✅ dùng imageFiles chứ KHÔNG dùng values.imageVariant
+      toast.success(res.message);
       setShowAddModal(false);
       fetchVariants();
     } catch (error) {
@@ -139,8 +140,8 @@ const VariantsPage: React.FC = () => {
 
     try {
       setLoading(true);
-      const { data } = await updateVariant(editingVariant.id, values, imageFiles);
-      toast.success(data.message);
+      const res = await updateVariant(editingVariant.id, values, imageFiles);
+      toast.success(res.message);
       setShowEditModal(false);
       fetchVariants();
     } catch (error) {
