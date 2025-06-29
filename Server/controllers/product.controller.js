@@ -4,30 +4,32 @@ const productValidate = require("../validate/productValidate");
 
 exports.getAllProducts = async (req, res) => {
   try {
-    // Lấy query page và limit từ req.query (mặc định nếu không có)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Tổng số lượng sản phẩm (cho client biết có bao nhiêu sản phẩm)
-    const totalProducts = await Product.countDocuments();
+    const sortBy = req.query.sortBy || "createdAt";
+    const order = req.query.order === "asc" ? 1 : -1;
+    const keyword = req.query.q || "";
 
-    // Lấy sản phẩm có phân trang, sắp xếp và populate
-    const products = await Product.find()
+    const query = keyword
+      ? {
+          product_name: { $regex: keyword, $options: "i" }, // tìm không phân biệt hoa thường
+        }
+      : {};
+
+    const totalProducts = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
       .populate("brand_id", "brand_name")
       .populate("category_id", "category_name")
-      .sort({ createdAt: -1 })
+      .sort({ [sortBy]: order })
       .skip(skip)
       .limit(limit);
 
-    // Lấy danh sách _id để query các variant liên quan
     const productIds = products.map((p) => p._id);
+    const variants = await Variant.find({ product_id: { $in: productIds } });
 
-    const variants = await Variant.find({
-      product_id: { $in: productIds },
-    });
-
-    // Gộp variants vào từng sản phẩm
     const productList = products.map((product) => {
       const productVariants = variants.filter(
         (v) => v.product_id.toString() === product._id.toString()
@@ -238,9 +240,7 @@ exports.updateProduct = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi cập nhật:", error);
-    return res
-      .status(500)
-      .json({ message: error.message || "Lỗi server" });
+    return res.status(500).json({ message: error.message || "Lỗi server" });
   }
 };
 
