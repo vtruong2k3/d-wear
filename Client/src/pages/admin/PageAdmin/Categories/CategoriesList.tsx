@@ -117,7 +117,7 @@ const CategoriesList: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
       <Card>
         <Title level={2} style={{ textAlign: "center" }}>
           📂 Danh sách danh mục
