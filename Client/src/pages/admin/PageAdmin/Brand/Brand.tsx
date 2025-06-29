@@ -1,63 +1,94 @@
-import { useEffect, useState } from 'react';
-import { Table, Button, Card, Row, Col, Typography, Input, Space, Popconfirm, message, Divider, Tag } from 'antd';
-import { MdAdd, MdDelete } from 'react-icons/md';
-import { FaPen, FaSearch } from 'react-icons/fa';
-import axios from 'axios';
-import AddBrand from './AddBrand';
-import EditBrand from './EditBrand';
+import { useCallback, useEffect, useState } from "react";
+import {
+  Table,
+  Button,
+  Card,
+  Row,
+  Col,
+  Typography,
+  Input,
+  Space,
+  Popconfirm,
+
+  Divider,
+  Tag,
+} from "antd";
+import { MdAdd, MdDelete } from "react-icons/md";
+import { FaPen, FaSearch } from "react-icons/fa";
+import AddBrand from "./AddBrand";
+import EditBrand from "./EditBrand";
+import { useLoading } from "../../../../contexts/LoadingContext";
+import { fetchAllBrands, deleteBrandById } from "../../../../services/brandService";
+import type { IBrand } from "../../../../types/brand/IBrand";
+import { toast } from "react-toastify";
+import type { ErrorType } from "../../../../types/error/IError";
+import type { ColumnsType } from "antd/es/table";
 
 const { Title } = Typography;
 const { Search } = Input;
 
 const BrandList = () => {
-  const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [brands, setBrands] = useState<IBrand[]>([]);
+  const { setLoading } = useLoading();
+  const [searchText, setSearchText] = useState("");
   const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
-  const [editingBrand, setEditingBrand] = useState(null);
+  const [editingBrand, setEditingBrand] = useState<IBrand | null>(null);
 
-  const fetchBrands = async () => {
+
+
+  const fetchBrands = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/brand');
-      setBrands(Array.isArray(res.data) ? res.data : res.data.data || []);
-    } catch {
-      message.error('Không thể tải brand');
+      const data = await fetchAllBrands();
+      setBrands(data);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading]);
 
   useEffect(() => {
     fetchBrands();
-  }, []);
+  }, [fetchBrands]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/brand/${id}`);
-      message.success('Xoá thành công');
+      const res = await deleteBrandById(id);
+      toast.success(res.data.message || "Xoá thành công");
       fetchBrands();
-    } catch {
-      message.error('Xoá thất bại');
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<IBrand> = [
     {
-      title: 'STT',
-      render: (_, __, index) => index + 1,
-      align: 'center',
+      title: "STT",
+      key: "index",
+      align: "center",
+      render: (_: unknown, __: IBrand, index: number) => index + 1,
     },
     {
-      title: 'Tên brand',
-      dataIndex: 'brand_name',
-      render: (name) => <Tag color="blue">{name}</Tag>,
+      title: "Tên brand",
+      dataIndex: "brand_name",
+      key: "brand_name",
+      render: (name: string) => <Tag color="blue">{name}</Tag>,
     },
     {
-      title: 'Thao tác',
-      align: 'center',
-      render: (_, record) => (
+      title: "Thao tác",
+      key: "actions",
+      align: "center",
+      render: (_: unknown, record: IBrand) => (
         <Space>
           <Button
             type="text"
@@ -80,6 +111,11 @@ const BrandList = () => {
     },
   ];
 
+
+  const filteredBrands = brands.filter((b) =>
+    b.brand_name?.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   return (
     <Card>
       <Title level={2}>📌 Danh sách Brand</Title>
@@ -100,19 +136,15 @@ const BrandList = () => {
       </Row>
       <Divider />
       <Table
-        rowKey="id"
-        loading={loading}
+        rowKey="_id"
+        loading={false}
         columns={columns}
-        dataSource={brands.filter((b) =>
-          b.brand_name?.toLowerCase().includes(searchText.toLowerCase())
-        )}
+        dataSource={filteredBrands}
       />
       <AddBrand
         visible={addVisible}
-        onClose={() => {
-          setAddVisible(false);
-          fetchBrands();
-        }}
+        onClose={() => setAddVisible(false)}
+        onSuccess={fetchBrands}
       />
       <EditBrand
         visible={editVisible}
@@ -120,8 +152,8 @@ const BrandList = () => {
         onClose={() => {
           setEditVisible(false);
           setEditingBrand(null);
-          fetchBrands();
         }}
+        onSuccess={fetchBrands}
       />
     </Card>
   );

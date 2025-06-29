@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Button,
   Popconfirm,
@@ -11,71 +11,73 @@ import {
   Divider,
   Input,
   Tag,
-  message,
+
 } from "antd";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
+import { useLoading } from "../../../../contexts/LoadingContext";
 import AddCategory from "./AddCategory";
 import EditCategory from "./EditCatgory";
+import { fetchGetAllCategory, deleteCategoryById } from "../../../../services/categoryService";
+import type { ICategory } from "../../../../types/category/ICategory";
+import type { ColumnsType } from "antd/es/table";
+import type { ErrorType } from "../../../../types/error/IError";
+import { toast } from "react-toastify";
 
 const { Title } = Typography;
 const { Search } = Input;
 
 const CategoriesList: React.FC = () => {
-  const navigate = useNavigate();
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState("");
 
-  // Modal states
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [searchText, setSearchText] = useState("");
+  const { setLoading } = useLoading();
+
   const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<ICategory | null>(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/category");
-      const data = response.data;
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if (Array.isArray(data.data)) {
-        setCategories(data.data);
-      } else {
-        setCategories([]);
-      }
+      const data = await fetchGetAllCategory();
+      setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Lỗi lấy danh mục:", error);
-      message.error("Không thể tải danh mục");
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading]);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/category/${id}`);
-      message.success("Xoá thành công");
+      const { data } = await deleteCategoryById(id);
+      toast.success(data.message)
       fetchCategories();
-    } catch {
-      message.error("Xoá thất bại");
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<ICategory> = [
     {
       title: "STT",
-      key: "stt",
+      key: "index",
       align: "center",
-      render: (_: any, __: any, index: number) => (
-        <Tag color="blue">#{index + 1}</Tag>
-      ),
+      render: (_text, _record, index) => <Tag color="blue">#{index + 1}</Tag>,
     },
     {
       title: "Tên danh mục",
@@ -86,7 +88,7 @@ const CategoriesList: React.FC = () => {
       title: "Thao tác",
       key: "action",
       align: "center",
-      render: (_: any, record: any) => (
+      render: (_text, record) => (
         <Space>
           <Button
             type="text"
@@ -141,9 +143,9 @@ const CategoriesList: React.FC = () => {
         </Row>
         <Divider />
         <Table
-          loading={loading}
+          loading={false}
           dataSource={filteredCategories}
-          rowKey="id"
+          rowKey="_id"
           columns={columns}
         />
       </Card>

@@ -1,23 +1,46 @@
-import { Modal, Form, Input, message } from 'antd';
-import { useEffect } from 'react';
-import axios from 'axios';
+import { Modal, Form, Input } from "antd";
+import { useEffect } from "react";
+import { updateBrandById } from "../../../../services/brandService";
+import type { IBrand } from "../../../../types/brand/IBrand";
+import type { ErrorType } from "../../../../types/error/IError";
+import { toast } from "react-toastify";
+import { useLoading } from "../../../../contexts/LoadingContext";
 
-const EditBrand = ({ visible, onClose, brand }) => {
+interface EditBrandProps {
+  visible: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  brand: IBrand | null;
+}
+
+const EditBrand: React.FC<EditBrandProps> = ({ visible, onClose, onSuccess, brand }) => {
   const [form] = Form.useForm();
-
+  const { setLoading } = useLoading();
   useEffect(() => {
-    form.setFieldsValue(brand || {});
-  }, [brand, form]);
+    if (visible && brand) {
+      form.setFieldsValue({ brand_name: brand.brand_name });
+    }
+  }, [visible, brand, form]);
 
   const handleOk = async () => {
+    if (!brand) return;
+
     try {
+      setLoading(true)
       const values = await form.validateFields();
-      await axios.put(`/api/brand/${brand._id}`, values);
-      message.success('Cập nhật brand thành công');
+      const res = await updateBrandById(brand._id, values);
+      toast.success(res.data?.message || "Cập nhật brand thành công");
       onClose();
+      onSuccess();
       form.resetFields();
-    } catch {
-      message.error('Cập nhật thất bại');
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -25,7 +48,10 @@ const EditBrand = ({ visible, onClose, brand }) => {
     <Modal
       open={visible}
       onOk={handleOk}
-      onCancel={onClose}
+      onCancel={() => {
+        onClose();
+        form.resetFields();
+      }}
       title="Sửa Brand"
       okText="Lưu"
       cancelText="Huỷ"
@@ -34,7 +60,7 @@ const EditBrand = ({ visible, onClose, brand }) => {
         <Form.Item
           name="brand_name"
           label="Tên brand"
-          rules={[{ required: true, message: 'Nhập tên brand' }]}
+          rules={[{ required: true, message: "Nhập tên brand" }]}
         >
           <Input placeholder="Nhập tên brand" />
         </Form.Item>

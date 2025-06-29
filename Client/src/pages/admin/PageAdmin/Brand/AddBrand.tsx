@@ -1,20 +1,43 @@
-import { Modal, Form, Input, message } from 'antd';
-import axios from 'axios';
+import { Modal, Form, Input, message } from "antd";
+import { useEffect } from "react";
+import { fetchCreateBrand } from "../../../../services/brandService"; // service đã tách
+import type { FC } from "react";
+import { toast } from "react-toastify";
+import type { ErrorType } from "../../../../types/error/IError";
+import { useLoading } from "../../../../contexts/LoadingContext";
 
-const AddBrand = ({ visible, onClose }) => {
+interface AddBrandProps {
+  visible: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const AddBrand: FC<AddBrandProps> = ({ visible, onClose, onSuccess }) => {
   const [form] = Form.useForm();
-
+  const { setLoading } = useLoading();
   const handleOk = async () => {
     try {
+      setLoading(true);
       const values = await form.validateFields();
-      await axios.post('/api/brand', values);
-      message.success('Thêm brand thành công');
+      const res = await fetchCreateBrand(values);
+      message.success(res.data?.message || "Thêm brand thành công");
       onClose();
+      onSuccess(); // gọi lại để fetch brand list
       form.resetFields();
-    } catch {
-      message.error('Thêm brand thất bại');
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
     }
   };
+
+  useEffect(() => {
+    if (!visible) form.resetFields(); // reset form mỗi khi đóng
+  }, [visible, form]);
 
   return (
     <Modal
@@ -29,7 +52,7 @@ const AddBrand = ({ visible, onClose }) => {
         <Form.Item
           name="brand_name"
           label="Tên brand"
-          rules={[{ required: true, message: 'Nhập tên brand' }]}
+          rules={[{ required: true, message: "Nhập tên brand" }]}
         >
           <Input placeholder="Nhập tên brand" />
         </Form.Item>

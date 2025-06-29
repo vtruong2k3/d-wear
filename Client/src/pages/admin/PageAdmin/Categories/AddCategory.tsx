@@ -1,18 +1,34 @@
-import { Modal, Form, Input, Button, Space, message } from "antd";
-import axios from "axios";
+import { Modal, Form, Input, Button, Space } from "antd";
+import { fetchCreateCategory } from "../../../../services/categoryService"; // Cập nhật đúng path import
+import type { ErrorType } from "../../../../types/error/IError";
+import { toast } from "react-toastify";
+import { useLoading } from "../../../../contexts/LoadingContext";
 
-const AddCategory = ({ visible, onClose, onSuccess }: any) => {
+interface AddCategoryProps {
+  visible: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const AddCategory: React.FC<AddCategoryProps> = ({ visible, onClose, onSuccess }) => {
   const [form] = Form.useForm();
-
-  const handleSubmit = async (values: any) => {
+  const { setLoading } = useLoading();
+  const handleSubmit = async (values: { category_name: string }) => {
     try {
-      await axios.post("/api/category", values);
-      message.success("Thêm thành công");
+      setLoading(true)
+      const { data } = await fetchCreateCategory(values);
+      toast.success(data.message)
       form.resetFields();
       onClose();
       onSuccess();
-    } catch {
-      message.error("Thêm thất bại");
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
