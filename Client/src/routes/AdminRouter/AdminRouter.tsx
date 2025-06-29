@@ -12,7 +12,7 @@ import Orderdetail from '../../pages/admin/PageAdmin/Orders/OrderDetail';
 import Brand from '../../pages/admin/PageAdmin/Brand/Brand';
 import Voucher from '../../pages/admin/PageAdmin/Voucher/Voucher';
 import Variants from '../../pages/admin/PageAdmin/Variants/Variants';
-import VariantsCRUD from '../../pages/admin/PageAdmin/Variants/AddVariants';
+
 const adminRouter = [
     {
         path: "/admin",
@@ -24,7 +24,7 @@ const adminRouter = [
             { path: "products/add", element: <ProductAdd /> },
             { path: "categories", element: <Categories /> },
             { path: "variants", element: <Variants /> },
-            { path: "variants/add", element: <VariantsCRUD /> },
+
             { path: "orders", element: <Orders /> },
             { path: "orders/detail/:id", element: <Orderdetail /> },
             { path: "brands", element: <Brand /> },

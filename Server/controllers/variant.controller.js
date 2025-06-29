@@ -63,6 +63,7 @@ exports.createVariant = async (req, res) => {
   req.body.image = req.files.imageVariant
     ? req.files.imageVariant.map((file) => file.path)
     : [];
+
   try {
     //Validate
     const { error } = variantValidate.create.validate(req.body, {
@@ -115,6 +116,7 @@ exports.updateVariant = async (req, res) => {
   req.body.image = req.files.imageVariant
     ? req.files.imageVariant.map((file) => file.path)
     : [];
+
   try {
     if (!id) {
       return res.status(400).json({ message: "ID không được để trống" });
@@ -136,11 +138,11 @@ exports.updateVariant = async (req, res) => {
       color,
     });
 
-    if (existingVariant) {
-      return res.status(400).json({
-        message: "Biến thể với size và màu này đã tồn tại cho sản phẩm",
-      });
-    }
+    // if (existingVariant) {
+    //   return res.status(400).json({
+    //     message: "Biến thể với size và màu này đã tồn tại cho sản phẩm",
+    //   });
+    // }
     const updateVariant = await Variant.findByIdAndUpdate(
       id,
       {

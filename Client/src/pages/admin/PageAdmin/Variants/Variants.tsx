@@ -1,82 +1,159 @@
-// src/pages/admin/Variants/index.tsx
-import React, { useEffect, useState } from 'react';
-import { Button, Card, Image, Input, Popconfirm, Table, Tag, Typography, message } from 'antd';
-import { DeleteOutlined, SearchOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons';
-import type { IVariants } from '../../../../types/IVariants';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Button,
+  Card,
+  Image,
+  Input,
+  Popconfirm,
+  Table,
+  Tag,
+  Typography,
+  message,
+
+} from 'antd';
+import {
+  DeleteOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  EditOutlined
+} from '@ant-design/icons';
+import type { IVariants, VariantFormValues } from '../../../../types/IVariants';
 import AddVariants from './AddVariants';
 import EditVariant from './EditVariant';
 import { toast } from 'react-toastify';
+import {
+  createVariant,
+  updateVariant,
+  deleteVariant,
+  getAllVariants
+} from '../../../../services/variantServices';
+import axios from 'axios';
+import type { ErrorType } from '../../../../types/error/IError';
+import { useLoading } from '../../../../contexts/LoadingContext';
 
 const { Title } = Typography;
 
 const VariantsPage: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
+  const [products, setProducts] = useState<{ _id: string; product_name: string }[]>([]);
   const [searchText, setSearchText] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingVariant, setEditingVariant] = useState<IVariants | null>(null);
+  const { setLoading } = useLoading();
 
-      const mockData: IVariants[] = [
-      {
-        id: 1,
-        product_id: 'PROD001',
-        size: 'L',
-        color: 'Đỏ',
-        stock: 50,
-        price: 299000,
-        imageVariant: ['https://via.placeholder.com/150x150/ff0000/ffffff?text=Red+L']
-      },
-      {
-        id: 2,
-        product_id: 'PROD001',
-        size: 'M',
-        color: 'Xanh',
-        stock: 30,
-        price: 299000,
-        imageVariant: ['https://via.placeholder.com/150x150/0000ff/ffffff?text=Blue+M']
-      },
-      {
-        id: 3,
-        product_id: 'PROD002',
-        size: 'XL',
-        color: 'Đen',
-        stock: 25,
-        price: 459000,
-        imageVariant: ['https://via.placeholder.com/150x150/000000/ffffff?text=Black+XL']
-      }
-    ];
-  useEffect(() => {
-    setVariants(mockData);
+
+  const fetchVariants = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getAllVariants();
+      setVariants(data);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi, vui lòng thử lại.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, setVariants]);
+
+  const fetchProducts = useCallback(async (): Promise<void> => {
+    try {
+      const res = await axios.get('/api/product/items');
+      const data = Array.isArray(res.data.products) ? res.data.products : [];
+      setProducts(data);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi, vui lòng thử lại.';
+      toast.error(errorMessage);
+    }
   }, []);
-
-  const handleDelete = (id: number | string) => {
-    setVariants(prev => prev.filter(v => v.id !== id));
-    message.success('Xóa biến thể thành công!');
+  useEffect(() => {
+    fetchVariants();
+    fetchProducts();
+  }, [fetchVariants, fetchProducts]);
+  const handleDelete = async (id: number | string) => {
+    try {
+      setLoading(true)
+      await deleteVariant(id);
+      setVariants(prev => prev.filter(v => v._id !== id));
+      message.success('Xóa biến thể thành công!');
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi, vui lòng thử lại.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
   };
 
-  const handleAdd = () => {
-    setShowAddModal(true);
-  };
+  const handleAdd = () => setShowAddModal(true);
 
   const handleEdit = (variant: IVariants) => {
     setEditingVariant(variant);
     setShowEditModal(true);
   };
 
-  const handleAddSubmit = (values: any) => {
-    const newVariant = { id: Date.now(), imageVariant: [], ...values };
-    setVariants(prev => [...prev, newVariant]);
-    setShowAddModal(false);
-    toast('Thêm mới thành công!');
+  const handleAddSubmit = async (
+    values: VariantFormValues,
+    imageFiles: File[]
+  ) => {
+    console.log("🧪 Submit Add Variant:", values, imageFiles); // THÊM DÒNG NÀY
+
+    if (!imageFiles.length) {
+      toast.error("Vui lòng chọn ít nhất 1 ảnh!");
+      return;
+    }
+
+    try {
+      setLoading(true)
+      const { data } = await createVariant(values, imageFiles); // ✅ dùng imageFiles chứ KHÔNG dùng values.imageVariant
+      toast.success(data.message);
+      setShowAddModal(false);
+      fetchVariants();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
   };
 
-  const handleEditSubmit = (values: any) => {
+
+  const handleEditSubmit = async (
+    values: VariantFormValues,
+    imageFiles: File[]
+  ) => {
     if (!editingVariant) return;
-    const updated = { ...editingVariant, ...values };
-    setVariants(prev => prev.map(v => v.id === updated.id ? updated : v));
-    setShowEditModal(false);
-    message.success('Cập nhật thành công!');
+
+
+
+    try {
+      setLoading(true);
+      const { data } = await updateVariant(editingVariant.id, values, imageFiles);
+      toast.success(data.message);
+      setShowEditModal(false);
+      fetchVariants();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi, vui lòng thử lại.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
   };
+
 
   const filteredVariants = variants.filter(variant =>
     variant.product_id.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -85,8 +162,15 @@ const VariantsPage: React.FC = () => {
   );
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-    { title: 'Mã sản phẩm', dataIndex: 'product_id', key: 'product_id' },
+    { title: 'ID', dataIndex: '_id', key: '_id', width: 80 },
+    {
+      title: 'Tên sản phẩm',
+      key: 'product_name',
+      render: (_: IVariants, record: IVariants) => {
+        const product = products.find(p => p._id === record.product_id);
+        return product?.product_name || record.product_id;
+      }
+    },
     {
       title: 'Kích thước',
       dataIndex: 'size',
@@ -112,9 +196,9 @@ const VariantsPage: React.FC = () => {
     },
     {
       title: 'Hình ảnh',
-      dataIndex: 'imageVariant',
-      key: 'imageVariant',
-      render: (images: string[]) => (
+      dataIndex: 'image',
+      key: 'image',
+      render: (images: string[] = []) => (
         <div className="flex gap-1">
           {images.slice(0, 2).map((img, index) => (
             <Image
@@ -132,7 +216,7 @@ const VariantsPage: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      render: (_: any, record: IVariants) => (
+      render: (_: IVariants, record: IVariants) => (
         <>
           <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
           <Popconfirm
@@ -163,7 +247,7 @@ const VariantsPage: React.FC = () => {
               placeholder="Tìm kiếm..."
               prefix={<SearchOutlined />}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={e => setSearchText(e.target.value)}
               className="w-64"
             />
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -175,7 +259,7 @@ const VariantsPage: React.FC = () => {
         <Table
           columns={columns}
           dataSource={filteredVariants}
-          rowKey="id"
+          rowKey="_id"
           pagination={{ pageSize: 8 }}
           scroll={{ x: 1000 }}
         />
@@ -185,6 +269,7 @@ const VariantsPage: React.FC = () => {
         visible={showAddModal}
         onCancel={() => setShowAddModal(false)}
         onSubmit={handleAddSubmit}
+        products={products}
       />
 
       <EditVariant
@@ -192,6 +277,7 @@ const VariantsPage: React.FC = () => {
         initialValues={editingVariant}
         onCancel={() => setShowEditModal(false)}
         onSubmit={handleEditSubmit}
+        products={products}
       />
     </div>
   );

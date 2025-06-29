@@ -10,6 +10,7 @@ productRouter.post(
 );
 
 productRouter.get("/product", productControler.getAllProducts);
+productRouter.get("/product/items", productControler.getAllProdutsItem);
 productRouter.get("/product/:id", productControler.getProductById);
 
 productRouter.put(

@@ -269,3 +269,14 @@ exports.deleteProduct = async (req, res) => {
     return res.status(500).json({ message: "Server Error: ", error });
   }
 };
+exports.getAllProdutsItem = async (req, res) => {
+  try {
+    const result = await Product.find({}, "_id product_name"); // chỉ lấy _id và product_name
+    return res.status(200).json({
+      message: "Lấy sản phẩm thành công",
+      products: result,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server Error", error });
+  }
+};

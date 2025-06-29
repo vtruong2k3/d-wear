@@ -12,13 +12,15 @@ import "../../../../styles/addProduct.css";
 import type { UploadChangeParam } from "antd/es/upload";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
+import { useLoading } from "../../../../contexts/LoadingContext";
 const { Option } = Select;
 const { TextArea } = Input;
 
 const ProductEdit = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { setLoading } = useLoading();
+
   const [imageList, setImageList] = useState<UploadFile[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
@@ -40,7 +42,11 @@ const ProductEdit = () => {
         setBrands(brandRes.data.data || []);
         setCategories(categoryRes.data.data || []);
       } catch (error) {
-        console.error("Lỗi khi lấy brand/category:", error);
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
       }
     };
     fetchSelectOptions();
@@ -49,6 +55,7 @@ const ProductEdit = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        setLoading(true)
         const res = await axios.get(`/api/product/${id}`);
         const product = res.data.product;
         form.setFieldsValue({
@@ -72,8 +79,14 @@ const ProductEdit = () => {
             };
           })
         );
-      } catch (err) {
-        console.error("Lỗi khi lấy dữ liệu sản phẩm:", err);
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false)
       }
     };
     if (brands.length > 0 && categories.length > 0 && id) {
@@ -505,11 +518,11 @@ const ProductEdit = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loading}
+
                   size="large"
                   className="min-w-[140px] h-12 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  {loading ? "Đang tạo..." : "Cập nhật"}
+                  Cập nhật
                 </Button>
               </div>
             </div>
