@@ -1,10 +1,13 @@
 export interface IProduct {
   id: number;
-  title: string;
-  price: number;
-  thumbnail: string;
+  product_name: string;
+  basePrice: number;
+  brand_id: string;
   description: string;
-  category?: string;
+  category_id?: string;
+  gender: string,
+  material: string,
+  productImage: [];
 }
 // types/interfaces.ts
 export interface StatCardProps {
