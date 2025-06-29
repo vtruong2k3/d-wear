@@ -1,5 +1,5 @@
 // VoucherManagement.jsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Table, Button, Space, Tag, Popconfirm, Input, Select, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import AddVoucherForm from './VoucherFomAdd';
@@ -29,29 +29,33 @@ const VoucherManagement = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const { setLoading } = useLoading();
 
-    const getAllVoucher = async (page = 1, limit = 10) => {
+    const getAllVoucher = useCallback(
+        async (page = 1, limit = 10) => {
+            setLoading(true);
+            try {
+                const res = await fetchGetAllVouchers(page, limit);
+                setVouchers(res.vouchers);
+                setTotal(res.pagination.total);
+                setPage(res.pagination.page);
+            } catch (error) {
+                const errorMessage =
+                    (error as ErrorType).response?.data?.message ||
+                    (error as ErrorType).message ||
+                    "Đã xảy ra lỗi, vui lòng thử lại.";
+                toast.error(errorMessage);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [setLoading]
+    );
 
-        try {
-            setLoading(true)
-            const res = await fetchGetAllVouchers(page, limit); // <-- truyền page, limit
-            setVouchers(res.vouchers);
-            setTotal(res.pagination.total);  // set thêm nếu bạn dùng Antd Pagination
-            setPage(res.pagination.page);    // nếu dùng useState để track trang
-        } catch (error) {
-            const errorMessage =
-                (error as ErrorType).response?.data?.message ||
-                (error as ErrorType).message ||
-                "Đã xảy ra lỗi, vui lòng thử lại.";
-            console.error("Lỗi:", errorMessage);
-            toast.error(errorMessage);
-        } finally {
-            setLoading(false)
-        }
-    };
 
     useEffect(() => {
         getAllVoucher(page, limit);
-    }, [page, limit]);
+    }, [page, limit, getAllVoucher]);
+
+
     const handlePageChange = (page: number) => {
         getAllVoucher(page); // gọi lại khi chuyển trang
     };

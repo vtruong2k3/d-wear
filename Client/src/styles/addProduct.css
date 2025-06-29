@@ -7,6 +7,33 @@
   background-color: #f9fafb;
   transition: all 0.2s ease;
 }
+/* 1. Kích thước thumbnail ảnh mới (Upload) */
+.product-image-upload .ant-upload-list-picture-card .ant-upload-list-item {
+  width: 120px !important;
+  height: 120px !important;
+}
+
+/* 2. Cách ảnh ra xa nhau hơn */
+.product-image-upload .ant-upload-list-picture-card-container {
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+/* 3. Ảnh fill toàn bộ khung */
+.product-image-upload .ant-upload-list-item-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+/* 4. KHÔNG nên ghi đè cái này nếu dùng picture-card */
+.product-image-upload .ant-upload-list-item {
+  width: unset !important;
+  height: unset !important;
+  margin: unset !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
 
 .product-image-upload .ant-upload-select:hover {
   border-color: #9ca3af;

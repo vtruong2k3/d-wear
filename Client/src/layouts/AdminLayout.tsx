@@ -1,16 +1,29 @@
-import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 import AdminHeader from "../components/Admin/Header/Headers";
 import AsideAdmin from "../components/Admin/SideBar/SideBar";
 import { LoadingProvider } from '../contexts/LoadingContext';
 import GlobalLoading from '../components/Loading/GlobalLoading';
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+import { toast } from "react-toastify";
 
+export default function AdminLayout() {
+  const [collapsed, setCollapsed] = useState(false);
+  const token = localStorage.getItem('token');
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
 
+
+
+  useEffect(() => {
+    if (!token) {
+      toast.error("Vui lòng đăng nhập");
+    }
+  }, [token]);
+
+  if (!token) {
+    return <Navigate to="/admin/login" />;
+  }
   return (
     <LoadingProvider>
       <GlobalLoading />

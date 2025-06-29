@@ -9,7 +9,7 @@ const productValidate = {
       "string.max": "Tên sản phẩm không được vượt quá {#limit} ký tự.",
       "any.required": "Tên sản phẩm là bắt buộc.",
     }),
-    description: Joi.string().max(1000).required().messages({
+    description: Joi.string().max(5000).required().messages({
       "string.base": "Mô tả phải là chuỗi.",
       "string.empty": "Mô tả không được để trống.",
       "string.max": "Mô tả không được vượt quá {#limit} ký tự.",
@@ -43,7 +43,7 @@ const productValidate = {
       "string.length": "ID danh mục không hợp lệ.",
       "any.required": "ID danh mục là bắt buộc.",
     }),
-    gender: Joi.string().valid("male", "famale", "unisex").messages({
+    gender: Joi.string().valid("male", "female", "unisex").messages({
       "string.base": "Giới tính phải là chuỗi.",
       "any.only":
         "Giới tính phải là một trong các giá trị: male, famale, unisex.",

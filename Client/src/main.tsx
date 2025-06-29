@@ -5,6 +5,8 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { configAxios } from './configs/AxiosConfig.tsx'
+import 'antd/dist/reset.css';
+
 configAxios();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
