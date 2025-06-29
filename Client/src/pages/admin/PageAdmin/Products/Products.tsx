@@ -40,13 +40,29 @@ const Products: React.FC = () => {
   });
 
   const sortOptions: DefaultOptionType[] = [
-    { value: JSON.stringify({ sortBy: "basePrice", order: "asc" }), label: "Giá tăng dần" },
-    { value: JSON.stringify({ sortBy: "basePrice", order: "desc" }), label: "Giá giảm dần" },
-    { value: JSON.stringify({ sortBy: "product_name", order: "asc" }), label: "Tên A-Z" },
-    { value: JSON.stringify({ sortBy: "product_name", order: "desc" }), label: "Tên Z-A" },
+    {
+      value: JSON.stringify({ sortBy: "basePrice", order: "asc" }),
+      label: "Giá tăng dần",
+    },
+    {
+      value: JSON.stringify({ sortBy: "basePrice", order: "desc" }),
+      label: "Giá giảm dần",
+    },
+    {
+      value: JSON.stringify({ sortBy: "product_name", order: "asc" }),
+      label: "Tên A-Z",
+    },
+    {
+      value: JSON.stringify({ sortBy: "product_name", order: "desc" }),
+      label: "Tên Z-A",
+    },
   ];
 
-  const { data: rawProducts, loading, refetch } = useFetchList<IProduct>("product", query, {});
+  const {
+    data: rawProducts,
+    loading,
+    refetch,
+  } = useFetchList<IProduct>("product", query, {});
 
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
@@ -81,18 +97,40 @@ const Products: React.FC = () => {
       width: 300,
       render: (_, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <img
-            src={record.thumbnail}
-            alt="product"
-            style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }}
-          />
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              flexShrink: 0,
+              borderRadius: 8,
+              border: "1px solid #f0f0f0",
+              overflow: "hidden", //k tràn ảnh
+              backgroundColor: "#fff",
+            }}
+          >
+            <img
+              src={record.thumbnail}
+              alt="product"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </div>
           <div>
-            <div style={{ fontWeight: "600", color: "#262626" }}>{record.title}</div>
-            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>{record.brand}</div>
+            <div style={{ fontWeight: "600", color: "#262626" }}>
+              {record.title}
+            </div>
+            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+              {record.brand}
+            </div>
           </div>
         </div>
       ),
     },
+
     {
       title: "Giá",
       dataIndex: "price",
@@ -111,7 +149,9 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
-        <Tag color="geekblue" style={{ borderRadius: "12px" }}>{category}</Tag>
+        <Tag color="geekblue" style={{ borderRadius: "12px" }}>
+          {category}
+        </Tag>
       ),
     },
     {
@@ -167,8 +207,21 @@ const Products: React.FC = () => {
 
   return (
     <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
-      <Card style={{ marginBottom: 24, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-        <Title level={2} style={{ textAlign: "center", margin: "0 0 24px 0", color: "#262626" }}>
+      <Card
+        style={{
+          marginBottom: 24,
+          borderRadius: 12,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+      >
+        <Title
+          level={2}
+          style={{
+            textAlign: "center",
+            margin: "0 0 24px 0",
+            color: "#262626",
+          }}
+        >
           📦 Danh sách sản phẩm
         </Title>
 
@@ -200,7 +253,10 @@ const Products: React.FC = () => {
               size="large"
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
-              style={{ borderRadius: 8, boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)" }}
+              style={{
+                borderRadius: 8,
+                boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+              }}
             >
               Thêm sản phẩm
             </Button>
@@ -218,7 +274,8 @@ const Products: React.FC = () => {
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sản phẩm`,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} sản phẩm`,
             style: { marginTop: 16 },
           }}
           style={{ background: "white", borderRadius: 8 }}
