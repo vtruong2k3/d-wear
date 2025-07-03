@@ -1,3 +1,4 @@
+
 const Category = require("../models/categories");
 const categoryValidate = require("../validate/categoryValidate");
 
@@ -134,3 +135,4 @@ exports.deleteCategory = async (req, res) => {
     });
   }
 };
+

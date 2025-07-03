@@ -4,30 +4,32 @@ const productValidate = require("../validate/productValidate");
 
 exports.getAllProducts = async (req, res) => {
   try {
-    // Lấy query page và limit từ req.query (mặc định nếu không có)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Tổng số lượng sản phẩm (cho client biết có bao nhiêu sản phẩm)
-    const totalProducts = await Product.countDocuments();
+    const sortBy = req.query.sortBy || "createdAt";
+    const order = req.query.order === "asc" ? 1 : -1;
+    const keyword = req.query.q || "";
 
-    // Lấy sản phẩm có phân trang, sắp xếp và populate
-    const products = await Product.find()
+    const query = keyword
+      ? {
+          product_name: { $regex: keyword, $options: "i" }, // tìm không phân biệt hoa thường
+        }
+      : {};
+
+    const totalProducts = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
       .populate("brand_id", "brand_name")
       .populate("category_id", "category_name")
-      .sort({ createdAt: -1 })
+      .sort({ [sortBy]: order })
       .skip(skip)
       .limit(limit);
 
-    // Lấy danh sách _id để query các variant liên quan
     const productIds = products.map((p) => p._id);
+    const variants = await Variant.find({ product_id: { $in: productIds } });
 
-    const variants = await Variant.find({
-      product_id: { $in: productIds },
-    });
-
-    // Gộp variants vào từng sản phẩm
     const productList = products.map((product) => {
       const productVariants = variants.filter(
         (v) => v.product_id.toString() === product._id.toString()
@@ -129,7 +131,6 @@ exports.createProduct = async (req, res) => {
       category_id,
       gender,
       material,
-      variants,
     } = req.body;
 
     const product = await Product.create({
@@ -167,48 +168,55 @@ exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Nếu có upload ảnh mới thì gán lại imageUrls, không thì giữ nguyên
-    if (req.files && req.files.productImage) {
-      req.body.imageUrls = req.files.productImage.map((file) => file.path);
+    // 1. Kiểm tra sản phẩm tồn tại
+    const productInDb = await Product.findById(id);
+    if (!productInDb) {
+      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
     }
 
-    // // Parse variants nếu là chuỗi JSON
-    // if (typeof req.body.variants === "string") {
-    //   req.body.variants = JSON.parse(req.body.variants);
-    // }
+    // 2. Lấy danh sách ảnh cũ giữ lại (client gửi qua FormData field `existingImageUrls`)
+    let existingImageUrls = req.body.existingImageUrls || [];
+    if (typeof existingImageUrls === "string") {
+      existingImageUrls = [existingImageUrls];
+    }
 
-    // // Nếu có upload ảnh variants mới thì gán vào từng variant
-    // let variantsImages = [];
-    // if (req.files && req.files.variantsImage) {
-    //   variantsImages = req.files.variantsImage.map((file) => file.path);
-    // }
-    // if (Array.isArray(req.body.variants)) {
-    //   req.body.variants = req.body.variants.map((variant, idx) => ({
-    //     ...variant,
-    //     image: variantsImages.length > idx ? [variantsImages[idx]] : [],
-    //   }));
-    // }
+    // 3. Lấy ảnh mới từ form (nếu có)
+    const newImages =
+      req.files && req.files.productImage
+        ? Array.isArray(req.files.productImage)
+          ? req.files.productImage.map((file) => file.path)
+          : [req.files.productImage.path]
+        : [];
 
-    // Validate dữ liệu đầu vào
+    // 4. Gộp ảnh
+    req.body.imageUrls = [...existingImageUrls, ...newImages];
 
+    // ❗ Xóa field không mong muốn trước khi validate
+    delete req.body.existingImageUrls;
+
+    // 5. Validate schema
     const { error } = productValidate.createProduct.validate(req.body, {
       abortEarly: false,
     });
+
     if (error) {
       const errors = error.details.map((err) => err.message);
-      return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });
+      return res.status(400).json({
+        message: "Dữ liệu không hợp lệ",
+        errors,
+      });
     }
 
-    // Cập nhật sản phẩm
+    // 6. Cập nhật DB
     const {
       product_name,
       description,
       basePrice,
-      imageUrls,
       brand_id,
       category_id,
       gender,
       material,
+      imageUrls,
     } = req.body;
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -226,38 +234,13 @@ exports.updateProduct = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedProduct) {
-      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
-    }
-
-    // // Chỉ xử lý variants nếu client gửi trường variants
-    // let updatedVariants = await Variant.find({ product_id: id });
-    // if (req.body.variants !== undefined) {
-    //   // Xóa hết variants cũ
-    //   await Variant.deleteMany({ product_id: id });
-
-    //   // Nếu mảng variants mới không rỗng thì thêm mới
-    //   if (Array.isArray(variants) && variants.length > 0) {
-    //     const variantsWithProductId = variants.map((variant) => ({
-    //       ...variant,
-    //       product_id: id,
-    //     }));
-    //     updatedVariants = await Variant.insertMany(variantsWithProductId);
-    //   } else {
-    //     updatedVariants = [];
-    //   }
-    // }
-
     return res.status(200).json({
       message: "Cập nhật sản phẩm thành công",
       product: updatedProduct,
-      // product: {
-      //   ...updatedProduct.toObject(),
-      //   variants: updatedVariants,
-      // },
     });
   } catch (error) {
-    return res.status(400).json({ message: error.message || "Server error" });
+    console.error("Lỗi cập nhật:", error);
+    return res.status(500).json({ message: error.message || "Lỗi server" });
   }
 };
 
@@ -284,5 +267,16 @@ exports.deleteProduct = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: "Server Error: ", error });
+  }
+};
+exports.getAllProdutsItem = async (req, res) => {
+  try {
+    const result = await Product.find({}, "_id product_name"); // chỉ lấy _id và product_name
+    return res.status(200).json({
+      message: "Lấy sản phẩm thành công",
+      products: result,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server Error", error });
   }
 };

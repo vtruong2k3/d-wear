@@ -1,3 +1,4 @@
+
 .login-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -268,7 +269,7 @@
 
 .login-button {
   width: 100%;
-  padding: 16px 24px;
+  padding: 25px 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -464,3 +465,4 @@
     transition-duration: 0.01ms !important;
   }
 }
+

@@ -1,3 +1,4 @@
+
 const Joi = require("joi");
 
 const variantValidate = {
@@ -79,3 +80,4 @@ const variantValidate = {
 };
 
 module.exports = variantValidate;
+

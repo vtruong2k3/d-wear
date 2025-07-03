@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const userShema = new mongoose.Schema(
@@ -27,3 +28,4 @@ const userShema = new mongoose.Schema(
 );
 const User = mongoose.model("users", userShema);
 module.exports = User;
+

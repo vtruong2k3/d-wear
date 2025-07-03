@@ -1,44 +1,176 @@
-import { useState } from "react";
-import api from "../../../../configs/AxiosConfig";
+
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+// import {api} from "../../../../configs/AxiosConfig";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Button, Form, Input, InputNumber, Select, Upload } from "antd";
-import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import type { IProduct } from "../../../../types/IProducts";
-import "../../../../styles/addProduct.css"
+import { Button, Form, Input, InputNumber, Select, Upload, Modal, type UploadFile } from "antd";
+import { PlusOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
+import type { CurrentImage, IProducts } from "../../../../types/IProducts";
+import type { Category } from "../../../../types/IProducts";
+import type { Brand } from "../../../../types/IProducts";
+import "../../../../styles/addProduct.css";
+import type { UploadChangeParam } from "antd/es/upload";
+import { toast } from "react-toastify";
+import type { ErrorType } from "../../../../types/error/IError";
+import { useLoading } from "../../../../contexts/LoadingContext";
 const { Option } = Select;
 const { TextArea } = Input;
 
-const ProductAdd = () => {
+const ProductEdit = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [imageList, setImageList] = useState([]);
+  const { setLoading } = useLoading();
 
-  const onFinish = async (values: IProduct) => {
-    console.log(values);
+  const [imageList, setImageList] = useState<UploadFile[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewTitle, setPreviewTitle] = useState("");
+  const [currentImages, setCurrentImages] = useState<CurrentImage[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const { id } = useParams();
 
+
+  //Load brands và categories 
+  useEffect(() => {
+    const fetchSelectOptions = async () => {
+      try {
+        const [brandRes, categoryRes] = await Promise.all([
+          axios.get("/api/brand"),
+          axios.get("/api/category"),
+        ]);
+        setBrands(brandRes.data.data || []);
+        setCategories(categoryRes.data.data || []);
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+      }
+    };
+    fetchSelectOptions();
+  }, []);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true)
+        const res = await axios.get(`/api/product/${id}`);
+        const product = res.data.product;
+        form.setFieldsValue({
+          product_name: product.product_name,
+          description: product.description,
+          basePrice: product.basePrice,
+          brand_id: product.brand_id?._id || product.brand_id,
+          category_id: product.category_id?._id || product.category_id,
+          gender: product.gender,
+          material: product.material,
+        });
+        setCurrentImages(
+          (product.imageUrls || []).map((url: string, index: number) => {
+            const fullUrl = url.startsWith("http")
+              ? url
+              : `http://localhost:5000/${url.replace(/\\/g, "/")}`;
+            return {
+              uid: `current-${index}`,
+              name: `image-${index}`,
+              url: fullUrl,
+            };
+          })
+        );
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false)
+      }
+    };
+    if (brands.length > 0 && categories.length > 0 && id) {
+      fetchProduct();
+    }
+  }, [brands, categories, id, form]);
+
+  const onFinish = async (values: IProducts) => {
     try {
       setLoading(true);
-      // Xử lý mảng ảnh từ upload component
-      const productData = {
-        ...values,
-        productImage: imageList.map(img => img.url || img.response?.url).filter(Boolean)
-      };
+      const formData = new FormData();
+      formData.append("product_name", values.product_name);
+      formData.append("description", values.description);
+      formData.append("basePrice", String(values.basePrice));
+      formData.append("brand_id", values.brand_id);
+      formData.append("category_id", values.category_id);
+      formData.append("gender", values.gender);
+      formData.append("material", values.material);
 
-      await api.post(`/products/add`, productData);
-      alert("Tạo sản phẩm thành công");
+      currentImages.forEach((img) => {
+        formData.append("existingImageUrls", img.url);
+      });
+
+      imageList.forEach((file) => {
+        if (file.originFileObj) {
+          formData.append("productImage", file.originFileObj);
+        }
+      });
+
+      const { data } = await axios.put(`/api/product/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast.success(data.message)
       navigate("/admin/products");
     } catch (error) {
-      console.log(error);
-      alert("Có lỗi xảy ra khi tạo sản phẩm");
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageChange = ({ fileList }) => {
-    setImageList(fileList);
+  const handleImageChange = (info: UploadChangeParam<UploadFile>) => {
+    setImageList(info.fileList);
   };
+
+  const handlePreview = async (file: UploadFile) => {
+    if (!file.url && !file.preview && file.originFileObj) {
+      file.preview = await getBase64(file.originFileObj);
+    }
+    setPreviewImage(file.url || (file.preview as string));
+    setPreviewTitle(
+      file.name || file.url?.substring(file.url.lastIndexOf("/") + 1) || ""
+    );
+    setPreviewOpen(true);
+  };
+
+  const getBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleCancel = () => setPreviewOpen(false);
+  const handleCurrentImagePreview = (url: string) => {
+    setPreviewImage(url);
+    setPreviewTitle("Ảnh sản phẩm hiện tại");
+    setPreviewOpen(true);
+  };
+  const handleRemoveCurrentImage = (index: number) => {
+    const newImages = [...currentImages];
+    newImages.splice(index, 1);
+    setCurrentImages(newImages);
+  };
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -50,9 +182,13 @@ const ProductAdd = () => {
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
                 <PlusOutlined className="text-white text-lg" />
               </div>
-              Sửa Sản Phẩm
+
+              Upadate Sản Phẩm
             </h1>
-            <p className="text-gray-600 mt-2 ml-14">Điền thông tin chi tiết để sửa sản phẩm</p>
+            <p className="text-gray-600 mt-2 ml-14">
+              Điền thông tin chi tiết để sửa sản phẩm
+            </p>
+
           </div>
         </div>
 
@@ -76,9 +212,20 @@ const ProductAdd = () => {
                   </h3>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Tên sản phẩm</span>}
+
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Tên sản phẩm
+                      </span>
+                    }
                     name="product_name"
-                    rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập tên sản phẩm!",
+                      },
+                    ]}
+
                   >
                     <Input
                       placeholder="Nhập tên sản phẩm..."
@@ -88,9 +235,17 @@ const ProductAdd = () => {
                   </Form.Item>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Mô tả sản phẩm</span>}
+
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Mô tả sản phẩm
+                      </span>
+                    }
                     name="description"
-                    rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
+                    rules={[
+                      { required: true, message: "Vui lòng nhập mô tả!" },
+                    ]}
+
                   >
                     <TextArea
                       rows={4}
@@ -100,19 +255,27 @@ const ProductAdd = () => {
                   </Form.Item>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Giá bán (VNĐ)</span>}
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Giá bán (VNĐ)
+                      </span>
+                    }
                     name="basePrice"
-                    rules={[{ required: true, message: 'Vui lòng nhập giá!' }]}
+                    rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
                   >
-                    <InputNumber
+                    <InputNumber<number>
                       min={0}
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       size="large"
-                      style={{ height: '48px' }}
-                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      style={{ height: "48px" }}
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ""))}
                       placeholder="0"
                     />
+
+
                   </Form.Item>
                 </div>
 
@@ -124,9 +287,16 @@ const ProductAdd = () => {
                   </h3>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Brand</span>}
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Brand
+                      </span>
+                    }
                     name="brand_id"
-                    rules={[{ required: true, message: 'Vui lòng chọn brand!' }]}
+                    rules={[
+                      { required: true, message: "Vui lòng chọn brand!" },
+                    ]}
+
                   >
                     <Select
                       placeholder="Chọn brand..."
@@ -134,21 +304,29 @@ const ProductAdd = () => {
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       showSearch
                       optionFilterProp="children"
-                      style={{ height: '48px' }}
+
+                      style={{ height: "48px" }}
                     >
-                      <Option value="brand1">Nike</Option>
-                      <Option value="brand2">Adidas</Option>
-                      <Option value="brand3">Puma</Option>
-                      <Option value="brand4">Converse</Option>
-                      <Option value="brand5">Vans</Option>
-                      <Option value="brand6">New Balance</Option>
+                      {brands.map((brand) => (
+                        <Option key={brand._id} value={brand._id}>
+                          {brand.brand_name}
+                        </Option>
+                      ))}
+
                     </Select>
                   </Form.Item>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Category</span>}
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Category
+                      </span>
+                    }
                     name="category_id"
-                    rules={[{ required: true, message: 'Vui lòng chọn category!' }]}
+                    rules={[
+                      { required: true, message: "Vui lòng chọn category!" },
+                    ]}
+
                   >
                     <Select
                       placeholder="Chọn category..."
@@ -156,14 +334,15 @@ const ProductAdd = () => {
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       showSearch
                       optionFilterProp="children"
-                      style={{ height: '48px' }}
+
+                      style={{ height: "48px" }}
                     >
-                      <Option value="cat1">Giày thể thao</Option>
-                      <Option value="cat2">Giày chạy bộ</Option>
-                      <Option value="cat3">Giày bóng đá</Option>
-                      <Option value="cat4">Giày casual</Option>
-                      <Option value="cat5">Giày hiking</Option>
-                      <Option value="cat6">Giày tennis</Option>
+                      {categories.map((cat) => (
+                        <Option key={cat._id} value={cat._id}>
+                          {cat.category_name}
+                        </Option>
+                      ))}
+
                     </Select>
                   </Form.Item>
                 </div>
@@ -179,15 +358,25 @@ const ProductAdd = () => {
                   </h3>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Giới tính</span>}
+
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Giới tính
+                      </span>
+                    }
                     name="gender"
-                    rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                    rules={[
+                      { required: true, message: "Vui lòng chọn giới tính!" },
+                    ]}
+
                   >
                     <Select
                       placeholder="Chọn giới tính..."
                       size="large"
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                      style={{ height: '48px' }}
+
+                      style={{ height: "48px" }}
+
                     >
                       <Option value="male">Nam</Option>
                       <Option value="female">Nữ</Option>
@@ -196,9 +385,17 @@ const ProductAdd = () => {
                   </Form.Item>
 
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Chất liệu</span>}
+
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Chất liệu
+                      </span>
+                    }
                     name="material"
-                    rules={[{ required: true, message: 'Vui lòng nhập chất liệu!' }]}
+                    rules={[
+                      { required: true, message: "Vui lòng nhập chất liệu!" },
+                    ]}
+
                   >
                     <Input
                       placeholder="Nhập chất liệu..."
@@ -208,23 +405,99 @@ const ProductAdd = () => {
                   </Form.Item>
                 </div>
 
-                {/* Hình ảnh sản phẩm - Fixed CSS */}
+
+                {/* Hình ảnh sản phẩm - With Preview */}
+
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
                     <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
                     Hình Ảnh Sản Phẩm
                   </h3>
 
+
+                  {/* Hiển thị ảnh hiện tại từ database */}
+                  {currentImages.length > 0 && (
+                    <div className="mb-6">
+                      <div className="text-gray-800 font-semibold text-sm mb-3">
+                        Ảnh hiện tại
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {currentImages.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-orange-400 transition-all duration-200">
+                              <img
+                                src={image.url} // `url` dùng để hiển thị ảnh
+                                alt={`Current product ${index + 1}`}
+                                className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                                onClick={() =>
+                                  handleCurrentImagePreview(image.url)
+                                }
+                              />
+                            </div>
+
+                            {/* Overlay buttons */}
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleCurrentImagePreview(image.url)
+                                  }
+                                  className="bg-white text-gray-700 hover:text-orange-600 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+                                >
+                                  <EyeOutlined className="text-lg" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRemoveCurrentImage(index)
+                                  }
+                                  className="bg-white text-gray-700 hover:text-red-600 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Indicator for main image */}
+                            {index === 0 && (
+                              <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                Ảnh chính
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <Form.Item
-                    label={<span className="text-gray-800 font-semibold text-sm">Ảnh sản phẩm</span>}
+                    label={
+                      <span className="text-gray-800 font-semibold text-sm">
+                        Thêm ảnh mới
+                      </span>
+                    }
                     name="productImage"
-                    rules={[{ required: true, message: 'Vui lòng tải lên ít nhất 1 ảnh!' }]}
+
                   >
                     <div className="ant-upload-wrapper">
                       <Upload
                         listType="picture-card"
                         fileList={imageList}
                         onChange={handleImageChange}
+
+                        onPreview={handlePreview}
+
                         multiple
                         beforeUpload={() => false}
                         className="product-image-upload"
@@ -234,8 +507,14 @@ const ProductAdd = () => {
                           <div className="ant-upload-select">
                             <div className="flex flex-col items-center justify-center p-4">
                               <UploadOutlined className="text-2xl text-gray-400 mb-2" />
-                              <div className="text-sm font-medium text-gray-600">Tải ảnh lên</div>
-                              <div className="text-xs text-gray-400 mt-1">PNG, JPG, GIF</div>
+
+                              <div className="text-sm font-medium text-gray-600">
+                                Tải ảnh lên
+                              </div>
+                              <div className="text-xs text-gray-400 mt-1">
+                                PNG, JPG, GIF
+                              </div>
+
                             </div>
                           </div>
                         )}
@@ -246,7 +525,13 @@ const ProductAdd = () => {
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-xs text-blue-700 flex items-start">
                       <span className="mr-2">💡</span>
-                      <span>Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ là ảnh chính.</span>
+
+                      <span>
+                        {currentImages.length > 0
+                          ? "Bạn có thể giữ ảnh cũ hoặc thêm ảnh mới. Ảnh mới sẽ được thêm vào danh sách ảnh hiện tại."
+                          : "Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ là ảnh chính."}
+                      </span>
+
                     </p>
                   </div>
                 </div>
@@ -266,20 +551,46 @@ const ProductAdd = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={loading}
+
+
                   size="large"
                   className="min-w-[140px] h-12 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  {loading ? 'Đang tạo...' : 'Sửa sản phẩm'}
+                  Cập nhật
+
                 </Button>
               </div>
             </div>
           </Form>
         </div>
+
+
+        {/* Modal Preview Image */}
+        <Modal
+          open={previewOpen}
+          title={previewTitle}
+          footer={null}
+          onCancel={handleCancel}
+          centered
+          width={800}
+          className="image-preview-modal"
+        >
+          <img
+            alt="preview"
+            style={{
+              width: "100%",
+              maxHeight: "70vh",
+              objectFit: "contain",
+            }}
+            src={previewImage}
+          />
+        </Modal>
       </div>
 
     </div>
   );
 };
 
-export default ProductAdd;
+
+export default ProductEdit;
+

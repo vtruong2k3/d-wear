@@ -1,3 +1,4 @@
+
 const Joi = require("joi");
 
 const brandValidation = {
@@ -22,3 +23,4 @@ const brandValidation = {
 };
 
 module.exports = brandValidation;
+

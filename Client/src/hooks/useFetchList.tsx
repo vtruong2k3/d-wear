@@ -1,38 +1,65 @@
 import { useState, useEffect } from "react";
-import api from "../configs/AxiosConfig";
+
+import axios from "axios";
+import type { AxiosRequestConfig } from "axios";
+
 interface UseFetchListResult<T> {
   data: T[];
   loading: boolean;
-  error: any;
-  refetch:()=> Promise<void>
+  error: unknown;
+  refetch: () => Promise<void>;
 }
 
-export const useFetchList = <T= any>(
+interface BaseListResponse<T> {
+  message?: string;
+  page?: number;
+  totalPages?: number;
+  products: T[];
+}
+
+export const useFetchList = <
+  T,
+  Q extends Record<string, string | number | boolean> = Record<
+    string,
+    string | number | boolean
+  >
+>(
   path: string,
-  query: Record<string, any> = {},
-  config: Record<string, any> = {}
+  query: Q = {} as Q,
+  config: AxiosRequestConfig = {}
 ): UseFetchListResult<T> => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<unknown>(null);
 
+  const fetchApi = async () => {
+    setLoading(true);
+    try {
+      const queryString = new URLSearchParams(
+        Object.entries(query).reduce((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {} as Record<string, string>)
+      ).toString();
 
-    const fetchApi = async () => {
-      try {
-        const queryString = new URLSearchParams(query).toString();
-        const res = await api.get(`${path}/search?${queryString}`, config);
-        console.log(res.data);
-        setData(res.data[path] || res.data);
-      } catch (err) {
-        setError(err);
-      }finally {
-        setLoading(false);
-      }
-    };
+      const res = await axios.get<BaseListResponse<T>>(
+        `/api/${path}?${queryString}`,
+        config
+      );
+
+      setData(res.data.products || []);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchApi();
   }, [path, JSON.stringify(query), JSON.stringify(config)]);
-  return {data,loading,error,refetch: fetchApi};
+
+  return { data, loading, error, refetch: fetchApi };
 };
 
 export default useFetchList;

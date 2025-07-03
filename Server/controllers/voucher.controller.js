@@ -1,3 +1,4 @@
+
 const Voucher = require("../models/vouchers");
 const voucherValidate = require("../validate/voucherValidate");
 
@@ -54,13 +55,30 @@ exports.createVoucher = async (req, res) => {
 
 exports.getAllVouchers = async (req, res) => {
   try {
-    const vouchers = await Voucher.find();
+    // Mặc định: page = 1, limit = 10
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    // Lấy danh sách voucher + tổng số
+    const [vouchers, total] = await Promise.all([
+      Voucher.find().skip(skip).limit(limit).sort({ createdAt: -1 }),
+      Voucher.countDocuments(),
+    ]);
+
     res.status(200).json({
       message: "Lấy voucher thành công",
-      data: vouchers,
+      vouchers,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       message: "Server Error",
       error: error.message,
     });
@@ -112,12 +130,12 @@ exports.updateVoucher = async (req, res) => {
       isActive,
     } = req.body;
 
-    const existVoucher = await Voucher.findOne({ code });
-    if (existVoucher) {
-      return res.status(400).json({ message: "Voucher đã tồn tại" });
-    }
+    // const existVoucher = await Voucher.findOne({ code });
+    // if (existVoucher) {
+    //   return res.status(400).json({ message: "Voucher đã tồn tại" });
+    // }
 
-    const vouher = await Voucher.findByIdAndUpdate(
+    const voucher = await Voucher.findByIdAndUpdate(
       id,
       {
         code,
@@ -134,7 +152,7 @@ exports.updateVoucher = async (req, res) => {
     );
     res.status(200).json({
       message: "Update thành công. ",
-      data: vouher,
+      voucher,
     });
   } catch (error) {
     return res.status(500).json({
@@ -161,3 +179,4 @@ exports.deleteVoucher = async (req, res) => {
     });
   }
 };
+

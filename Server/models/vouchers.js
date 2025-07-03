@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 // Import thư viện mongoose để làm việc với MongoDB.
 
@@ -46,3 +47,4 @@ const voucherShema = new mongoose.Schema(
 const Voucher = mongoose.model("vouchers", voucherShema);
 
 module.exports = Voucher;
+

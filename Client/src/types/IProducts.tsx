@@ -1,17 +1,52 @@
+// get products
 export interface IProduct {
-  id: number;
+  id: string;
+  _id: string;
   title: string;
   price: number;
   thumbnail: string;
+  category: string;
+  brand?: string;
+}
+// add  product
+export interface IProducts {
+  product_name: string;
   description: string;
-  category?: string;
+  basePrice: number;
+  brand_id: string;
+  category_id: string;
+  gender: string;
+  material: string;
+  variants?: Variant[];
+}
+interface Variant {
+  color: string;
+  size: string;
+  stock: number;
+  price?: number;
+  image: string[];
+}
+export interface CurrentImage {
+  uid: string;
+  name: string;
+  url: string;
+}
+//brand
+export interface Brand {
+  _id: string;
+  brand_name: string;
+}
+//catagory
+export interface Category {
+  _id: string;
+  category_name: string;
 }
 // types/interfaces.ts
 export interface StatCardProps {
   title: string;
   value: string | number;
   change: string;
-  changeType: 'positive' | 'negative';
+  changeType: "positive" | "negative";
   icon: React.ReactNode;
   bgColor: string;
 }
@@ -20,7 +55,8 @@ export interface SidebarItemProps {
   icon: React.ReactNode;
   label: string;
   isActive?: boolean;
-  onClick?: ()=>void;
+
+  onClick?: () => void;
 }
 
 export interface RevenueDataPoint {

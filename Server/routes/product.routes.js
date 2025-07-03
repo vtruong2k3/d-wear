@@ -1,3 +1,4 @@
+
 const express = require("express");
 const productRouter = express.Router();
 const upload = require("../middlewares/uploadProduct.middleware");
@@ -10,6 +11,7 @@ productRouter.post(
 );
 
 productRouter.get("/product", productControler.getAllProducts);
+productRouter.get("/product/items", productControler.getAllProdutsItem);
 productRouter.get("/product/:id", productControler.getProductById);
 
 productRouter.put(
@@ -21,3 +23,4 @@ productRouter.put(
 productRouter.delete("/product/:id", productControler.deleteProduct);
 
 module.exports = productRouter;
+
