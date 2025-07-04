@@ -1,4 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { Backdrop, CircularProgress, Grow } from "@mui/material";
+import { toast } from "react-toastify";
+
 import ico_eye from "../../../assets/images/ico_eye.png";
 import ico_fire from "../../../assets/images/ico_fire.png";
 import ico_checked from "../../../assets/images/ico_checked.png";
@@ -10,84 +15,65 @@ import ico_shipping2 from "../../../assets/images/ico_shipping2.png";
 import ico_share from "../../../assets/images/ico_share.png";
 import ico_check from "../../../assets/images/ico_check.png";
 import img_payment from "../../../assets/images/img_payment.avif";
-import { useNavigate, useParams } from "react-router-dom";
+
 import apiServiceProduct from "../../../services/apiServiceProduct";
-import { Backdrop, CircularProgress, Grow } from "@mui/material";
-import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
-
-import { useDispatch } from "react-redux";
-
-
-
-import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import useAuth from "../../../hooks/Client/useAuth";
-
-
 import { addToCart } from "../../../redux/features/cartSlice";
-import { toast } from "react-toastify";
+import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
+import type { IProducts } from "../../../types/IProducts";
+import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 
-
-interface Products {
-  id: number;
-  title: string;
-  price: number;
-  description: string;
-  thumbnail: string;
-  images: string[];
-  category: string;
-}
 const DetailProduct = () => {
-  const divRef = useRef(null);
-  const dispatch = useDispatch();
-  const { id } = useParams();
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { requireAuth } = useAuth();
-  // const isLogin = useSelector((state) => state.authenSlice.isLogin);
-  // const [dataDetail, setDataDetail] = useState(null);
-  const [dataDetail, setDataDetail] = useState<Products | null>(null);
 
+  const [dataDetail, setDataDetail] = useState<IProducts | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
-  const { products } = useFetchGetDataProduct(category);
-
+  const { products } = useFetchGetDataProduct(
+    dataDetail ? dataDetail.category_id : null,
+    dataDetail ? dataDetail.id : null
+  );
   useEffect(() => {
     if (id) {
-      if (divRef.current) {
-        divRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-          inline: "nearest",
-        });
-      }
-      setIsLoading(true);
+      divRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
       const fetchDataDetailProduct = async () => {
-        const res = await apiServiceProduct.getDetailProduct(id);
-        const { status, data } = res;
-        if (status === 200) {
-          setDataDetail(data);
+        setIsLoading(true);
+        try {
+          const res = await apiServiceProduct.getDetailProduct(id);
+          if (res.status === 200) {
+            setDataDetail(res.data);
+            setCategory(res.data.category);
+          } else {
+            setDataDetail(null);
+          }
+        } catch (err) {
+          console.error("Error fetching product detail", err);
+          setDataDetail(null);
+        } finally {
           setIsLoading(false);
-          setCategory(data.category);
         }
       };
+
       fetchDataDetailProduct();
     }
-  }, [id, divRef]);
+  }, [id]);
 
-
-  const handleAddToCart = (item: Products) => {
+  const handleAddToCart = (item: any) => {
     requireAuth(() => {
-      dispatch(
-        addToCart({
-          ...item,
-          quantity,
-        })
-      );
-      toast.success(`Đã thêm ${item.title} vào giỏ hàng`);
+      dispatch(addToCart({ ...item, quantity }));
+      toast.success(`Đã thêm ${item.product_name} vào giỏ hàng`);
       navigate("/shopping-cart");
     });
   };
-
 
   return (
     <>
@@ -95,72 +81,57 @@ const DetailProduct = () => {
         <div className="container" ref={divRef}>
           <ul className="flex gap-2 items-center py-4">
             <li>
-              <a className="text-sm" href="#none">
-                Home /{" "}
+              <a className="text-sm" href="/">
+                Home /
               </a>
             </li>
             <li>
               <a className="text-sm" href="#none">
-                {dataDetail.category} /{" "}
+                {dataDetail.category_id} /
               </a>
             </li>
             <li>
-              <a className="text-sm">{dataDetail.title}</a>
+              <a className="text-sm">{dataDetail.product_name}</a>
             </li>
           </ul>
+
           <div className="lg:grid grid-cols-5 gap-7 mt-4">
             <div className="col-span-3 flex gap-3">
               <ul className="flex flex-col gap-4">
-                {dataDetail.images.map((url) => (
-                  <li
-                    key={url}
-                    className="w-[82px] cursor-pointer p-[10px] rounded-md border border-black hover:border-black transition-all"
-                  >
-                    <img className="image" src={url} alt="" />
-                  </li>
-                ))}
+                {dataDetail.imagesUrls?.length ? (
+                  dataDetail.images.map((url) => (
+                    <li
+                      key={url}
+                      className="w-[82px] p-[10px] rounded-md border cursor-pointer"
+                    >
+                      <img src={url} alt="" className="image" />
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-sm text-gray-400">Không có hình ảnh</li>
+                )}
               </ul>
-              <div className="overflow-hidden">
-                <div className="rounded-xl overflow-hidden">
-                  <Grow {...(true ? { timeout: 1000 } : {})} in={true}>
-                    <img src={dataDetail.thumbnail} className="image" alt="" />
-                  </Grow>
-                </div>
+              <div className="rounded-xl overflow-hidden">
+                <Grow in={true} timeout={1000}>
+                  <img src={dataDetail.thumbnail} className="image" alt="" />
+                </Grow>
               </div>
             </div>
+
             <div className="col-span-2 mt-6">
               <h2 className="text-xl lg:text-3xl font-semibold">
                 {dataDetail.title}
               </h2>
               <ul className="flex items-center gap-1 mt-4">
-                <li>
-                  <img
-                    className="size-[16px]"
-                    src="./images/ico_star_active.png"
-                    alt=""
-                  />
-                </li>
-                <li>
-                  <img
-                    className="size-[16px]"
-                    src="./images/ico_star_active.png"
-                    alt=""
-                  />
-                </li>
-                <li>
-                  <img
-                    className="size-[16px]"
-                    src="./images/ico_star_active.png"
-                    alt=""
-                  />
-                </li>
-                <li>
-                  <img
-                    className="size-[16px]"
-                    src="./images/ico_star_active.png"
-                    alt=""
-                  />
-                </li>
+                {[...Array(4)].map((_, i) => (
+                  <li key={i}>
+                    <img
+                      className="size-[16px]"
+                      src="./images/ico_star_active.png"
+                      alt=""
+                    />
+                  </li>
+                ))}
                 <li>
                   <img
                     className="size-[16px]"
@@ -169,155 +140,117 @@ const DetailProduct = () => {
                   />
                 </li>
               </ul>
-
               <p className="mt-3 text-xl font-semibold">${dataDetail.price}</p>
 
               <div className="mt-2 pt-2 border-t border-gray">
                 <p className="flex items-center gap-2 mt-2">
-                  <img
-                    className="w-5 block animate-flicker"
-                    src={ico_eye}
-                    alt=""
-                  />
-                  <span className="font-medium text-sm">
+                  <img className="w-5 animate-flicker" src={ico_eye} alt="" />
+                  <span className="text-sm font-medium">
                     35 people are viewing this right now
                   </span>
                 </p>
                 <p className="flex items-center gap-2 mt-4">
                   <img
-                    className="w-5 block animate-zoomInOut"
+                    className="w-5 animate-zoomInOut"
                     src={ico_fire}
                     alt=""
                   />
-                  <span className="text-red-600 font-medium text-sm">
+                  <span className="text-sm font-medium text-red-600">
                     35 sold in last 18 hours
                   </span>
                 </p>
                 <p className="flex items-center gap-2 mt-6">
-                  <img className="w-5 block" src={ico_checked} alt="" />
-                  <span className="text-green font-medium text-sm">
+                  <img className="w-5" src={ico_checked} alt="" />
+                  <span className="text-sm font-medium text-green">
                     In stock
                   </span>
                 </p>
-
                 <p className="mt-5 text-midGray">{dataDetail.description}</p>
 
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="flex items-center w-max relative cursor-pointer">
+                <div className="mt-6 flex gap-3">
+                  <div className="relative">
                     <button
-                      onClick={() => setQuantity(quantity - 1)}
-                      type="button"
-                      disabled={quantity === 1}
-                      className="text-lg block text-[0px] absolute left-4 cursor-pointer"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="absolute left-4 text-2xl"
                     >
-                      <span className="text-2xl leading-[24px] cursor-pointer">
-                        -
-                      </span>
+                      -
                     </button>
                     <input
-                      type="text"
-                      className="w-[120px] h-[50px] border px-10 border-gray rounded-full text-center"
+                      readOnly
+                      className="w-[120px] h-[50px] border rounded-full text-center px-10"
                       value={quantity}
                     />
                     <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      type="button"
-                      className="text-lg block text-[0px] absolute right-4 cursor-pointer"
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="absolute right-4 text-2xl"
                     >
-                      <span className="text-2xl leading-[24px] cursor-pointer">
-                        +
-                      </span>
+                      +
                     </button>
                   </div>
-
                   <button
                     onClick={() => handleAddToCart(dataDetail)}
-                    type="button"
-                    className="h-[50px] bg-black text-white font-semibold text-sm px-4 flex-1 rounded-full hover:bg hover:bg-white border hover:border-black hover:text-black transition-all"
+                    className="h-[50px] bg-black text-white rounded-full px-4 flex-1 hover:bg-white hover:text-black hover:border hover:border-black"
                   >
                     Add To Cart
                   </button>
-                  <button
-                    type="button"
-                    className="p-4 bg-white border border-[#e6e6e6] rounded-full"
-                  >
+                  <button className="p-4 bg-white border rounded-full">
                     <img className="w-4" src={ico_heart} alt="" />
                   </button>
                 </div>
 
-                <ul className="flex items-center gap-4 mt-6">
+                {/* Các nút action nhỏ */}
+                <ul className="flex gap-4 mt-6">
                   <li>
-                    <button
-                      type="button"
-                      className="flex items-center gap-4 text-sm font-medium"
-                    >
+                    <button className="flex gap-2 text-sm">
                       <img className="w-4" src={ico_reload} alt="" />
                       Compare
                     </button>
                   </li>
                   <li>
-                    <button
-                      type="button"
-                      className="flex items-center gap-4 text-sm font-medium"
-                    >
+                    <button className="flex gap-2 text-sm">
                       <img className="w-4" src={ico_question} alt="" />
                       Question
                     </button>
                   </li>
                   <li>
-                    <button
-                      type="button"
-                      className="flex items-center gap-4 text-sm font-medium"
-                    >
+                    <button className="flex gap-2 text-sm">
                       <img className="w-4" src={ico_shipping} alt="" />
                       Shipping info
                     </button>
                   </li>
                   <li>
-                    <button
-                      type="button"
-                      className="flex items-center gap-4 text-sm font-medium"
-                    >
+                    <button className="flex gap-2 text-sm">
                       <img className="w-4" src={ico_share} alt="" />
                       Share
                     </button>
                   </li>
                 </ul>
 
-                <div className="flex items-center mt-6 mb-6 pt-6 pb-6 border-t border-b border-b-gray border-t-gray">
-                  <div>
-                    <img className="block w-9" src={ico_shipping2} alt="" />
-                  </div>
-                  <p className="flex-1 ml-4 pl-4 border-l border-l-[#d9d9d9] text-sm">
-                    Order in the next 22 hours 45 minutes to get it between{" "}
+                {/* Shipping + info */}
+                <div className="flex mt-6 mb-6 pt-6 pb-6 border-t border-b">
+                  <img className="w-9" src={ico_shipping2} alt="" />
+                  <p className="ml-4 pl-4 border-l text-sm">
+                    Order in the next 22 hours 45 minutes to get it between
                     <br />
                     <span className="font-semibold underline">
-                      Tuesday, Oct 22{" "}
-                    </span>{" "}
+                      Tuesday, Oct 22
+                    </span>
                     <span className="mx-2">and</span>
                     <span className="font-semibold underline">
-                      {" "}
                       Saturday, Oct 26
                     </span>
                   </p>
                 </div>
 
-                <div className="p-[15px] rounded-xl border border-[#dedede] flex items-start gap-3">
-                  <div>
-                    <img src={ico_check} className="w-6 block" alt="" />
-                  </div>
+                <div className="p-4 border rounded-xl flex gap-3">
+                  <img src={ico_check} className="w-6" alt="" />
                   <div className="text-sm">
-                    <p className="text-lightGray">
+                    <p>
                       Pickup available at{" "}
-                      <span className="font-semibold text-black">
-                        {" "}
-                        Akaze store
-                      </span>
+                      <span className="font-semibold">Akaze store</span>
                     </p>
-                    <p className="text-xs text-lightGray mt-1">
-                      Usually ready in 24 hours
-                    </p>
-                    <button type="button" className="underline text-xs mt-4">
+                    <p className="text-xs">Usually ready in 24 hours</p>
+                    <button className="underline text-xs mt-1">
                       View store information
                     </button>
                   </div>
@@ -325,27 +258,37 @@ const DetailProduct = () => {
 
                 <div className="text-center mt-6 p-6 bg-[#f6f6f6] rounded-lg">
                   <p className="text-sm tracking-widest">Guaranteed Checkout</p>
-                  <img className="block mt-3" src={img_payment} alt="" />
+                  <img className="mt-3" src={img_payment} alt="" />
                 </div>
               </div>
             </div>
           </div>
+
           <div className="mt-24 mb-32">
             <h2 className="text-center text-xl lg:text-3xl font-semibold">
               Sản phẩm liên quan
             </h2>
-            <ul className="mt-6 grid gap-4 grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-              {products.map((item) => (
-                <BoxProduct key={item.id} item={item} />
-              ))}
+            <ul className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              {products.length ? (
+                products.map((item) => <BoxProduct key={item.id} item={item} />)
+              ) : (
+                <li className="col-span-full text-center text-gray-400">
+                  Không có sản phẩm liên quan
+                </li>
+              )}
             </ul>
           </div>
         </div>
       ) : (
-        ""
+        !isLoading && (
+          <div className="container text-center py-10 text-gray-500">
+            Không tìm thấy sản phẩm
+          </div>
+        )
       )}
+
       <Backdrop
-        sx={(theme) => ({ color: "#fff", zIndex: theme.zIndex.drawer + 1 })}
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={isLoading}
       >
         <CircularProgress color="inherit" />

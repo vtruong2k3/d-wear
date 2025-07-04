@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import BannerTop from "../../../components/Client/Banners/BannerTop";
 import SectionService from "../../../components/Client/SectionService/SectionService";
 import SectionOurCategories from "../../../components/Client/SectionOurCategories/SectionOurCategories";
-import SectionBestseller from "../../../components/Client/SectionBestseller/SectionBestseller";
 import apiServiceProduct from "../../../services/apiServiceProduct";
 import SectionNewArrivals from "../../../components/Client/SectionNewArrivals/SectionNewArrivals";
+import SectionAllProduct from "../../../components/Client/SectionAllProduct/SectionAllProduct";
 
 
 const Home = () => {
@@ -23,10 +23,10 @@ const Home = () => {
     <>
       <BannerTop />
       <SectionService />
-      <SectionOurCategories type={1} />
-      <SectionBestseller products={products} />
-      <SectionOurCategories type={2} />
-      <SectionNewArrivals products={products} />
+      {/* <SectionOurCategories type={1} /> */}
+      <SectionAllProduct products={products} />
+      {/* <SectionOurCategories type={2} /> */}
+      {/* <SectionNewArrivals products={products} /> */}
     </>
   );
 };

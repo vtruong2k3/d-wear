@@ -17,19 +17,19 @@ export type ServiceItem = {
 export const dataSectionService: ServiceItem[] = [
   {
     url: ico_freeship,
-    title: "Free Shipping Over $50",
+    title: "Miễn phí vận chuyển",
   },
   {
     url: ico_quality,
-    title: "Quality Assurance",
+    title: "Bảo hành sản phẩm",
   },
   {
     url: ico_return,
-    title: "Return within 14 days",
+    title: "Đổi hàng linh hoạt",
   },
   {
     url: ico_support,
-    title: "Support 24/7",
+    title: "Hỗ trợ 24/7",
   },
 ];
 
