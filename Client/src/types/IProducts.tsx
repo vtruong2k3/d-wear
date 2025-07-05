@@ -10,6 +10,7 @@ export interface IProduct {
 }
 // add  product
 export interface IProducts {
+  _id: string;
   product_name: string;
   description: string;
   basePrice: number;
@@ -46,7 +47,7 @@ export interface StatCardProps {
   title: string;
   value: string | number;
   change: string;
-  changeType: 'positive' | 'negative';
+  changeType: "positive" | "negative";
   icon: React.ReactNode;
   bgColor: string;
 }

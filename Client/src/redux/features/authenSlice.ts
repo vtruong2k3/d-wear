@@ -32,7 +32,21 @@ export const authenSlice = createSlice({
         isLogin: false,
       };
     },
+    //  Xử lý đăng nhập bằng Google
+    doLoginWithGoogle: (state, action) => {
+      const { email, displayName } = action.payload;
+      const userName = displayName || email?.split("@")[0] || "user";
 
+      // Lưu tên người dùng vào localStorage
+      localStorage.setItem("userName", userName);
+
+      toast.success("Đăng nhập Google thành công!");
+      return {
+        ...state,
+        userName,
+        isLogin: true,
+      };
+    },
     doLogout: (state) => {
       localStorage.removeItem("userName");
       return {
@@ -59,5 +73,6 @@ export const authenSlice = createSlice({
   },
 });
 
-export const { doLogin, doLogout, doRegister } = authenSlice.actions;
+export const { doLogin, doLogout, doRegister, doLoginWithGoogle } =
+  authenSlice.actions;
 export default authenSlice.reducer;
