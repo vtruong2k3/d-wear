@@ -1,21 +1,28 @@
-// Modal chỉnh sửa biến thể sản phẩm
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, InputNumber, Row, Col, Upload, Button } from 'antd';
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  InputNumber,
+  Row,
+  Col,
+  Upload,
+  Button
+} from 'antd';
 import type { IProductOption, IVariants, VariantFormValues } from '../../../../types/IVariants';
 import { SIZE_OPTIONS } from '../../../../utils/constants/variant';
 import { UploadOutlined } from '@ant-design/icons';
 import type { RcFile, UploadFile } from 'antd/es/upload/interface';
-import { toast } from 'react-toastify';
+
 
 interface EditVariantProps {
   visible: boolean;
   initialValues: IVariants | null;
   onCancel: () => void;
-  onSubmit: (values: VariantFormValues, imageFiles: File[]) => void; // ✅ Đúng kiểu truyền từ VariantsPage
+  onSubmit: (values: VariantFormValues, imageFiles: File[] | null) => void;
   products: IProductOption[];
 }
-
-
 
 const EditVariantModal: React.FC<EditVariantProps> = ({
   visible,
@@ -27,16 +34,25 @@ const EditVariantModal: React.FC<EditVariantProps> = ({
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  // Khi mở modal, gán giá trị ban đầu vào form
   useEffect(() => {
     if (initialValues) {
       form.setFieldsValue(initialValues);
-      // Reset file list khi có initial values mới
-      setFileList([]);
+
+      //  Hiển thị ảnh cũ nếu có
+      if (initialValues.image && Array.isArray(initialValues.image)) {
+        const defaultFiles: UploadFile[] = initialValues.image.map((url, index) => ({
+          uid: `old-${index}`,
+          name: `Ảnh ${index + 1}`,
+          status: 'done',
+          url: url,
+        }));
+        setFileList(defaultFiles);
+      } else {
+        setFileList([]);
+      }
     }
   }, [initialValues, form]);
 
-  // Khi người dùng nhấn OK
   const handleOk = () => {
     form.submit();
   };
@@ -44,17 +60,16 @@ const EditVariantModal: React.FC<EditVariantProps> = ({
   const onFinish = (values: IVariants) => {
     const realFiles = fileList
       .map((f) => f.originFileObj)
-      .filter((f): f is RcFile => !!f); // ✅ an toàn cho cả File & RcFile
+      .filter((f): f is RcFile => !!f);
 
-    if (!realFiles.length) {
-      toast.error("Vui lòng chọn ít nhất 1 ảnh!");
-      return;
-    }
+    // ✅ Nếu không có ảnh mới => giữ nguyên ảnh cũ bằng null
+    const imageFiles = realFiles.length > 0 ? realFiles : null;
 
-    onSubmit(values, realFiles);
+    onSubmit(values, imageFiles);
     form.resetFields();
     setFileList([]);
   };
+
   return (
     <Modal
       title="Chỉnh Sửa Biến Thể"
@@ -143,22 +158,20 @@ const EditVariantModal: React.FC<EditVariantProps> = ({
                   value ? parseInt(value.replace(/\D/g, '')) : 0
                 }
               />
-
             </Form.Item>
           </Col>
         </Row>
 
-        <Form.Item
-          label="Hình ảnh biến thể"
-        >
+        <Form.Item label="Hình ảnh biến thể">
           <Upload
-            name="imageVariant" // ✅ Tên phải đúng với Multer bên backend
+            name="imageVariant"
             listType="picture"
-            beforeUpload={() => false} // ✅ Rất quan trọng, để Ant Design không auto upload
+            beforeUpload={() => false}
             multiple
             maxCount={5}
             fileList={fileList}
             onChange={({ fileList: newFileList }) => setFileList(newFileList)}
+            accept="image/*"
           >
             <Button icon={<UploadOutlined />}>Chọn ảnh (Tối đa 5 ảnh)</Button>
           </Upload>

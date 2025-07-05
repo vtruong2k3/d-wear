@@ -7,6 +7,7 @@ import {
     LogoutOutlined,
 
     SearchOutlined,
+    SettingOutlined,
 } from '@ant-design/icons';
 import NotificationDropdown from '../Notification/Notification'; // Import component thông báo
 import { useNavigate } from 'react-router-dom';
@@ -26,8 +27,12 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
             label: 'Tài khoản',
         },
         {
-            type: 'divider',
+
+            key: 'setting',
+            icon: <SettingOutlined />,
+            label: 'Cài đặt',
         },
+
         {
             key: 'logout',
             icon: <LogoutOutlined />,

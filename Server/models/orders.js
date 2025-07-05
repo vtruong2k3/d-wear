@@ -41,8 +41,11 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
-    // Đơn hàng đã thanh toán hay chưa
-    isPaid: { type: Boolean, default: false },
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "paid", "refunded"],
+      default: "unpaid",
+    },
   },
   {
     timestamps: true,
