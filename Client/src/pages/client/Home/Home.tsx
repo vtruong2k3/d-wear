@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import BannerTop from "../../../components/Client/Banners/BannerTop";
 import SectionService from "../../../components/Client/SectionService/SectionService";
-import SectionOurCategories from "../../../components/Client/SectionOurCategories/SectionOurCategories";
+
 import apiServiceProduct from "../../../services/apiServiceProduct";
-import SectionNewArrivals from "../../../components/Client/SectionNewArrivals/SectionNewArrivals";
+
 import SectionAllProduct from "../../../components/Client/SectionAllProduct/SectionAllProduct";
 
 

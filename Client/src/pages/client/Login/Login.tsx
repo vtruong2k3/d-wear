@@ -1,11 +1,13 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
+
 import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 
 import type { AppDispatch, RootState } from "../../../redux/store";
 import { doLoginWithGoogle } from "../../../redux/features/authenSlice";
+import { useLoading } from "../../../contexts/LoadingContext";
+import toast from "react-hot-toast";
 
 
 
@@ -13,28 +15,44 @@ const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { isLogin } = useSelector((state: RootState) => state.authenSlice);
-
+  const { setLoading } = useLoading()
   // Google Login custom
   const login = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      if (tokenResponse?.access_token) {
-        dispatch(doLoginWithGoogle(tokenResponse.access_token));
-      } else {
+    onSuccess: async (tokenResponse) => {
+      if (!tokenResponse?.access_token) {
         toast.error("Không lấy được token từ Google!");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        await dispatch(
+          doLoginWithGoogle({ accessToken: tokenResponse.access_token })
+        ).unwrap();
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Đăng nhập thất bại";
+
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false); // tắt loading cuối cùng
       }
     },
+
     onError: () => {
       toast.error("Đăng nhập Google thất bại!");
     },
+
     flow: "implicit",
   });
+
 
   useEffect(() => {
     if (isLogin) navigate("/");
   }, [isLogin, navigate]);
 
   const handleFacebookLogin = () => {
-    toast.info("Tính năng Facebook đang được phát triển!");
+    toast.error("Tính năng Facebook đang được phát triển!");
   };
 
   return (

@@ -117,7 +117,7 @@ exports.loginWithGoogle = async (req, res) => {
 
     // Tạo JWT token của bạn
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: "1h",
     });
 
     return res.status(200).json({

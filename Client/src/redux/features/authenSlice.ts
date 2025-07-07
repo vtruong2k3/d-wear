@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 
 import { loginWithGoogle } from "../../services/authService";
 import type { ErrorType } from "../../types/error/IError";
-import type { AuthState } from "../../types/auth/IAuth";
-
+import type { AuthState, User } from "../../types/auth/IAuth";
+import type { AppThunkAPI } from "../store";
 // Interface người dùng
 
 // Lấy từ localStorage
@@ -22,31 +22,38 @@ const initialState: AuthState = {
 };
 
 // ✅ AsyncThunk: login với Google bằng access_token
-export const doLoginWithGoogle = createAsyncThunk(
-  "auth/googleLogin",
-  async (accessToken: string, { rejectWithValue }) => {
-    try {
-      const res = await loginWithGoogle(accessToken);
-
-      const { user, token } = res;
-      const message = res.message || "Đăng nhập Google thành công!";
-
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
-
-      toast.success(message);
-      return { user, token };
-    } catch (error) {
-      const errorMessage =
-        (error as ErrorType).response?.data?.message ||
-        (error as ErrorType).message ||
-        "Đã xảy ra lỗi, vui lòng thử lại.";
-
-      toast.error(errorMessage);
-      return rejectWithValue(errorMessage);
-    }
+export const doLoginWithGoogle = createAsyncThunk<
+  { user: User; token: string },
+  { accessToken: string }, // argument type (accessToken)
+  {
+    extra: AppThunkAPI["extra"]; // 👈 khai báo kiểu extra
+    rejectValue: string;
   }
-);
+>("auth/googleLogin", async ({ accessToken }, { rejectWithValue, extra }) => {
+  try {
+    extra.setLoading?.(true);
+    const res = await loginWithGoogle(accessToken);
+
+    const { user, token } = res;
+    const message = res.message || "Đăng nhập Google thành công!";
+
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("token", token);
+
+    toast.success(message);
+    return { user, token };
+  } catch (error) {
+    const errorMessage =
+      (error as ErrorType).response?.data?.message ||
+      (error as ErrorType).message ||
+      "Đã xảy ra lỗi, vui lòng thử lại.";
+
+    toast.error(errorMessage);
+    return rejectWithValue(errorMessage);
+  } finally {
+    extra.setLoading?.(false);
+  }
+});
 
 // ✅ Slice
 export const authenSlice = createSlice({
