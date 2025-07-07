@@ -1,3 +1,4 @@
+
 const Joi = require("joi");
 const cartValidate = {
   addTocart: Joi.object({
@@ -22,3 +23,4 @@ const cartValidate = {
   }),
 };
 module.exports = cartValidate;
+

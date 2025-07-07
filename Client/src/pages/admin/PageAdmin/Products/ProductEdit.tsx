@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 // import {api} from "../../../../configs/AxiosConfig";
@@ -128,6 +129,7 @@ const ProductEdit = () => {
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
       toast.error(errorMessage);
+
     } finally {
       setLoading(false);
     }
@@ -169,6 +171,7 @@ const ProductEdit = () => {
   };
 
 
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -179,11 +182,13 @@ const ProductEdit = () => {
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
                 <PlusOutlined className="text-white text-lg" />
               </div>
+
               Upadate Sản Phẩm
             </h1>
             <p className="text-gray-600 mt-2 ml-14">
               Điền thông tin chi tiết để sửa sản phẩm
             </p>
+
           </div>
         </div>
 
@@ -207,6 +212,7 @@ const ProductEdit = () => {
                   </h3>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Tên sản phẩm
@@ -219,6 +225,7 @@ const ProductEdit = () => {
                         message: "Vui lòng nhập tên sản phẩm!",
                       },
                     ]}
+
                   >
                     <Input
                       placeholder="Nhập tên sản phẩm..."
@@ -228,6 +235,7 @@ const ProductEdit = () => {
                   </Form.Item>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Mô tả sản phẩm
@@ -237,6 +245,7 @@ const ProductEdit = () => {
                     rules={[
                       { required: true, message: "Vui lòng nhập mô tả!" },
                     ]}
+
                   >
                     <TextArea
                       rows={4}
@@ -266,6 +275,7 @@ const ProductEdit = () => {
                       placeholder="0"
                     />
 
+
                   </Form.Item>
                 </div>
 
@@ -275,6 +285,7 @@ const ProductEdit = () => {
                     <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                     Phân Loại
                   </h3>
+
                   <Form.Item
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
@@ -285,6 +296,7 @@ const ProductEdit = () => {
                     rules={[
                       { required: true, message: "Vui lòng chọn brand!" },
                     ]}
+
                   >
                     <Select
                       placeholder="Chọn brand..."
@@ -292,6 +304,7 @@ const ProductEdit = () => {
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       showSearch
                       optionFilterProp="children"
+
                       style={{ height: "48px" }}
                     >
                       {brands.map((brand) => (
@@ -299,6 +312,7 @@ const ProductEdit = () => {
                           {brand.brand_name}
                         </Option>
                       ))}
+
                     </Select>
                   </Form.Item>
 
@@ -312,6 +326,7 @@ const ProductEdit = () => {
                     rules={[
                       { required: true, message: "Vui lòng chọn category!" },
                     ]}
+
                   >
                     <Select
                       placeholder="Chọn category..."
@@ -319,6 +334,7 @@ const ProductEdit = () => {
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       showSearch
                       optionFilterProp="children"
+
                       style={{ height: "48px" }}
                     >
                       {categories.map((cat) => (
@@ -326,6 +342,7 @@ const ProductEdit = () => {
                           {cat.category_name}
                         </Option>
                       ))}
+
                     </Select>
                   </Form.Item>
                 </div>
@@ -341,6 +358,7 @@ const ProductEdit = () => {
                   </h3>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Giới tính
@@ -350,12 +368,15 @@ const ProductEdit = () => {
                     rules={[
                       { required: true, message: "Vui lòng chọn giới tính!" },
                     ]}
+
                   >
                     <Select
                       placeholder="Chọn giới tính..."
                       size="large"
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+
                       style={{ height: "48px" }}
+
                     >
                       <Option value="male">Nam</Option>
                       <Option value="female">Nữ</Option>
@@ -364,6 +385,7 @@ const ProductEdit = () => {
                   </Form.Item>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Chất liệu
@@ -373,6 +395,7 @@ const ProductEdit = () => {
                     rules={[
                       { required: true, message: "Vui lòng nhập chất liệu!" },
                     ]}
+
                   >
                     <Input
                       placeholder="Nhập chất liệu..."
@@ -382,12 +405,15 @@ const ProductEdit = () => {
                   </Form.Item>
                 </div>
 
+
                 {/* Hình ảnh sản phẩm - With Preview */}
+
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
                     <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
                     Hình Ảnh Sản Phẩm
                   </h3>
+
 
                   {/* Hiển thị ảnh hiện tại từ database */}
                   {currentImages.length > 0 && (
@@ -462,13 +488,16 @@ const ProductEdit = () => {
                       </span>
                     }
                     name="productImage"
+
                   >
                     <div className="ant-upload-wrapper">
                       <Upload
                         listType="picture-card"
                         fileList={imageList}
                         onChange={handleImageChange}
+
                         onPreview={handlePreview}
+
                         multiple
                         beforeUpload={() => false}
                         className="product-image-upload"
@@ -478,12 +507,14 @@ const ProductEdit = () => {
                           <div className="ant-upload-select">
                             <div className="flex flex-col items-center justify-center p-4">
                               <UploadOutlined className="text-2xl text-gray-400 mb-2" />
+
                               <div className="text-sm font-medium text-gray-600">
                                 Tải ảnh lên
                               </div>
                               <div className="text-xs text-gray-400 mt-1">
                                 PNG, JPG, GIF
                               </div>
+
                             </div>
                           </div>
                         )}
@@ -494,11 +525,13 @@ const ProductEdit = () => {
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-xs text-blue-700 flex items-start">
                       <span className="mr-2">💡</span>
+
                       <span>
                         {currentImages.length > 0
                           ? "Bạn có thể giữ ảnh cũ hoặc thêm ảnh mới. Ảnh mới sẽ được thêm vào danh sách ảnh hiện tại."
                           : "Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ là ảnh chính."}
                       </span>
+
                     </p>
                   </div>
                 </div>
@@ -519,15 +552,18 @@ const ProductEdit = () => {
                   type="primary"
                   htmlType="submit"
 
+
                   size="large"
                   className="min-w-[140px] h-12 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   Cập nhật
+
                 </Button>
               </div>
             </div>
           </Form>
         </div>
+
 
         {/* Modal Preview Image */}
         <Modal
@@ -550,8 +586,11 @@ const ProductEdit = () => {
           />
         </Modal>
       </div>
+
     </div>
   );
 };
 
+
 export default ProductEdit;
+

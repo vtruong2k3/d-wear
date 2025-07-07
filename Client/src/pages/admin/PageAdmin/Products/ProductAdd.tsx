@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 // import {api} from "../../../../configs/AxiosConfig";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +13,7 @@ import "../../../../styles/addProduct.css";
 import type { UploadChangeParam } from "antd/es/upload";
 import type { ErrorType } from "../../../../types/error/IError";
 import { toast } from "react-toastify";
+
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -19,6 +21,7 @@ const ProductAdd = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
   const [imageList, setImageList] = useState<UploadFile[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -89,13 +92,16 @@ const ProductAdd = () => {
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
       toast.error(errorMessage);
+
     } finally {
       setLoading(false);
     }
   };
 
+
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     setImageList(info.fileList);
+
   };
 
   return (
@@ -108,11 +114,13 @@ const ProductAdd = () => {
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
                 <PlusOutlined className="text-white text-lg" />
               </div>
+
               Thêm Sản Phẩm
             </h1>
             <p className="text-gray-600 mt-2 ml-14">
               Điền thông tin chi tiết để thêm sản phẩm
             </p>
+
           </div>
         </div>
 
@@ -136,6 +144,7 @@ const ProductAdd = () => {
                   </h3>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Tên sản phẩm
@@ -148,6 +157,7 @@ const ProductAdd = () => {
                         message: "Vui lòng nhập tên sản phẩm!",
                       },
                     ]}
+
                   >
                     <Input
                       placeholder="Nhập tên sản phẩm..."
@@ -157,6 +167,7 @@ const ProductAdd = () => {
                   </Form.Item>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Mô tả sản phẩm
@@ -166,6 +177,7 @@ const ProductAdd = () => {
                     rules={[
                       { required: true, message: "Vui lòng nhập mô tả!" },
                     ]}
+
                   >
                     <TextArea
                       rows={4}
@@ -175,6 +187,7 @@ const ProductAdd = () => {
                   </Form.Item>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Giá bán (VNĐ)
@@ -192,6 +205,7 @@ const ProductAdd = () => {
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                       parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, "") || 0)}
+
                       placeholder="0"
                     />
                   </Form.Item>
@@ -203,6 +217,7 @@ const ProductAdd = () => {
                     <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                     Phân Loại
                   </h3>
+
                   <Form.Item
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
@@ -213,6 +228,7 @@ const ProductAdd = () => {
                     rules={[
                       { required: true, message: "Vui lòng chọn brand!" },
                     ]}
+
                   >
                     <Select
                       placeholder="Chọn brand..."
@@ -220,6 +236,7 @@ const ProductAdd = () => {
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       showSearch
                       optionFilterProp="children"
+
                       style={{ height: "48px" }}
                     >
                       {brands.map((brand) => (
@@ -227,6 +244,7 @@ const ProductAdd = () => {
                           {brand.brand_name}
                         </Option>
                       ))}
+
                     </Select>
                   </Form.Item>
 
@@ -240,6 +258,7 @@ const ProductAdd = () => {
                     rules={[
                       { required: true, message: "Vui lòng chọn category!" },
                     ]}
+
                   >
                     <Select
                       placeholder="Chọn category..."
@@ -247,6 +266,7 @@ const ProductAdd = () => {
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                       showSearch
                       optionFilterProp="children"
+
                       style={{ height: "48px" }}
                     >
                       {categories.map((cat) => (
@@ -254,6 +274,7 @@ const ProductAdd = () => {
                           {cat.category_name}
                         </Option>
                       ))}
+
                     </Select>
                   </Form.Item>
                 </div>
@@ -269,6 +290,7 @@ const ProductAdd = () => {
                   </h3>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Giới tính
@@ -278,12 +300,15 @@ const ProductAdd = () => {
                     rules={[
                       { required: true, message: "Vui lòng chọn giới tính!" },
                     ]}
+
                   >
                     <Select
                       placeholder="Chọn giới tính..."
                       size="large"
                       className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+
                       style={{ height: "48px" }}
+
                     >
                       <Option value="male">Nam</Option>
                       <Option value="female">Nữ</Option>
@@ -292,6 +317,7 @@ const ProductAdd = () => {
                   </Form.Item>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Chất liệu
@@ -301,6 +327,7 @@ const ProductAdd = () => {
                     rules={[
                       { required: true, message: "Vui lòng nhập chất liệu!" },
                     ]}
+
                   >
                     <Input
                       placeholder="Nhập chất liệu..."
@@ -318,6 +345,7 @@ const ProductAdd = () => {
                   </h3>
 
                   <Form.Item
+
                     label={
                       <span className="text-gray-800 font-semibold text-sm">
                         Ảnh sản phẩm
@@ -330,6 +358,7 @@ const ProductAdd = () => {
                         message: "Vui lòng tải lên ít nhất 1 ảnh!",
                       },
                     ]}
+
                   >
                     <div className="ant-upload-wrapper">
                       <Upload
@@ -345,12 +374,14 @@ const ProductAdd = () => {
                           <div className="ant-upload-select">
                             <div className="flex flex-col items-center justify-center p-4">
                               <UploadOutlined className="text-2xl text-gray-400 mb-2" />
+
                               <div className="text-sm font-medium text-gray-600">
                                 Tải ảnh lên
                               </div>
                               <div className="text-xs text-gray-400 mt-1">
                                 PNG, JPG, GIF
                               </div>
+
                             </div>
                           </div>
                         )}
@@ -361,10 +392,12 @@ const ProductAdd = () => {
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-xs text-blue-700 flex items-start">
                       <span className="mr-2">💡</span>
+
                       <span>
                         Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ
                         là ảnh chính.
                       </span>
+
                     </p>
                   </div>
                 </div>
@@ -388,15 +421,21 @@ const ProductAdd = () => {
                   size="large"
                   className="min-w-[140px] h-12 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
+
                   {loading ? "Đang tạo..." : "Thêm sản phẩm"}
+
                 </Button>
               </div>
             </div>
           </Form>
         </div>
       </div>
+
+
     </div>
   );
 };
 
+
 export default ProductAdd;
+

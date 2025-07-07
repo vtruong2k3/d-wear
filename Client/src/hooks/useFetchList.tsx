@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
-
 
 interface UseFetchListResult<T> {
   data: T[];
@@ -10,7 +10,6 @@ interface UseFetchListResult<T> {
   refetch: () => Promise<void>;
 }
 
-
 interface BaseListResponse<T> {
   message?: string;
   page?: number;
@@ -18,10 +17,12 @@ interface BaseListResponse<T> {
   products: T[];
 }
 
-
 export const useFetchList = <
   T,
-  Q extends Record<string, string | number | boolean> = Record<string, string | number | boolean>
+  Q extends Record<string, string | number | boolean> = Record<
+    string,
+    string | number | boolean
+  >
 >(
   path: string,
   query: Q = {} as Q,

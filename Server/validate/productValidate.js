@@ -1,3 +1,4 @@
+
 const Joi = require("joi");
 
 const productValidate = {
@@ -55,3 +56,4 @@ const productValidate = {
 };
 
 module.exports = productValidate;
+

@@ -1,3 +1,4 @@
+
 const Joi = require("joi");
 const authValidate = {
   register: Joi.object({
@@ -35,3 +36,4 @@ const authValidate = {
   }),
 };
 module.exports = authValidate;
+

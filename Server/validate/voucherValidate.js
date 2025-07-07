@@ -1,3 +1,4 @@
+
 const Joi = require("joi");
 
 const voucherValidate = {
@@ -87,3 +88,4 @@ const voucherValidate = {
 };
 
 module.exports = voucherValidate;
+

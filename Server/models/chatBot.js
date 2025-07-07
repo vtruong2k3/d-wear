@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const chatbotSchema = new mongoose.Schema(
@@ -20,3 +21,4 @@ const chatbotSchema = new mongoose.Schema(
 const Chatbot = mongoose.model("chatbots", chatbotSchema);
 
 module.exports = Chatbot;
+

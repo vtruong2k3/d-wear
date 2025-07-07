@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
   Button,
   Popconfirm,
@@ -12,6 +13,7 @@ import {
   Typography,
   Divider,
 } from "antd";
+
 import useFetchList from "../../../../hooks/useFetchList";
 import useQuery from "../../../../hooks/useQuery";
 import type { ColumnsType } from "antd/es/table";
@@ -19,6 +21,7 @@ import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
+
 import axios from "axios";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
@@ -26,9 +29,11 @@ import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 
+
 const { Title } = Typography;
 
 const Products: React.FC = () => {
+
   const navigate = useNavigate();
 
   const [query, updateQuery] = useQuery({
@@ -82,20 +87,24 @@ const Products: React.FC = () => {
       };
     }) || [];
 
+
   const columns: ColumnsType<IProduct> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
       width: 80,
+
       align: "center",
       render: (id) => <Tag color="blue">#{id}</Tag>,
+
     },
     {
       title: "Sản phẩm",
       key: "product",
       width: 300,
       render: (_, record) => (
+
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div
             style={{
@@ -124,6 +133,7 @@ const Products: React.FC = () => {
               {record.title}
             </div>
             <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+
               {record.brand}
             </div>
           </div>
@@ -131,15 +141,19 @@ const Products: React.FC = () => {
       ),
     },
 
+
+
     {
       title: "Giá",
       dataIndex: "price",
       key: "price",
       width: 150,
+
       align: "right",
       render: (price) => (
         <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
           {typeof price === "number" ? formatCurrency(price) : "N/A"}
+
         </span>
       ),
     },
@@ -149,23 +163,29 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
+
         <Tag color="geekblue" style={{ borderRadius: "12px" }}>
           {category}
         </Tag>
       ),
+
     },
     {
       title: "Thao tác",
       key: "action",
       width: 120,
+
       align: "center",
+
       render: (_, record: any) => (
         <Space size="small">
           <Button
             type="text"
             icon={<FaPen />}
             onClick={() => navigate(`/admin/products/edit/${record.id}`)}
+
             style={{ color: "#1890ff" }}
+
             title="Chỉnh sửa"
           />
           <Popconfirm
@@ -176,11 +196,13 @@ const Products: React.FC = () => {
             cancelText="Hủy"
           >
             <Button type="text" danger icon={<MdDelete />} title="Xóa" />
+
           </Popconfirm>
         </Space>
       ),
     },
   ];
+
 
   const handleDelete = async (id: number) => {
     try {
@@ -226,6 +248,7 @@ const Products: React.FC = () => {
         </Title>
 
         <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
+
           <Col flex="auto">
             <Space size="middle" wrap>
               <Search
@@ -239,11 +262,14 @@ const Products: React.FC = () => {
               <Select
                 placeholder="Sắp xếp theo"
                 style={{ minWidth: 180 }}
+
                 size="large"
                 onChange={handleSort}
                 options={sortOptions}
                 suffixIcon={<FaFilter />}
+
                 allowClear
+
               />
             </Space>
           </Col>
@@ -254,8 +280,10 @@ const Products: React.FC = () => {
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
               style={{
+
                 borderRadius: 8,
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+
               }}
             >
               Thêm sản phẩm
@@ -263,12 +291,16 @@ const Products: React.FC = () => {
           </Col>
         </Row>
 
+
         <Divider />
+
 
         <Table
           loading={loading}
           dataSource={products}
+
           rowKey={(record) => record.id || record._id || record.title}
+
           columns={columns}
           pagination={{
             pageSize: 10,
@@ -276,10 +308,12 @@ const Products: React.FC = () => {
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} của ${total} sản phẩm`,
+
             style: { marginTop: 16 },
           }}
           style={{ background: "white", borderRadius: 8 }}
           scroll={{ x: 800 }}
+
           size="middle"
         />
       </Card>
@@ -287,4 +321,6 @@ const Products: React.FC = () => {
   );
 };
 
+
 export default Products;
+

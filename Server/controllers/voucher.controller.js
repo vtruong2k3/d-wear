@@ -1,3 +1,4 @@
+
 const Voucher = require("../models/vouchers");
 const voucherValidate = require("../validate/voucherValidate");
 
@@ -178,3 +179,4 @@ exports.deleteVoucher = async (req, res) => {
     });
   }
 };
+

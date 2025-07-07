@@ -2,9 +2,10 @@ const User = require("../models/users");
 const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
 const authValidate = require("../validate/authValidate");
-const { OAuth2Client } = require("google-auth-library");
+
 const axios = require("axios");
 const JWT_SECRET = process.env.JWT_SECRET;
+
 exports.login = async (req, res) => {
   try {
     const { error } = authValidate.login.validate(req.body, {

@@ -6,15 +6,15 @@ import ico_bag from "../../../assets/images/ico_bag.png";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import AccountMenu from "./MenuAccount";
-
+import type { RootState } from "../../../redux/store";
 
 import { useState } from "react";
 import CartModal from "../../../pages/client/Cart/CartModal";
 
 
 const Header = () => {
-  const cartItems = useSelector((state) => state.cartSlice.cartItems);
-  const isLogin = useSelector((state) => state.authenSlice.isLogin);
+  const cartItems = useSelector((state: RootState) => state.cartSlice.cartItems);
+  const isLogin = useSelector((state: RootState) => state.authenSlice.isLogin);
 
 
   const [openCart, setOpenCart] = useState(false);

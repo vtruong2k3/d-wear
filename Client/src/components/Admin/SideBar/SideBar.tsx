@@ -11,6 +11,8 @@ import {
     TeamOutlined,
     TagsOutlined,
     BranchesOutlined,
+
+
     GiftOutlined,
     AppstoreOutlined,
 } from '@ant-design/icons';
@@ -19,6 +21,7 @@ interface SidebarProps {
     onCollapse: () => void;
 }
 const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
+
     const location = useLocation();
 
     const menuItems = [
@@ -65,6 +68,7 @@ const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
             label: <Link to="/admin/voucher">Voucher</Link>
         },
         {
+
             key: '/admin/customers',
             icon: <UserOutlined />,
             label: <Link to="/admin/customers">Khách hàng</Link>,

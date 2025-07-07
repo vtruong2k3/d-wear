@@ -1,3 +1,4 @@
+
 const express = require("express");
 const brandRouter = express.Router();
 const brandController = require("../controllers/brand.controller");
@@ -9,3 +10,4 @@ brandRouter.put("/brand/:id", brandController.updateBrand);
 brandRouter.delete("/brand/:id", brandController.deleteBrand);
 
 module.exports = brandRouter;
+
