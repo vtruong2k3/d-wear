@@ -38,7 +38,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="pt-20 pb-10 bg-[#f5f5f5] min-h-screen">
+    <div className="pt-20 pb-10 bg-[#e5e5e5] ">
       <div className="container">
         <div className="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-md">
           <h2 className="font-semibold text-2xl text-center">Đăng nhập</h2>

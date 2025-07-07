@@ -1,4 +1,4 @@
-import logo from "../../../assets/images/logo.png";
+import logo from "../../../assets/images/Logo thời trang D-Wear.png";
 import ico_search from "../../../assets/images/ico_search.png";
 import ico_heart from "../../../assets/images/ico_heart.png";
 import ico_user from "../../../assets/images/ico_user.png";
