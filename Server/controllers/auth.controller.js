@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
 const authValidate = require("../validate/authValidate");
 const { OAuth2Client } = require("google-auth-library");
+const axios = require("axios");
+const JWT_SECRET = process.env.JWT_SECRET;
 exports.login = async (req, res) => {
   try {
     const { error } = authValidate.login.validate(req.body, {
@@ -82,43 +84,48 @@ exports.register = async (req, res) => {
 };
 
 exports.loginWithGoogle = async (req, res) => {
-  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   try {
-    const { id_token } = req.body;
-    if (!id_token) return res.status(400).json({ message: "Thiếu id_token" });
+    const { access_token } = req.body;
+    if (!access_token) {
+      return res.status(400).json({ message: "Access token is required" });
+    }
 
-    const ticket = await client.verifyIdToken({
-      idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    // Gọi API lấy thông tin người dùng từ Google
+    const googleRes = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
 
-    const { email, name, picture } = ticket.getPayload();
+    const profile = googleRes.data;
 
-    let user = await User.findOne({ email });
-
+    // Tùy bạn xử lý logic ở đây: tìm user trong DB hoặc tạo mới
+    let user = await User.findOne({ email: profile.email });
     if (!user) {
       user = await User.create({
-        username: name,
-        email,
-        avatar: picture,
+        username: profile.name,
+        email: profile.email,
+        avatar: profile.picture,
+        password: "google_oauth",
         isGoogleAccount: true,
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-
-    res.status(200).json({
-      message: "Đăng nhập thành công",
-      token,
-      user,
+    // Tạo JWT token của bạn
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
+      expiresIn: "7d",
     });
-  } catch (err) {
-    return res.status(500).json({ message: "Lỗi server", error: err.message });
+
+    return res.status(200).json({
+      message: "Đăng nhập Google thành công!",
+      user,
+      token,
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    return res.status(500).json({ message: "Lỗi đăng nhập Google", error });
   }
 };

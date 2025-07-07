@@ -12,15 +12,16 @@ import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
 import { doLogout } from "../../../redux/features/authenSlice.ts";
-import { toast } from "react-toastify";
+import type { RootState } from "../../../redux/store.ts";
+
 
 export default function AccountMenu() {
-  const userName = useSelector((state) => state.authenSlice.userName);
-
+  const user = useSelector((state: RootState) => state.authenSlice.user);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const dispatch = useDispatch();
-  const [anchorEl, setAnchorEl] = React.useState(null);
+
   const open = Boolean(anchorEl);
-  const handleClick = (event) => {
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
@@ -29,7 +30,7 @@ export default function AccountMenu() {
 
   const handleLogout = () => {
     dispatch(doLogout())
-    toast.success("logout thành công")
+
   }
 
   return (
@@ -44,8 +45,8 @@ export default function AccountMenu() {
             aria-haspopup="true"
             aria-expanded={open ? "true" : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32 }}>
-              {userName.slice(0, 1).toLocaleUpperCase()}
+            <Avatar sx={{ width: 32, height: 32 }} src={user?.avatar || undefined}>
+              {!user?.avatar && (user?.username?.slice(0, 1)?.toUpperCase() || "?")}
             </Avatar>
           </IconButton>
         </Tooltip>
