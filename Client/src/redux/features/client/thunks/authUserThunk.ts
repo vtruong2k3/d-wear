@@ -27,9 +27,10 @@ export const doLoginWithGoogle = createAsyncThunk<
     const res = await loginWithGoogle(accessToken);
 
     const { user, token } = res;
-    const message = res.message || "Đăng nhập Google thành công!";
-
+    localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("token", token);
+
+    const message = res.message || "Đăng nhập Google thành công!";
 
     toast.success(message);
     return { user, token };
@@ -75,7 +76,10 @@ export const doLogin = createAsyncThunk<
   try {
     const res = await loginAPI(payload);
     localStorage.setItem("token", res.token);
+
+    localStorage.setItem("user", JSON.stringify(res.user));
     const message = res.message || "Đăng nhập thành công!";
+
     toast.success(message);
     return {
       user: res.user,

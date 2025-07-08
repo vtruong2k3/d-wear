@@ -26,7 +26,8 @@ const schema = yup.object().shape({
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const isLogin = useSelector((state: RootState) => state.authAdminSlice.isLogin)
+  const { isLogin, user } = useSelector((state: RootState) => state.authAdminSlice)
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
@@ -56,8 +57,10 @@ export default function AdminLogin() {
   };
 
   useEffect(() => {
-    if (isLogin) navigate('/admin/dashboard')
-  }, [isLogin, navigate])
+    if (isLogin && user?.role === "admin") {
+      navigate('/admin/dashboard')
+    }
+  }, [isLogin, navigate, user])
   return (
     <div className="login-container">
       <div className="login-card">

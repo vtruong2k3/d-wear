@@ -34,7 +34,15 @@ exports.loginAmdin = async (req, res) => {
       expiresIn: "2h",
     });
     // Ẩn mật khẩu khỏi response
-    const { password: _, ...userData } = user._doc;
+    const {
+      password: _v,
+      __v,
+      createdAt,
+      updatedAt,
+      isGoogleAccount,
+      isActive,
+      ...userData
+    } = user._doc;
     // Đăng nhập thành công
     res
       .status(200)

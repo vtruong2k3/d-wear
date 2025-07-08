@@ -10,8 +10,11 @@ export const doLoginAdmin = createAsyncThunk(
   async (data: LoginFormValues, { rejectWithValue }) => {
     try {
       const res = await loginAdminAPI(data);
+
       localStorage.setItem("token", res.token);
+      localStorage.setItem("user", JSON.stringify(res.user));
       toast.success(res.message);
+
       return res;
     } catch (error) {
       const errorMessage =

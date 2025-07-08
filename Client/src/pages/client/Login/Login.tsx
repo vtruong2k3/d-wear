@@ -22,7 +22,7 @@ type LoginFormData = yup.InferType<typeof schema>;
 const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { isLogin } = useSelector((state: RootState) => state.authenSlice);
+  const { isLogin, token } = useSelector((state: RootState) => state.authenSlice);
   const { setLoading } = useLoading();
 
   const {
@@ -73,8 +73,8 @@ const Login: React.FC = () => {
   });
 
   useEffect(() => {
-    if (isLogin) navigate("/");
-  }, [isLogin, navigate]);
+    if (isLogin && token) navigate("/");
+  }, [isLogin, navigate, token]);
 
   return (
     <div className="pt-20 pb-10 bg-[#e5e5e5]">

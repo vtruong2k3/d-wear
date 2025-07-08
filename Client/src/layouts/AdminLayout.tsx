@@ -5,22 +5,26 @@ import AsideAdmin from "../components/Admin/SideBar/SideBar";
 import { LoadingProvider } from "../contexts/LoadingContext";
 import GlobalLoading from "../components/Loading/GlobalLoading";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
-  const token = localStorage.getItem("token");
+
+  const { token, user } = useSelector((state: RootState) => state.authAdminSlice)
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
 
   useEffect(() => {
-    if (!token) {
-      toast.error("Vui lòng đăng nhập");
+    if (!token || user?.role !== "admin") {
+      toast.error("Vui lòng đăng nhập với tài khoản admin");
     }
-  }, [token]);
-
-  if (!token) {
-    return <Navigate to="/admin/login" />;
+  }, [token, user]);
+  if (!token || user?.role !== "admin") {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    return <Navigate to="/admin/login" replace />;
   }
   return (
     <LoadingProvider>
@@ -28,9 +32,8 @@ export default function AdminLayout() {
       <div className="h-screen flex overflow-hidden">
         {/* Sidebar cố định bên trái */}
         <aside
-          className={`shrink-0 transition-all duration-300 ${
-            collapsed ? "w-20" : "w-64"
-          }`}
+          className={`shrink-0 transition-all duration-300 ${collapsed ? "w-20" : "w-64"
+            }`}
         >
           <AsideAdmin collapsed={collapsed} onCollapse={toggleCollapsed} />
         </aside>
