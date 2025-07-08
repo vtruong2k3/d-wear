@@ -6,7 +6,7 @@ import {
   addToCart,
   deleteFormCart,
   reduceFormCart,
-} from "../../../redux/features/cartSlice";
+} from "../../../redux/features/client/cartSlice";
 import useAuth from "../../../hooks/Client/useAuth";
 import type { RootState } from "../../../redux/store";
 import { useNavigate } from "react-router-dom";

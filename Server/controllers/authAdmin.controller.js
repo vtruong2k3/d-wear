@@ -31,7 +31,7 @@ exports.loginAmdin = async (req, res) => {
     }
 
     const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "2h",
     });
     // Ẩn mật khẩu khỏi response
     const { password: _, ...userData } = user._doc;

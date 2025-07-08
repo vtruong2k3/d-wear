@@ -8,7 +8,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
 
 import type { AppDispatch, RootState } from "../../../redux/store";
-import { doLogin, doLoginWithGoogle } from "../../../redux/features/authenSlice";
+import { doLogin, doLoginWithGoogle } from "../../../redux/features/client/thunks/authUserThunk";
 import { useLoading } from "../../../contexts/LoadingContext";
 
 //  Khai báo schema Yup

@@ -11,7 +11,12 @@ import {
 } from '@ant-design/icons';
 import NotificationDropdown from '../Notification/Notification'; // Import component thông báo
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../redux/features/admin/adminSlice';
+import type { RootState } from '../../../redux/store';
+// import { useDispatch } from 'react-redux';
+// import { AppDispatch } from '../../../redux/store';
 
 const { Search } = Input;
 interface AdminHeaderProps {
@@ -20,6 +25,7 @@ interface AdminHeaderProps {
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
+    // const dispatch = useDispatch<AppDispatch>()
     const userMenuItems: MenuProps['items'] = [
         {
             key: 'account',
@@ -40,16 +46,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
             danger: true,
         },
     ];
-
-
+    const dispatch = useDispatch()
+    const user = useSelector((state: RootState) => state.authAdminSlice.user)
 
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-
-        toast.success("Đăng xuất thành công");
-
+        dispatch(logout())
         // ⏳ Đợi 300ms rồi mới navigate
         setTimeout(() => {
             navigate("/admin/login");
@@ -113,20 +116,19 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
                         <div className="relative">
                             <Avatar
                                 size={36}
-                                icon={<UserOutlined />}
                                 className="mr-3 ring-2 ring-white shadow-lg transition-all duration-300 group-hover:ring-blue-200"
                                 style={{
                                     background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
                                 }}
-                            />
+                            >{!user?.avatar && (user?.username?.slice(0, 1)?.toUpperCase() || "?")}</Avatar>
                             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
                         </div>
-                        {/* <div className="hidden md:block">
+                        {/* <div className="block">
                             <div className="text-sm font-semibold text-gray-700 group-hover:text-gray-800 transition-colors">
-                                Admin User
+                                {user?.username?.toUpperCase() || "User"}
                             </div>
                             <div className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors">
-                                admin@example.com
+                                {user?.email || "No email"}
                             </div>
                         </div> */}
                     </div>

@@ -18,7 +18,7 @@ import img_payment from "../../../assets/images/img_payment.avif";
 
 import apiServiceProduct from "../../../services/apiServiceProduct";
 import useAuth from "../../../hooks/Client/useAuth";
-import { addToCart } from "../../../redux/features/cartSlice";
+import { addToCart } from "../../../redux/features/client/cartSlice";
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import type { IProducts } from "../../../types/IProducts";
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";

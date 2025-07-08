@@ -5,7 +5,7 @@ import {
   addToCart,
   reduceFormCart,
   deleteFormCart,
-} from "../../../redux/features/cartSlice";
+} from "../../../redux/features/client/cartSlice";
 import { useNavigate } from "react-router-dom";
 import ico_trash from "../../../assets/images/ico_trash.png";
 import { X, ShoppingCart } from "lucide-react";
