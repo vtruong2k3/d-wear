@@ -32,7 +32,16 @@ exports.login = async (req, res) => {
       expiresIn: "1h",
     });
     // Ẩn mật khẩu khỏi response
-    const { password: _, ...userData } = user._doc;
+    const {
+      password: _v,
+      __v,
+      createdAt,
+      updatedAt,
+      isGoogleAccount,
+      isActive,
+      ...userData
+    } = user._doc;
+
     // Đăng nhập thành công
     res
       .status(200)
@@ -91,7 +100,7 @@ exports.loginWithGoogle = async (req, res) => {
       return res.status(400).json({ message: "Access token is required" });
     }
 
-    // Gọi API lấy thông tin người dùng từ Google
+    // Gọi API Google lấy profile
     const googleRes = await axios.get(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
@@ -103,7 +112,7 @@ exports.loginWithGoogle = async (req, res) => {
 
     const profile = googleRes.data;
 
-    // Tùy bạn xử lý logic ở đây: tìm user trong DB hoặc tạo mới
+    // Tìm hoặc tạo user
     let user = await User.findOne({ email: profile.email });
     if (!user) {
       user = await User.create({
@@ -115,14 +124,25 @@ exports.loginWithGoogle = async (req, res) => {
       });
     }
 
-    // Tạo JWT token của bạn
+    // Tạo JWT token
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
       expiresIn: "1h",
     });
 
+    // Lấy dữ liệu cần trả về (ẩn field nhạy cảm)
+    const {
+      password,
+      __v,
+      createdAt,
+      updatedAt,
+      isGoogleAccount,
+      isActive,
+      ...userData
+    } = user._doc;
+
     return res.status(200).json({
       message: "Đăng nhập Google thành công!",
-      user,
+      user: userData,
       token,
     });
   } catch (error) {

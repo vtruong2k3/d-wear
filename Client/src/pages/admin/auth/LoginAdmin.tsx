@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -8,11 +8,15 @@ import { Eye, EyeOff, Lock, Mail, Shield } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "antd";
 
-import { loginAdminAPI } from "../../../services/authAPI";
+
 import type { ErrorType } from "../../../types/error/IError";
-import type { LoginFormValues, LoginResponse } from "../../../types/auth/IAuth";
+import type { LoginFormValues } from "../../../types/auth/IAuth";
 
 import "../../../styles/adminLogin.css";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../../redux/store";
+import { doLoginAdmin } from "../../../redux/features/admin/thunks/authAdminThunk";
+
 
 // Schema xác thực với yup
 const schema = yup.object().shape({
@@ -22,9 +26,11 @@ const schema = yup.object().shape({
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { isLogin, user } = useSelector((state: RootState) => state.authAdminSlice)
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const dispatch = useDispatch<AppDispatch>();
   const {
     register,
     handleSubmit,
@@ -36,10 +42,9 @@ export default function AdminLogin() {
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     try {
-      const res: LoginResponse = await loginAdminAPI(data);
-      localStorage.setItem("token", res.token);
-      toast.success(res.message);
-      navigate("/admin/dashboard");
+      // 
+      dispatch(doLoginAdmin(data)).unwrap();
+
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -51,6 +56,11 @@ export default function AdminLogin() {
     }
   };
 
+  useEffect(() => {
+    if (isLogin && user?.role === "admin") {
+      navigate('/admin/dashboard')
+    }
+  }, [isLogin, navigate, user])
   return (
     <div className="login-container">
       <div className="login-card">

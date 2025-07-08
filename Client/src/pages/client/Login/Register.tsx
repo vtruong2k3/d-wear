@@ -7,7 +7,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
 
-import { doLoginWithGoogle, doRegister } from "../../../redux/features/authenSlice";
+import { doLoginWithGoogle, doRegister } from "../../../redux/features/client/thunks/authUserThunk";
 import { useLoading } from "../../../contexts/LoadingContext";
 import type { RegisterFormData } from "../../../types/auth/IAuth";
 import type { AppDispatch, RootState } from "../../../redux/store";

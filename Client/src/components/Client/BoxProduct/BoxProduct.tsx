@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Skeleton from "@mui/material/Skeleton";
 import { Grow } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { addToCart } from "../../../redux/features/cartSlice";
+import { addToCart } from "../../../redux/features/client/cartSlice";
 import { toast } from "react-toastify";
 import useAuth from "../../../hooks/Client/useAuth";
 

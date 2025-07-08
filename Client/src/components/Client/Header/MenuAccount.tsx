@@ -11,7 +11,7 @@ import PersonAdd from "@mui/icons-material/PersonAdd";
 import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
-import { doLogout } from "../../../redux/features/authenSlice.ts";
+import { doLogout } from "../../../redux/features/client/authenSlice.ts";
 import type { RootState } from "../../../redux/store.ts";
 
 
