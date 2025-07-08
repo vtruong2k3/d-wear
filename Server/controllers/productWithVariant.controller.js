@@ -1,6 +1,9 @@
 const Product = require("../models/products");
 const Variant = require("../models/variants");
-const { productValidate, variantValidate } = require("../validate/productValidate");
+const {
+  productValidate,
+  variantValidate,
+} = require("../validate/productValidate");
 
 // Lấy tất cả sản phẩm cùng biến thể
 exports.getAllProductWithVariants = async (req, res) => {
@@ -15,7 +18,10 @@ exports.getAllProductWithVariants = async (req, res) => {
 
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({ message: "Lỗi server khi lấy danh sách sản phẩm", error: error.message });
+    return res.status(500).json({
+      message: "Lỗi server khi lấy danh sách sản phẩm",
+      error: error.message,
+    });
   }
 };
 
@@ -33,7 +39,9 @@ exports.getProductWithVariantsById = async (req, res) => {
 
     return res.status(200).json({ product, variants });
   } catch (error) {
-    return res.status(500).json({ message: "Lỗi server khi lấy sản phẩm", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Lỗi server khi lấy sản phẩm", error: error.message });
   }
 };
 
@@ -80,12 +88,17 @@ exports.createProductWithVariants = async (req, res) => {
     req.body.imageUrls = imageUrls;
 
     // ✅ Validate sản phẩm
-    const { error: productError } = productValidate.createProduct.validate(req.body, {
-      abortEarly: false,
-    });
+    const { error: productError } = productValidate.createProduct.validate(
+      req.body,
+      {
+        abortEarly: false,
+      }
+    );
     if (productError) {
       const errors = productError.details.map((err) => err.message);
-      return res.status(400).json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
+      return res
+        .status(400)
+        .json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
     }
 
     // ✅ Validate từng biến thể
@@ -98,7 +111,9 @@ exports.createProductWithVariants = async (req, res) => {
       });
       if (variantError) {
         const errors = variantError.details.map((err) => err.message);
-        return res.status(400).json({ message: "Dữ liệu biến thể không hợp lệ", errors });
+        return res
+          .status(400)
+          .json({ message: "Dữ liệu biến thể không hợp lệ", errors });
       }
     }
 
@@ -144,144 +159,109 @@ exports.createProductWithVariants = async (req, res) => {
     });
   }
 };
-
-// // Cập nhật sản phẩm cùng với biến thể
-// exports.updateProductWithVariants = async (req, res) => {
-//   const { id } = req.params;
-
-//   try {
-//     const product = await Product.findById(id);
-//     if (!product) {
-//       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
-//     }
-
-//     const existingImageUrls = typeof req.body.existingImageUrls === "string"
-//       ? [req.body.existingImageUrls]
-//       : req.body.existingImageUrls || [];
-
-//     const newImages = req.files?.productImage?.map((file) => file.path) || [];
-//     req.body.imageUrls = [...existingImageUrls, ...newImages];
-
-//     // ✅ Validate sản phẩm
-//     const { error: productError } = productValidate.createProduct.validate(req.body, {
-//       abortEarly: false,
-//     });
-//     if (productError) {
-//       const errors = productError.details.map((err) => err.message);
-//       return res.status(400).json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
-//     }
-
-//     const {
-//       product_name,
-//       description,
-//       basePrice,
-//       imageUrls,
-//       brand_id,
-//       category_id,
-//       gender,
-//       material,
-//     } = req.body;
-
-//     const updatedProduct = await Product.findByIdAndUpdate(
-//       id,
-//       {
-//         product_name,
-//         description,
-//         basePrice,
-//         imageUrls,
-//         brand_id,
-//         category_id,
-//         gender,
-//         material,
-//       },
-//       { new: true }
-//     );
-
-//     // ✅ Xử lý biến thể
-//     const variantsData = JSON.parse(req.body.variants || "[]");
-//     const variantImages = req.files?.imageVariant || [];
-
-//     for (let i = 0; i < variantsData.length; i++) {
-//       const variant = variantsData[i];
-//       const image = variantImages[i]?.path;
-//       if (image) variant.image = [image];
-
-//       variant.product_id = id; // Gán để validate
-
-//       // ✅ Validate từng biến thể
-//       const { error: variantError } = variantValidate.create.validate(variant, {
-//         abortEarly: false,
-//       });
-//       if (variantError) {
-//         const errors = variantError.details.map((err) => err.message);
-//         return res.status(400).json({ message: "Dữ liệu biến thể không hợp lệ", errors });
-//       }
-
-//       if (variant._id) {
-//         // Nếu có _id → update
-//         await Variant.findByIdAndUpdate(variant._id, variant);
-//       } else {
-//         // Nếu chưa có _id → kiểm tra trùng trước khi tạo
-//         const exists = await Variant.findOne({
-//           product_id: id,
-//           size: variant.size,
-//           color: variant.color,
-//         });
-//         if (exists) {
-//           // Nếu trùng thì bỏ qua
-//           continue;
-//         }
-
-//         await Variant.create({ ...variant, product_id: id });
-//       }
-//     }
-
-//     // ✅ Lấy lại danh sách biến thể sau cập nhật
-//     const updatedVariants = await Variant.find({ product_id: id });
-
-//     return res.status(200).json({
-//       message: "Cập nhật sản phẩm và biến thể thành công",
-//       product: updatedProduct,
-//       variants: updatedVariants, // ✅ Trả về luôn biến thể mới nhất
-//     });
-//   } catch (error) {
-//     return res.status(500).json({
-//       message: "Lỗi server khi cập nhật sản phẩm và biến thể",
-//       error: error.message,
-//     });
-//   }
-// };
 // Cập nhật sản phẩm cùng với biến thể
 exports.updateProductWithVariants = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Kiểm tra sản phẩm tồn tại
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
 
-    const existingImageUrls = typeof req.body.existingImageUrls === "string"
-      ? [req.body.existingImageUrls]
-      : req.body.existingImageUrls || [];
+    // Gộp ảnh cũ và mới của sản phẩm
+    const existingImageUrls =
+      typeof req.body.existingImageUrls === "string"
+        ? [req.body.existingImageUrls]
+        : req.body.existingImageUrls || [];
 
     const newImages = req.files?.productImage?.map((file) => file.path) || [];
-    req.body.imageUrls = [...existingImageUrls, ...newImages];
+    const fullImageUrls = [...existingImageUrls, ...newImages];
+    req.body.imageUrls = fullImageUrls;
 
-    // Validate sản phẩm
-    const { error: productError } = productValidate.createProduct.validate(req.body, {
-      abortEarly: false,
-    });
+    // ✅ 1. Validate sản phẩm
+    const { error: productError } = productValidate.updateProduct.validate(
+      req.body,
+      {
+        abortEarly: false,
+      }
+    );
     if (productError) {
       const errors = productError.details.map((err) => err.message);
-      return res.status(400).json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
+      return res
+        .status(400)
+        .json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
     }
 
+    // ✅ 2. Parse & validate biến thể
+    let variantsData = [];
+    try {
+      variantsData = JSON.parse(req.body.variants || "[]");
+    } catch (err) {
+      return res.status(400).json({
+        message: "Dữ liệu biến thể không hợp lệ",
+        errors: ["Trường 'variants' phải là chuỗi JSON hợp lệ."],
+      });
+    }
+
+    console.log("📦 Danh sách biến thể gửi lên:", variantsData);
+
+    const variantImages = req.files?.imageVariant || [];
+
+    // Validate từng biến thể
+    for (let i = 0; i < variantsData.length; i++) {
+      const variant = variantsData[i];
+
+      // ✅ Gán ảnh đúng
+      if (Array.isArray(variantImages) && variantImages[i]) {
+        variant.image = [variantImages[i].path]; // ảnh mới
+      } else if (Array.isArray(variant.image)) {
+        variant.image = variant.image.map((fileName) =>
+          fileName.includes("uploads")
+            ? fileName
+            : `uploads/products/${fileName}`
+        ); // giữ ảnh cũ
+      } else {
+        variant.image = [];
+      }
+
+      variant.product_id = id;
+
+      const isUpdate = variant._id && typeof variant._id === "string";
+      const schema = isUpdate ? variantValidate.update : variantValidate.create;
+
+      if (!schema || typeof schema.validate !== "function") {
+        return res.status(500).json({
+          message: "Schema validate cho biến thể không hợp lệ.",
+        });
+      }
+
+      // ✅ Debug biến thể đang validate
+      console.log(`🧩 Đang validate biến thể thứ ${i + 1}:`);
+      console.log("▶️ Dữ liệu biến thể:", variant);
+
+      const { error: variantError } = schema.validate(variant, {
+        abortEarly: false,
+      });
+
+      if (variantError) {
+        console.log("❌ Lỗi validate biến thể:", variantError.details);
+        const errors = variantError.details.map((err) => err.message);
+        return res.status(400).json({
+          message: `Dữ liệu biến thể thứ ${i + 1} không hợp lệ`,
+          errors,
+        });
+      }
+    }
+
+    // ✅ 3. Nếu hợp lệ → cập nhật DB
+
+    // 3.1 Update sản phẩm
     const {
       product_name,
       description,
       basePrice,
-      imageUrls,
       brand_id,
       category_id,
       gender,
@@ -294,7 +274,7 @@ exports.updateProductWithVariants = async (req, res) => {
         product_name,
         description,
         basePrice,
-        imageUrls,
+        imageUrls: fullImageUrls,
         brand_id,
         category_id,
         gender,
@@ -303,30 +283,14 @@ exports.updateProductWithVariants = async (req, res) => {
       { new: true }
     );
 
-    // ======= CẬP NHẬT BIẾN THỂ =======
-    const variantsData = JSON.parse(req.body.variants || "[]");
-    const variantImages = req.files?.imageVariant || [];
-
+    // 3.2 Update biến thể
     const incomingVariantIds = [];
 
     for (let i = 0; i < variantsData.length; i++) {
       const variant = variantsData[i];
-      const image = variantImages[i]?.path;
-      if (image) variant.image = [image];
+      const isUpdate = variant._id && typeof variant._id === "string";
 
-      variant.product_id = id;
-
-      const schema = variant._id ? variantValidate.update : variantValidate.create;
-
-      const { error: variantError } = schema.validate(variant, {
-        abortEarly: false,
-      });
-      if (variantError) {
-        const errors = variantError.details.map((err) => err.message);
-        return res.status(400).json({ message: "Dữ liệu biến thể không hợp lệ", errors });
-      }
-
-      if (variant._id) {
+      if (isUpdate) {
         await Variant.findByIdAndUpdate(variant._id, variant);
         incomingVariantIds.push(variant._id);
       } else {
@@ -335,22 +299,23 @@ exports.updateProductWithVariants = async (req, res) => {
           size: variant.size,
           color: variant.color,
         });
+
         if (exists) {
           incomingVariantIds.push(exists._id);
           continue;
         }
+
         const created = await Variant.create({ ...variant, product_id: id });
         incomingVariantIds.push(created._id);
       }
     }
 
-    // ======= XOÁ BIẾN THỂ KHÔNG CÒN =======
+    // 3.3 Xoá biến thể không còn trong danh sách mới
     await Variant.deleteMany({
       product_id: id,
       _id: { $nin: incomingVariantIds },
     });
 
-    // ======= LẤY DANH SÁCH MỚI =======
     const updatedVariants = await Variant.find({ product_id: id });
 
     return res.status(200).json({
@@ -359,14 +324,13 @@ exports.updateProductWithVariants = async (req, res) => {
       variants: updatedVariants,
     });
   } catch (error) {
+    console.error("❌ Lỗi cập nhật:", error);
     return res.status(500).json({
       message: "Lỗi server khi cập nhật sản phẩm và biến thể",
       error: error.message,
     });
   }
 };
-
-
 
 // Xoá sản phẩm cùng biến thể
 exports.deleteProductWithVariants = async (req, res) => {
@@ -384,6 +348,8 @@ exports.deleteProductWithVariants = async (req, res) => {
       product: deletedProduct,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Lỗi server khi xoá", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Lỗi server khi xoá", error: error.message });
   }
 };
