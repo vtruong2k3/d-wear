@@ -1,5 +1,5 @@
 import { Modal, Form, Input, Button, Space } from "antd";
-import { fetchCreateCategory } from "../../../../services/categoryService"; // Cập nhật đúng path import
+import { fetchCreateCategory } from "../../../../services/admin/categoryService"; // Cập nhật đúng path import
 import type { ErrorType } from "../../../../types/error/IError";
 import { toast } from "react-toastify";
 import { useLoading } from "../../../../contexts/LoadingContext";

@@ -64,7 +64,13 @@ const BoxProduct = ({ item }) => {
         <div className="rounded-xl overflow-hidden bg-white lg:h-[385px]">
           <img
             className="block size-full object-cover"
-            src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "/default.png"}
+            src={
+              item.imageUrls && item.imageUrls.length > 0
+                ? item.imageUrls[0].startsWith("http")
+                  ? item.imageUrls[0]
+                  : `http://localhost:5000/${item.imageUrls[0].replace(/\\/g, "/")}`
+                : "/default.png"
+            }
             alt={item.product_name}
           />
         </div>

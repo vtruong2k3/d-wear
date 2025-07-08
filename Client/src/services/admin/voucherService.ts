@@ -3,7 +3,7 @@ import {
   type IVoucher,
   type CreateVoucherResponse,
   type VoucherResponse,
-} from "../types/voucher/IVoucher";
+} from "../../types/voucher/IVoucher";
 
 export const fetchGetAllVouchers = async (
   page = 1,

@@ -16,7 +16,7 @@ import ico_share from "../../../assets/images/ico_share.png";
 import ico_check from "../../../assets/images/ico_check.png";
 import img_payment from "../../../assets/images/img_payment.avif";
 
-import apiServiceProduct from "../../../services/apiServiceProduct";
+import apiServiceProduct from "../../../services/client/apiServiceProduct";
 import useAuth from "../../../hooks/Client/useAuth";
 import { addToCart } from "../../../redux/features/client/cartSlice";
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";

@@ -23,6 +23,11 @@ import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
 import { DeleteOutlined } from "@ant-design/icons";
+
+import { getDetailProduct, updateProduct } from "../../../../services/admin/productService";
+import type { SizeOption } from "../../../../types/size/ISize";
+import type { ColorOption } from "../../../../types/color/IColor";
+import type { VariantForm, IVariants, UploadFileWithRaw } from "../../../../types/IVariants";
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -39,10 +44,11 @@ const ProductEdit = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams();
-  const [sizes, setSizes] = useState<any[]>([]);
-  const [colors, setColors] = useState<any[]>([]);
-  const [variants, setVariants] = useState([
+  const [sizes, setSizes] = useState<SizeOption[]>([]);
+  const [colors, setColors] = useState<ColorOption[]>([]);
+  const [variants, setVariants] = useState<VariantForm[]>([
     {
+
       size: "",
       color: "",
       price: undefined,
@@ -95,59 +101,59 @@ const ProductEdit = () => {
   }, []);
 
   //variant
-  const validateVariants = () => {
-    const errors: { [index: number]: string[] } = {};
-    let isValid = true;
+  // const validateVariants = () => {
+  //   const errors: { [index: number]: string[] } = {};
+  //   let isValid = true;
 
-    variants.forEach((variant, idx) => {
-      const errs: string[] = [];
-      if (!variant.size) errs.push("size");
-      if (!variant.color) errs.push("color");
-      if (
-        variant.price === null ||
-        variant.price === undefined ||
-        variant.price <= 0
-      )
-        errs.push("price");
-      if (
-        variant.stock === null ||
-        variant.stock === undefined ||
-        variant.stock < 0
-      )
-        errs.push("stock");
+  //   variants.forEach((variant, idx) => {
+  //     const errs: string[] = [];
+  //     if (!variant.size) errs.push("size");
+  //     if (!variant.color) errs.push("color");
+  //     if (
+  //       variant.price === null ||
+  //       variant.price === undefined ||
+  //       variant.price <= 0
+  //     )
+  //       errs.push("price");
+  //     if (
+  //       variant.stock === null ||
+  //       variant.stock === undefined ||
+  //       variant.stock < 0
+  //     )
+  //       errs.push("stock");
 
-      if (errs.length > 0) {
-        errors[idx] = errs;
-        isValid = false;
-      }
-    });
+  //     if (errs.length > 0) {
+  //       errors[idx] = errs;
+  //       isValid = false;
+  //     }
+  //   });
 
-    setVariantErrors(errors);
-    return isValid;
-  };
+  //   setVariantErrors(errors);
+  //   return isValid;
+  // };
 
   //call api
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`/api/product/${id}`);
-        const product = res.data.product;
-  
+        const res = await getDetailProduct(id);
+        const product = res;
+        console.log(product)
         // Set giá trị cho các trường form
         form.setFieldsValue({
-          product_name: product.product_name,
-          description: product.description,
-          basePrice: product.basePrice,
-          brand_id: product.brand_id?._id || product.brand_id,
-          category_id: product.category_id?._id || product.category_id,
-          gender: product.gender,
-          material: product.material,
+          product_name: product.product.product_name,
+          description: product.product.description,
+          basePrice: product.product.basePrice,
+          brand_id: product.product.brand_id?._id || product.product.brand_id,
+          category_id: product.product.category_id?._id || product.product.category_id,
+          gender: product.product.gender,
+          material: product.product.material,
         });
-  
+
         // Set ảnh sản phẩm chính
         setCurrentImages(
-          (product.imageUrls || []).map((url: string, index: number) => {
+          (product.product.imageUrls || []).map((url: string, index: number) => {
             const fullUrl = url.startsWith("http")
               ? url
               : `http://localhost:5000/${url.replace(/\\/g, "/")}`;
@@ -158,10 +164,10 @@ const ProductEdit = () => {
             };
           })
         );
-  
+
         // ✅ Set biến thể và giữ _id
         setVariants(
-          (product.variants || []).map((variant: any, index: number) => ({
+          (product.variants || []).map((variant: IVariants, index: number) => ({
             _id: variant._id,
             size: variant.size,
             color: variant.color,
@@ -173,7 +179,7 @@ const ProductEdit = () => {
                 ? normalizedPath
                 : `http://localhost:5000/${normalizedPath}`;
               const fileName = normalizedPath.split("/").pop();
-        
+
               return {
                 uid: `variant-${index}-${i}`,
                 name: fileName,
@@ -183,8 +189,8 @@ const ProductEdit = () => {
             }),
           }))
         );
-        
-        
+
+
       } catch (error) {
         const errorMessage =
           (error as ErrorType).response?.data?.message ||
@@ -195,12 +201,12 @@ const ProductEdit = () => {
         setLoading(false);
       }
     };
-  
+
     if (brands.length > 0 && categories.length > 0 && id) {
       fetchProduct();
     }
   }, [brands, categories, id, form]);
-  
+
 
   //hàm xử lí submit
   const onFinish = async (values: IProducts) => {
@@ -269,28 +275,31 @@ const ProductEdit = () => {
       // ✅ Biến thể (JSON)
       const plainVariants = variants.map((v) => {
         const oldImages = v.image
-          .filter(
-            (img) =>
-              typeof img === "string" ||
-              (!img.originFileObj && (img.rawFileName || img.name))
-          )
-          .map((img) =>
-            typeof img === "string" ? img : (img.rawFileName || img.name)
-          );
-      
+          .filter((img) => {
+            if (typeof img === "string") return true;
+            const file = img as UploadFileWithRaw;
+            return !file.originFileObj && (file.rawFileName || file.name);
+          })
+          .map((img) => {
+            if (typeof img === "string") return img;
+            const file = img as UploadFileWithRaw;
+            return file.rawFileName || file.name;
+          });
+
         return {
           _id: v._id,
           size: v.size,
           color: v.color,
           stock: v.stock,
           price: v.price,
-          image: oldImages, // ✅ mảng string
+          image: oldImages, // ✅ string[]
         };
       });
+
       formData.append("variants", JSON.stringify(plainVariants));
-      
-      
-      
+
+
+
       // ✅ Ảnh biến thể
       variants.forEach((variant) => {
         variant.image.forEach((imgFile) => {
@@ -301,11 +310,7 @@ const ProductEdit = () => {
       });
 
       // ✅ PUT request
-      const { data } = await axios.put(`/api/products-with-variants/${id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const data = await updateProduct(id, formData)
 
       toast.success(data.message);
       navigate("/admin/products");
@@ -363,7 +368,11 @@ const ProductEdit = () => {
     ]);
   };
 
-  const handleVariantChange = (index: number, field: string, value: any) => {
+  const handleVariantChange = <K extends keyof VariantForm>(
+    index: number,
+    field: K,
+    value: VariantForm[K]
+  ) => {
     const updated = [...variants];
     updated[index][field] = value;
     setVariants(updated);
@@ -750,11 +759,10 @@ const ProductEdit = () => {
                           Size
                         </label>
                         <Select
-                          className={`w-full ${
-                            variantErrors[index]?.includes("size")
-                              ? "border-red-500"
-                              : ""
-                          }`}
+                          className={`w-full ${variantErrors[index]?.includes("size")
+                            ? "border-red-500"
+                            : ""
+                            }`}
                           placeholder="Chọn size"
                           value={variant.size}
                           onChange={(value) =>
@@ -783,11 +791,10 @@ const ProductEdit = () => {
                           Màu
                         </label>
                         <Select
-                          className={`w-full ${
-                            variantErrors[index]?.includes("color")
-                              ? "border-red-500"
-                              : ""
-                          }`}
+                          className={`w-full ${variantErrors[index]?.includes("color")
+                            ? "border-red-500"
+                            : ""
+                            }`}
                           placeholder="Chọn màu"
                           value={variant.color}
                           onChange={(value) =>
@@ -816,11 +823,10 @@ const ProductEdit = () => {
                           Giá (VNĐ)
                         </label>
                         <InputNumber
-                          className={`w-full ${
-                            variantErrors[index]?.includes("price")
-                              ? "border border-red-500"
-                              : ""
-                          }`}
+                          className={`w-full ${variantErrors[index]?.includes("price")
+                            ? "border border-red-500"
+                            : ""
+                            }`}
                           placeholder="Giá biến thể"
                           value={variant.price}
                           onChange={(value) =>
@@ -841,11 +847,10 @@ const ProductEdit = () => {
                           Tồn kho
                         </label>
                         <InputNumber
-                          className={`w-full ${
-                            variantErrors[index]?.includes("stock")
-                              ? "border border-red-500"
-                              : ""
-                          }`}
+                          className={`w-full ${variantErrors[index]?.includes("stock")
+                            ? "border border-red-500"
+                            : ""
+                            }`}
                           placeholder="Số lượng tồn kho"
                           value={variant.stock}
                           onChange={(value) =>

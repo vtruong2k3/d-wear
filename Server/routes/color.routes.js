@@ -1,20 +1,20 @@
 const express = require("express");
-const router = express.Router();
+const colorRouter = express.Router();
 const colorController = require("../controllers/color.controller");
 
 // Tạo màu
-router.post("/", colorController.createColor);
+colorRouter.post("/colors", colorController.createColor);
 
 // Lấy tất cả màu
-router.get("/", colorController.getAllColors);
+colorRouter.get("/colors", colorController.getAllColors);
 
 // Lấy màu theo ID
-router.get("/:id", colorController.getColorById);
+colorRouter.get("/colors/:id", colorController.getColorById);
 
 // Cập nhật màu
-router.put("/:id", colorController.updateColor);
+colorRouter.put("/colors/:id", colorController.updateColor);
 
 // Xoá màu
-router.delete("/:id", colorController.deleteColor);
+colorRouter.delete("/colors/:id", colorController.deleteColor);
 
-module.exports = router;
+module.exports = colorRouter;

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import BannerTop from "../../../components/Client/Banners/BannerTop";
 import SectionService from "../../../components/Client/SectionService/SectionService";
 
-import apiServiceProduct from "../../../services/apiServiceProduct";
+import apiServiceProduct from "../../../services/client/apiServiceProduct";
 
 import SectionAllProduct from "../../../components/Client/SectionAllProduct/SectionAllProduct";
 

@@ -10,7 +10,7 @@ import {
   loginAPI,
   loginWithGoogle,
   registerAPI,
-} from "../../../../services/authService";
+} from "../../../../services/client/authService";
 import type { AppThunkAPI } from "../../../store";
 
 // ✅ AsyncThunk: login với Google bằng access_token

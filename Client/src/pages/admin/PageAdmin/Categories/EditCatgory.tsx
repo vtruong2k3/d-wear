@@ -1,6 +1,6 @@
 import { Modal, Form, Input, Button, Space } from "antd";
 import { useEffect } from "react";
-import { updateCategoryById } from "../../../../services/categoryService";
+import { updateCategoryById } from "../../../../services/admin/categoryService";
 import type { ICategory } from "../../../../types/category/ICategory";
 import type { ErrorType } from "../../../../types/error/IError";
 import { toast } from "react-toastify";

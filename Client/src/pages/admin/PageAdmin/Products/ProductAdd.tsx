@@ -22,6 +22,11 @@ import type { UploadChangeParam } from "antd/es/upload";
 import type { ErrorType } from "../../../../types/error/IError";
 import { toast } from "react-toastify";
 import { DeleteOutlined } from "@ant-design/icons";
+import { createProduct } from "../../../../services/admin/productService";
+import type { VariantForm } from "../../../../types/IVariants";
+import type { SizeOption } from "../../../../types/size/ISize";
+import type { ColorOption } from "../../../../types/color/IColor";
+
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -33,18 +38,18 @@ const ProductAdd = () => {
   const [imageList, setImageList] = useState<UploadFile[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [sizes, setSizes] = useState([]);
-  const [colors, setColors] = useState([]);
+  const [sizes, setSizes] = useState<SizeOption[]>([]);
+  const [colors, setColors] = useState<ColorOption[]>([]);
   const [variantErrors, setVariantErrors] = useState<{
     [index: number]: string[];
   }>({});
-  const [variants, setVariants] = useState([
+  const [variants, setVariants] = useState<VariantForm[]>([
     {
       size: "",
       color: "",
       price: undefined,
       stock: 0,
-      image: [] as UploadFile[],
+      image: [],
     },
   ]);
 
@@ -177,15 +182,7 @@ const ProductAdd = () => {
       }
 
       // Gửi request
-      const { data } = await axios.post(
-        "/api/products-with-variants",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const data = await createProduct(formData)
 
       toast.success(data.message);
       navigate("/admin/products");
@@ -212,7 +209,11 @@ const ProductAdd = () => {
     ]);
   };
 
-  const handleVariantChange = (index: number, field: string, value: any) => {
+  const handleVariantChange = <K extends keyof VariantForm>(
+    index: number,
+    field: K,
+    value: VariantForm[K]
+  ) => {
     const updated = [...variants];
     updated[index][field] = value;
     setVariants(updated);
@@ -534,11 +535,10 @@ const ProductAdd = () => {
                             Size
                           </label>
                           <Select
-                            className={`w-full ${
-                              variantErrors[index]?.includes("size")
-                                ? "border-red-500"
-                                : ""
-                            }`}
+                            className={`w-full ${variantErrors[index]?.includes("size")
+                              ? "border-red-500"
+                              : ""
+                              }`}
                             placeholder="Chọn size"
                             value={variant.size}
                             onChange={(value) =>
@@ -567,11 +567,10 @@ const ProductAdd = () => {
                             Màu
                           </label>
                           <Select
-                            className={`w-full ${
-                              variantErrors[index]?.includes("color")
-                                ? "border-red-500"
-                                : ""
-                            }`}
+                            className={`w-full ${variantErrors[index]?.includes("color")
+                              ? "border-red-500"
+                              : ""
+                              }`}
                             placeholder="Chọn màu"
                             value={variant.color}
                             onChange={(value) =>
@@ -600,11 +599,10 @@ const ProductAdd = () => {
                             Giá (VNĐ)
                           </label>
                           <InputNumber
-                            className={`w-full ${
-                              variantErrors[index]?.includes("price")
-                                ? "border border-red-500"
-                                : ""
-                            }`}
+                            className={`w-full ${variantErrors[index]?.includes("price")
+                              ? "border border-red-500"
+                              : ""
+                              }`}
                             placeholder="Giá biến thể"
                             value={variant.price}
                             onChange={(value) =>
@@ -625,11 +623,10 @@ const ProductAdd = () => {
                             Tồn kho
                           </label>
                           <InputNumber
-                            className={`w-full ${
-                              variantErrors[index]?.includes("stock")
-                                ? "border border-red-500"
-                                : ""
-                            }`}
+                            className={`w-full ${variantErrors[index]?.includes("stock")
+                              ? "border border-red-500"
+                              : ""
+                              }`}
                             placeholder="Số lượng tồn kho"
                             value={variant.stock}
                             onChange={(value) =>

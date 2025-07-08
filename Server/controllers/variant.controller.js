@@ -3,7 +3,10 @@ const variantValidate = require("../validate/variantValidate");
 
 exports.getAllVariant = async (req, res) => {
   try {
-    const variants = await Variant.find();
+    const variants = await Variant.find().populate({
+      path: "product_id",
+      select: "product_name", // chỉ lấy tên sản phẩm
+    });
     res.status(200).json({
       message: "Lấy tất cả sản phẩm thành công",
       variants,

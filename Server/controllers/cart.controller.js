@@ -1,4 +1,3 @@
-
 const Cart = require("../models/carts");
 const Product = require("../models/products");
 const Variant = require("../models/variants");
@@ -168,12 +167,10 @@ exports.deleteAllCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const result = await Cart.deleteMany({ user_id: userId });
-    res
-      .status(200)
-      .json({
-        message: "Xoá tất cả sản phẩm khỏi giỏ hàng thành công",
-        deleteCount: result.deletedCount,
-      });
+    res.status(200).json({
+      message: "Xoá tất cả sản phẩm khỏi giỏ hàng thành công",
+      deleteCount: result.deletedCount,
+    });
   } catch (error) {
     return res.status(500).json({
       message: "Server Error",
@@ -181,4 +178,3 @@ exports.deleteAllCart = async (req, res) => {
     });
   }
 };
-

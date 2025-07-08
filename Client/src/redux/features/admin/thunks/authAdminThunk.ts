@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { LoginFormValues } from "../../../../types/auth/IAuth";
-import { loginAdminAPI } from "../../../../services/authAPI";
+import { loginAdminAPI } from "../../../../services/admin/authAPI";
 
 import type { ErrorType } from "../../../../types/error/IError";
 import { toast } from "react-toastify";

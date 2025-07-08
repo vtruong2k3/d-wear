@@ -6,7 +6,7 @@ import AddVoucherForm from './VoucherFomAdd';
 import EditVoucherForm from './VoucherFormUpadate';
 import { formatCurrency, formatDate } from '../../../../utils/Format';
 import type { IVoucher } from '../../../../types/voucher/IVoucher';
-import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/voucherService';
+import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/admin/voucherService';
 import type { ErrorType } from '../../../../types/error/IError';
 import { toast } from 'react-toastify';
 import { useLoading } from '../../../../contexts/LoadingContext';

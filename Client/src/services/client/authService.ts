@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { LoginFormData, RegisterFormData } from "../types/auth/IAuth";
+import type { LoginFormData, RegisterFormData } from "../../types/auth/IAuth";
 
 export const loginWithGoogle = async (accessToken: string) => {
   const response = await axios.post("api/auth/google", {

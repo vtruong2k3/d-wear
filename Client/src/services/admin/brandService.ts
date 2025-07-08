@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { IBrand } from "../types/brand/IBrand";
+import type { IBrand } from "../../types/brand/IBrand";
 export const fetchAllBrands = async (): Promise<IBrand[]> => {
   const res = await axios.get("/api/brand");
   return Array.isArray(res.data) ? res.data : res.data.data || [];

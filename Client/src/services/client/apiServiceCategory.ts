@@ -1,6 +1,6 @@
 import axios from "axios";
-// @ts-ignore
-import { API_CATEGORIES } from "../utils/constants/api";
+
+import { API_CATEGORIES } from "../../utils/constants/api";
 
 const apiServiceCategory = {
   getAllCategories: async () => {

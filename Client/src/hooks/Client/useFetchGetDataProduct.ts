@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import apiServiceProduct from "../../services/apiServiceProduct";
+import apiServiceProduct from "../../services/client/apiServiceProduct";
 
 const useFetchGetDataProduct = (category_id, exclude_id) => {
   const [products, setProducts] = useState([]);
