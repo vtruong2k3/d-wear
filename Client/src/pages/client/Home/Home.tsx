@@ -5,6 +5,8 @@ import SectionService from "../../../components/Client/SectionService/SectionSer
 import apiServiceProduct from "../../../services/client/apiServiceProduct";
 
 import SectionAllProduct from "../../../components/Client/SectionAllProduct/SectionAllProduct";
+import SectionNewArrivals from "../../../components/Client/SectionNewArrivals/SectionNewArrivals";
+import SectionOurCategories from "../../../components/Client/SectionOurCategories/SectionOurCategories";
 
 
 const Home = () => {
@@ -23,10 +25,10 @@ const Home = () => {
     <>
       <BannerTop />
       <SectionService />
-      {/* <SectionOurCategories type={1} /> */}
+      <SectionOurCategories type={1} />
       <SectionAllProduct products={products} />
-      {/* <SectionOurCategories type={2} /> */}
-      {/* <SectionNewArrivals products={products} /> */}
+      <SectionOurCategories type={2} />
+      <SectionNewArrivals products={products} />
     </>
   );
 };

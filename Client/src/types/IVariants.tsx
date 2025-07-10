@@ -30,3 +30,14 @@ export interface IProductOption {
 export interface UploadFileWithRaw extends UploadFile {
     rawFileName?: string;
 }
+export interface IVariantDetail {
+    _id: string;
+    product_id: string;
+    size: string;
+    color: string;
+    stock: number;
+    price: number;
+    image: string[];
+    createdAt: string;
+    updatedAt: string;
+}

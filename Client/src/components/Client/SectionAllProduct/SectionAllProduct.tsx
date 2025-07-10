@@ -3,13 +3,13 @@
 import BoxProduct from "../BoxProduct/BoxProduct";
 
 const SectionAllProduct = ({ products }) => {
-  console.log(products, "All product");
+
   return (
     <section className="mt-9 lg:mt-24 pt-16 pb-8 bg-gray">
       <div className="container">
         <div className="lg:flex justify-between items-end">
           <div>
-            <h2 className="text-3xl font-bold">Tất cả sản phẩm</h2>
+            <h2 className="text-3xl font-bold">Out Products</h2>
           </div>
           <a
             href="#none"

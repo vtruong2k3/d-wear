@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../../../redux/features/client/cartSlice";
 import { toast } from "react-toastify";
 import useAuth from "../../../hooks/Client/useAuth";
+import { formatCurrency } from "../../../utils/Format";
 
 const BoxProduct = ({ item }) => {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ const BoxProduct = ({ item }) => {
         <div className="mt-2 relative h-5 overflow-hidden">
           <div className="absolute left-1/2 -translate-x-1/2 group-hover:bottom-0 -bottom-5 transition-all duration-300">
             <div className="flex items-center justify-center font-bold text-15 text-center">
-              <span className="text-red-600">{item.basePrice}</span>
+              <span className="text-red-600">{formatCurrency(item.basePrice)}</span>
             </div>
             <button
               onClick={handleAddToCart}

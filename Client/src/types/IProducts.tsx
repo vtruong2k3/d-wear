@@ -20,6 +20,21 @@ export interface IProducts {
   material: string;
   variants?: Variant[];
 }
+export interface IProductDetail {
+  _id: string;
+  product_name: string;
+  description: string;
+  basePrice: number;
+  imageUrls: string[];
+  category_id: string;
+  brand_id: string;
+  gender: string;
+  material: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
 interface Variant {
   color: string;
   size: string;
