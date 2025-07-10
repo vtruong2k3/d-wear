@@ -231,7 +231,7 @@ const ShoppingCart = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span className="text-sm font-medium text-green-800">
-                        Miễn phí vận chuyển cho đơn hàng trên $100
+                        Miễn phí vận chuyển cho đơn hàng trên 100.000đ
                       </span>
                     </div>
                     <div className="mt-2 bg-green-200 h-2 rounded-full overflow-hidden">

@@ -43,6 +43,7 @@ const DetailProduct = () => {
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { products } = useFetchGetDataProduct(
     dataDetail?.category_id || "",
     dataDetail?._id || ""
@@ -85,18 +86,54 @@ const DetailProduct = () => {
 
     fetchDataDetailProduct();
   }, [id]);
+  useEffect(() => {
+    if (dataDetail?.imageUrls?.length) {
+      setSelectedImage(dataDetail.imageUrls[0]);
+    }
+  }, [dataDetail]);
 
   // Xử lý khi chọn màu sắc
+  // const handleColorSelect = (color: string) => {
+  //   setSelectedColor(color);
+  //   // Tìm variant phù hợp với màu đã chọn
+  //   const matchingVariant = variants.find(v =>
+  //     v.color === color && (!selectedSize || v.size === selectedSize)
+  //   );
+  //   if (matchingVariant) {
+  //     setSelectedVariant(matchingVariant);
+  //   }
+  // };
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
-    // Tìm variant phù hợp với màu đã chọn
-    const matchingVariant = variants.find(v =>
-      v.color === color && (!selectedSize || v.size === selectedSize)
-    );
-    if (matchingVariant) {
-      setSelectedVariant(matchingVariant);
+
+    // Lọc các biến thể có cùng màu
+    const matchingColorVariants = variants.filter((v) => v.color === color);
+
+    // Kiểm tra xem size hiện tại có còn trong màu mới không
+    const sameSizeVariant = matchingColorVariants.find((v) => v.size === selectedSize);
+
+    if (sameSizeVariant && sameSizeVariant.stock > 0) {
+      // Nếu vẫn còn size đó, dùng luôn
+      setSelectedSize(sameSizeVariant.size);
+      setSelectedVariant(sameSizeVariant);
+      setSelectedImage(sameSizeVariant.image?.[0] || null);
+      return;
+    }
+
+    // Nếu size hiện tại không còn → tìm size đầu tiên còn hàng
+    const firstAvailableVariant = matchingColorVariants.find((v) => v.stock > 0);
+
+    if (firstAvailableVariant) {
+      setSelectedSize(firstAvailableVariant.size);
+      setSelectedVariant(firstAvailableVariant);
+      setSelectedImage(firstAvailableVariant.image?.[0] || null);
+    } else {
+      // Không có size nào còn hàng
+      setSelectedSize("");
+      setSelectedVariant(null);
     }
   };
+
 
   // Xử lý khi chọn size
   const handleSizeSelect = (size: string) => {
@@ -179,44 +216,48 @@ const DetailProduct = () => {
             </li>
           </ul>
 
-          <div className="lg:grid grid-cols-5 gap-7 mt-4">
+          <div className="lg:grid grid-cols-5 gap-7 mt-4 ml-15">
             <div className="col-span-3 flex gap-3">
               <ul className="flex flex-col gap-4">
                 {dataDetail.imageUrls?.length ? (
-                  dataDetail.imageUrls.map((url) => (
-                    <li
-                      key={url}
-                      className="w-[82px] h-[82px] p-[10px] rounded-md border cursor-pointer hover:border-black transition-colors"
-                    >
-                      <img
-                        src={url?.startsWith("http") ? url : `http://localhost:5000/${url}`}
-                        alt=""
-                        className="w-full h-full object-cover rounded"
-                      />
-
-                    </li>
-                  ))
+                  dataDetail.imageUrls.map((url) => {
+                    const fullUrl = url.startsWith("http") ? url : `http://localhost:5000/${url}`;
+                    const isSelected = selectedImage === url;
+                    return (
+                      <li
+                        key={url}
+                        onClick={() => setSelectedImage(url)}
+                        className={`w-[82px] h-[82px] p-[10px] rounded-md border cursor-pointer transition-colors ${isSelected ? "border-black" : "border-gray-300 hover:border-black"
+                          }`}
+                      >
+                        <img
+                          src={fullUrl}
+                          alt=""
+                          className="w-full h-full object-cover rounded"
+                        />
+                      </li>
+                    );
+                  })
                 ) : (
                   <li className="text-sm text-gray-400">Không có hình ảnh</li>
                 )}
               </ul>
-              <div className="rounded-xl overflow-hidden max-w-[700px] max-h-[700px]">
+
+              <div className="rounded-xl overflow-hidden w-[600px] h-[750px] flex items-center justify-center bg-gray-100">
                 <Grow in={true} timeout={1000}>
                   <img
                     src={
-                      dataDetail.imageUrls?.[0]?.startsWith("http")
-                        ? dataDetail.imageUrls[0]
-                        : `http://localhost:5000/${dataDetail.imageUrls?.[0]}`
+                      selectedImage?.startsWith("http")
+                        ? selectedImage
+                        : `http://localhost:5000/${selectedImage}`
                     }
-
-
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-all duration-300"
                     alt=""
                   />
-
                 </Grow>
               </div>
             </div>
+
 
             <div className="col-span-2 mt-6">
               <h2 className="text-xl lg:text-3xl font-semibold">
