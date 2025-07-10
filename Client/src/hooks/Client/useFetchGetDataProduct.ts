@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import apiServiceProduct from "../../services/client/apiServiceProduct";
+import type { IProducts } from "../../types/IProducts";
 
-const useFetchGetDataProduct = (category_id, exclude_id) => {
-  const [products, setProducts] = useState([]);
+const useFetchGetDataProduct = (category_id: string, exclude_id: string) => {
+  const [products, setProducts] = useState<IProducts[]>([]);
 
   useEffect(() => {
-    if (!category_id) return; // Đợi khi có category_id mới gọi
+    if (!category_id) return;
 
     const fetch = async () => {
       try {

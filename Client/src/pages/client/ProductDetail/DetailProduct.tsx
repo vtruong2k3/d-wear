@@ -125,22 +125,7 @@ const DetailProduct = () => {
       setQuantity((prev) => Math.max(1, prev - 1));
     }
   };
-  const getDescriptionDisplay = (description) => {
-    if (!description) return "";
 
-    const maxLength = 150; // Giới hạn ký tự
-    const maxLines = 3; // Hoặc giới hạn số dòng
-
-    if (description.length <= maxLength) {
-      return description;
-    }
-
-    if (showFullDescription) {
-      return description;
-    }
-
-    return description.substring(0, maxLength) + "...";
-  };
 
   const handleAddToCart = (item: IProductDetail) => {
     if (variants.length > 0 && !selectedVariant) {

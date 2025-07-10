@@ -15,6 +15,7 @@ export interface IProducts {
   description: string;
   basePrice: number;
   brand_id: string;
+  imageUrls: string[];
   category_id: string;
   gender: string;
   material: string;
