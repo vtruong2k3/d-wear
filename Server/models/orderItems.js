@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 const orderItemSchema = new mongoose.Schema(
   {
@@ -19,8 +18,6 @@ const orderItemSchema = new mongoose.Schema(
     },
     quantity: { type: Number, required: true, default: 1 },
     price: { type: Number, required: true },
-    size: { type: String, required: true },
-    color: { type: String, required: true },
   },
   {
     timestamps: true,
@@ -29,4 +26,3 @@ const orderItemSchema = new mongoose.Schema(
 );
 const OrderItem = mongoose.model("orderitems", orderItemSchema);
 module.exports = OrderItem;
-

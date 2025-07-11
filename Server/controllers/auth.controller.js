@@ -28,9 +28,13 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Mật khẩu không đúng" });
     }
 
-    const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = await jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
     // Ẩn mật khẩu khỏi response
     const {
       password: _v,
@@ -125,7 +129,7 @@ exports.loginWithGoogle = async (req, res) => {
     }
 
     // Tạo JWT token
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
       expiresIn: "1h",
     });
 

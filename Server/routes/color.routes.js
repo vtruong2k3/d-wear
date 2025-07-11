@@ -1,9 +1,10 @@
 const express = require("express");
 const colorRouter = express.Router();
 const colorController = require("../controllers/color.controller");
+const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 
 // Tạo màu
-colorRouter.post("/colors", colorController.createColor);
+colorRouter.post("/colors", authAdminMiddelware, colorController.createColor);
 
 // Lấy tất cả màu
 colorRouter.get("/colors", colorController.getAllColors);
@@ -12,9 +13,17 @@ colorRouter.get("/colors", colorController.getAllColors);
 colorRouter.get("/colors/:id", colorController.getColorById);
 
 // Cập nhật màu
-colorRouter.put("/colors/:id", colorController.updateColor);
+colorRouter.put(
+  "/colors/:id",
+  authAdminMiddelware,
+  colorController.updateColor
+);
 
 // Xoá màu
-colorRouter.delete("/colors/:id", colorController.deleteColor);
+colorRouter.delete(
+  "/colors/:id",
+  authAdminMiddelware,
+  colorController.deleteColor
+);
 
 module.exports = colorRouter;
