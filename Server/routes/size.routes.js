@@ -2,9 +2,10 @@ const express = require("express");
 const sizeRouter = express.Router();
 
 const sizeController = require("../controllers/size.controller");
+const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 
 // Tạo size mới
-sizeRouter.post("/sizes", sizeController.createSize);
+sizeRouter.post("/sizes", authAdminMiddelware, sizeController.createSize);
 
 // Lấy danh sách tất cả size
 sizeRouter.get("/sizes", sizeController.getAllSizes);
@@ -13,9 +14,9 @@ sizeRouter.get("/sizes", sizeController.getAllSizes);
 sizeRouter.get("/sizes/:id", sizeController.getSizeById);
 
 // Cập nhật size
-sizeRouter.put("/sizes/:id", sizeController.updateSize);
+sizeRouter.put("/sizes/:id", authAdminMiddelware, sizeController.updateSize);
 
 // Xoá size
-sizeRouter.delete("/sizes/:id", sizeController.deleteSize);
+sizeRouter.delete("/sizes/:id", authAdminMiddelware, sizeController.deleteSize);
 
 module.exports = sizeRouter;

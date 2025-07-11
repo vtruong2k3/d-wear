@@ -23,6 +23,7 @@ import {
 } from '../../../../services/admin/variantServices';
 import type { ErrorType } from '../../../../types/error/IError';
 import { useLoading } from '../../../../contexts/LoadingContext';
+import { formatCurrency } from '../../../../utils/Format';
 
 const { Title } = Typography;
 
@@ -107,7 +108,7 @@ const VariantsPage: React.FC = () => {
       key: 'price',
       render: (price: number) => (
         <span className="font-semibold text-blue-600">
-          {price.toLocaleString('vi-VN')}
+          {formatCurrency(price)}
         </span>
       ),
     },
@@ -139,7 +140,7 @@ const VariantsPage: React.FC = () => {
       key: 'actions',
       render: (_: IVariants, record: IVariants) => (
         <>
-          <Button icon={<EditOutlined />} />
+          <Button style={{ marginRight: "20px" }} icon={<EditOutlined />} />
           <Popconfirm
             title="Xác nhận xóa"
             onConfirm={() => handleDelete(record._id)}

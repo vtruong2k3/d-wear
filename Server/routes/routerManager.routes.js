@@ -9,6 +9,8 @@ const cartRouter = require("./cart.routes");
 const authAmdinRouter = require("./authAdmin.routes");
 const sizeRouter = require("./size.routes");
 const colorRouter = require("./color.routes");
+
+const orderRouter = require("./order.routes");
 const routerManager = express.Router();
 
 routerManager.use("/api", brandRouter);
@@ -21,5 +23,5 @@ routerManager.use("/api", cartRouter);
 routerManager.use("/api", authAmdinRouter);
 routerManager.use("/api", colorRouter);
 routerManager.use("/api", sizeRouter);
-// app.use("/api/products-with-variants", productWithVariantRoute);
+routerManager.use("/api", orderRouter);
 module.exports = routerManager;

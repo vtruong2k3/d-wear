@@ -8,21 +8,21 @@ import { useSelector } from "react-redux";
 import AccountMenu from "./MenuAccount";
 import type { RootState } from "../../../redux/store";
 
-import { useState } from "react";
-import CartModal from "../../../pages/client/Cart/CartModal";
+
+// import CartModal from "../../../pages/client/Cart/CartModal";
 import '../../../styles/activeMenu.css'
 const Header = () => {
   const cartItems = useSelector((state: RootState) => state.cartSlice.cartItems);
   const isLogin = useSelector((state: RootState) => state.authenSlice.isLogin);
 
-  const [openCart, setOpenCart] = useState(false);
+  // const [openCart, setOpenCart] = useState(false);
 
   const listMenu = [
     { title: "Home", to: "/" },
     { title: "Product", to: "/product" },
     { title: "Blog", to: "/blog" },
-    { title: "Cart", to: "/shopping-cart" },
-    { title: "Profile", to: "/profile" },
+    { title: "About", to: "/about" },
+    { title: "Contact", to: "/contact" },
   ];
 
   return (
@@ -95,19 +95,20 @@ const Header = () => {
             </Link>
 
             <div
-              onClick={() => setOpenCart(true)}
+
               className="relative cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <span className="absolute -top-[8px] -right-[10px] size-[18px] bg-black text-white rounded-full text-xs grid place-items-center">
-                {cartItems.length}
-              </span>
-              <img className="size-5" src={ico_bag} alt="Cart" />
+              <Link to={`/shopping-cart`}>
+                <span className="absolute -top-[8px] -right-[10px] size-[18px] bg-black text-white rounded-full text-xs grid place-items-center">
+                  {cartItems.length}
+                </span>
+                <img className="size-5" src={ico_bag} alt="Cart" /></Link>
             </div>
           </div>
         </div>
       </header>
 
-      <CartModal open={openCart} onClose={() => setOpenCart(false)} />
+      {/* <CartModal open={openCart} onClose={() => setOpenCart(false)} /> */}
     </>
   );
 };
