@@ -100,11 +100,12 @@ exports.createOrder = async (req, res) => {
     } = req.body;
 
     const emailUser = req.user?.email || email; //  Ưu tiên từ JWT, fallback qua body
+    const userId = req.user?.id || user_id;
 
-    if (!items || items.length === 0) {
+    if (!userId || !items || items.length === 0) {
       return res
         .status(400)
-        .json({ message: "Không có sản phẩm trong đơn hàng" });
+        .json({ message: "Thiếu thông tin đơn hàng hoặc người dùng." });
     }
 
     // Tính tổng giá trị đơn hàng
@@ -125,11 +126,19 @@ exports.createOrder = async (req, res) => {
       }
 
       const now = new Date();
-
       if (now < voucher.startDate || now > voucher.endDate) {
         return res
           .status(400)
           .json({ message: "Voucher hiện không còn hiệu lực." });
+      }
+
+      const alreadyUsed = voucher.usedUsers?.some(
+        (usedId) => usedId.toString() === userId.toString()
+      );
+      if (alreadyUsed) {
+        return res
+          .status(400)
+          .json({ message: "Bạn đã sử dụng voucher này rồi." });
       }
 
       if (voucher.maxUser > 0 && voucher.maxUser <= 0) {
@@ -140,7 +149,7 @@ exports.createOrder = async (req, res) => {
 
       if (total < voucher.minOrderValue) {
         return res.status(400).json({
-          message: `Đơn hàng phải đạt tối thiểu ${voucher.minOrderValue} để sử dụng voucher này.`,
+          message: `Đơn hàng phải đạt tối thiểu ${voucher.minOrderValue.toLocaleString()}₫ để áp dụng voucher.`,
         });
       }
 
@@ -149,22 +158,22 @@ exports.createOrder = async (req, res) => {
         if (voucher.maxDiscountValue > 0) {
           discount = Math.min(discount, voucher.maxDiscountValue);
         }
-      } else if (voucher.discountType === "fixed") {
+      } else {
         discount = voucher.discountValue;
       }
 
-      // Giảm số lượt sử dụng nếu cần
-      if (voucher.maxUser > 0) {
-        voucher.maxUser -= 1;
-        await voucher.save();
-      }
+      // Cập nhật voucher
+      await Voucher.findByIdAndUpdate(voucher_id, {
+        $inc: { maxUser: -1 },
+        $addToSet: { usedUsers: userId },
+      });
     }
 
     const finalAmount = total - discount;
 
     // Tạo Order
     const newOrder = await Order.create({
-      user_id,
+      user_id: userId,
       order_code: generateOrderCode(),
       voucher_id: voucher_id || null,
       total,

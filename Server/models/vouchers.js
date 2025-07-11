@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 // Import thư viện mongoose để làm việc với MongoDB.
 
@@ -6,7 +5,7 @@ const voucherShema = new mongoose.Schema(
   {
     code: { type: String, required: true, unique: true },
     // Mã voucher, kiểu chuỗi, bắt buộc, không được trùng lặp.
-
+    usedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
     discountType: {
       type: String,
       enum: ["percentage", "fixed"],
@@ -47,4 +46,3 @@ const voucherShema = new mongoose.Schema(
 const Voucher = mongoose.model("vouchers", voucherShema);
 
 module.exports = Voucher;
-
