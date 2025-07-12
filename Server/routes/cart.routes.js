@@ -4,7 +4,7 @@ const cartController = require("../controllers/cart.controller");
 const authUserMiddelware = require("../middlewares/auth.middleware");
 cartRouter.get("/cart", authUserMiddelware, cartController.getAllCart);
 cartRouter.post("/cart/items", authUserMiddelware, cartController.addToCart);
-cartRouter.patch(
+cartRouter.put(
   "/cart/items",
   authUserMiddelware,
   cartController.updateCartQuantity

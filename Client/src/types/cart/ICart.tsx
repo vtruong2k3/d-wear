@@ -19,8 +19,8 @@ interface Variant {
 // types/cart/ICartItem.ts
 export interface ICartItem {
     _id: string;
-    user_id: string;
-    product_id: Product
+    user_id?: string;
+    product_id: Product;
     variant_id: Variant
     quantity: number;
     price: number;
@@ -31,4 +31,8 @@ export interface ICartItem {
 export interface GetCartResponse {
     carts: ICartItem[];        // Danh sách các sản phẩm trong giỏ
     totalAmount: number;       // Tổng tiền giỏ hàng
+}
+export interface UpdateCartPayload {
+    variant_id: string;
+    quantity: number;
 }
