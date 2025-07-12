@@ -7,6 +7,7 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { configAxios } from './configs/AxiosConfig.tsx'
 import 'antd/dist/reset.css';
+
 import { GoogleOAuthProvider } from "@react-oauth/google";
 configAxios();
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID!;

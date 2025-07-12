@@ -10,15 +10,18 @@ import {
   Col,
 
   Button,
+
+
+  Select,
   Modal,
-  message,
-  Tag,
 } from "antd";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
-import { fetchGetOrderDetail } from "../../../../services/admin/orderService";
+import { fetchGetOrderDetail, updateOrderStatus } from "../../../../services/admin/orderService";
 import type { OrderDetailResponse, IOrder } from "../../../../types/order/IOrder";
 import { useLoading } from "../../../../contexts/LoadingContext";
+import { formatCurrency } from "../../../../utils/Format";
+import { Option } from "antd/es/mentions";
 
 
 const { Title } = Typography;
@@ -48,42 +51,109 @@ const OrderDetail = () => {
     fetchData();
   }, [id, setLoading]);
   // Màu sắc tương ứng với trạng thái
-  const statusColor: Record<string, string> = {
-    pending: "default",
-    processing: "orange",
-    shipped: "blue",
-    delivered: "green",
-    cancelled: "red",
-  };
+  // const statusColor: Record<string, string> = {
+  //   pending: "default",
+  //   processing: "orange",
+  //   shipped: "blue",
+  //   delivered: "green",
+  //   cancelled: "red",
+  // };
 
-  // Tiếng Việt cho trạng thái
-  const statusLabel: Record<string, string> = {
-    pending: "Chờ xử lý",
-    processing: "Đang xử lý",
-    shipped: "Đang giao",
-    delivered: "Đã giao",
-    cancelled: "Đã huỷ",
-  };
+  // // Tiếng Việt cho trạng thái
+  // const statusLabel: Record<string, string> = {
+  //   pending: "Chờ xử lý",
+  //   processing: "Đang xử lý",
+  //   shipped: "Đang giao",
+  //   delivered: "Đã giao",
+  //   cancelled: "Đã huỷ",
+  // };
+  const handleStatusChange = async (newStatus: IOrder["status"]) => {
+    if (!order?._id) return;
 
+    try {
+      // Hiện loading nếu cần
+      setLoading(true);
+
+      // Gọi API cập nhật trạng thái đơn hàng
+      await updateOrderStatus(order._id, newStatus);
+
+      // Cập nhật lại state `data` sau khi thành công
+      setData((prev) =>
+        prev
+          ? {
+            ...prev,
+            order: {
+              ...prev.order,
+              status: newStatus,
+            },
+          }
+          : prev
+      );
+
+      toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const getStatusLabel = (status: string) => {
+    const statusLabels: Record<string, string> = {
+      pending: "Chờ xử lý",
+      processing: "Đang xử lý",
+      shipped: "Đã giao hàng",
+      delivered: "Đã giao",
+      cancelled: "Đã hủy"
+    };
+    return statusLabels[status] || status;
+  };
 
   const handleStatusUpdate = (newStatus: IOrder["status"]) => {
     Modal.confirm({
       title: "Xác nhận cập nhật trạng thái",
-      content: `Bạn có chắc muốn chuyển đơn sang trạng thái "${newStatus}"?`,
+      content: `Bạn có chắc muốn chuyển đơn sang trạng thái "${getStatusLabel(newStatus)}"?`,
+      okText: "Xác nhận",
+      cancelText: "Huỷ",
       onOk: async () => {
         try {
-          // Gọi API cập nhật trạng thái ở đây nếu cần
-          message.success("Cập nhật trạng thái thành công!");
+          setLoading(true);
+          if (!order?._id) return;
+
+          // Gọi API cập nhật trạng thái
+          await updateOrderStatus(order._id, newStatus);
+
+          // Cập nhật lại state (local)
+          setData((prev) =>
+            prev
+              ? {
+                ...prev,
+                order: {
+                  ...prev.order,
+                  status: newStatus,
+                },
+              }
+              : prev
+          );
+
+          toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
         } catch (error) {
           const errorMessage =
             (error as ErrorType).response?.data?.message ||
             (error as ErrorType).message ||
             "Đã xảy ra lỗi, vui lòng thử lại.";
           toast.error(errorMessage);
+        } finally {
+          setLoading(false);
         }
       },
     });
   };
+
+
 
   const columns = [
     {
@@ -138,7 +208,7 @@ const OrderDetail = () => {
       title: "Đơn giá",
       dataIndex: "price",
       key: "price",
-      render: (price: number) => `${price.toLocaleString()}đ`,
+      render: (price: number) => formatCurrency(price),
     },
   ];
 
@@ -177,9 +247,43 @@ const OrderDetail = () => {
               <Descriptions.Item label="Phương thức thanh toán">{order.paymentMethod}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái thanh toán">{order.paymentStatus}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái đơn hàng">
-                <Tag color={statusColor[order.status]}>
-                  {statusLabel[order.status] || order.status}
-                </Tag>
+                <Select
+                  value={order.status}
+                  style={{ width: 120 }}
+                  onChange={(value) => handleStatusChange(value)}
+                  size="small"
+                  bordered={false}
+                >
+                  <Option
+                    value="pending"
+                    disabled={["shipped", "delivered"].includes(order.status)}
+                  >
+                    <span style={{ color: "#d9d9d9" }}>Chờ xử lý</span>
+                  </Option>
+
+                  <Option
+                    value="processing"
+                    disabled={["shipped", "delivered"].includes(order.status)}
+                  >
+                    <span style={{ color: "#fa8c16" }}>Đang xử lý</span>
+                  </Option>
+
+                  <Option value="shipped">
+                    <span style={{ color: "#52c41a" }}>Đang giao hàng</span>
+                  </Option>
+
+                  <Option value="delivered">
+                    <span style={{ color: "#1890ff" }}>Đã giao</span>
+                  </Option>
+
+                  <Option
+                    value="cancelled"
+                    disabled={["shipped", "delivered"].includes(order.status)}
+                  >
+                    <span style={{ color: "#ff4d4f" }}>Đã hủy</span>
+                  </Option>
+                </Select>
+
               </Descriptions.Item>
               <Descriptions.Item label="Tổng tiền">{order.total.toLocaleString()}đ</Descriptions.Item>
               <Descriptions.Item label="Giảm giá">{order.discount.toLocaleString()}đ</Descriptions.Item>
@@ -203,12 +307,37 @@ const OrderDetail = () => {
 
         <Card title="Cập nhật trạng thái" style={{ marginTop: 24 }}>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <Button onClick={() => handleStatusUpdate("processing")}>✅ Xác nhận</Button>
-            <Button onClick={() => handleStatusUpdate("shipped")}>🚚 Đang giao</Button>
-            <Button onClick={() => handleStatusUpdate("delivered")}>📦 Đã giao</Button>
-            <Button danger onClick={() => handleStatusUpdate("cancelled")}>❌ Hủy đơn</Button>
+            <Button
+              onClick={() => handleStatusUpdate("processing")}
+              disabled={["processing", "shipped", "delivered", "cancelled"].includes(order.status)}
+            >
+              ✅ Xác nhận
+            </Button>
+
+            <Button
+              onClick={() => handleStatusUpdate("shipped")}
+              disabled={["shipped", "delivered", "cancelled"].includes(order.status)}
+            >
+              🚚 Đang giao
+            </Button>
+
+            <Button
+              onClick={() => handleStatusUpdate("delivered")}
+              disabled={order.status !== "shipped"}
+            >
+              📦 Đã giao
+            </Button>
+
+            <Button
+              danger
+              onClick={() => handleStatusUpdate("cancelled")}
+              disabled={["shipped", "delivered", "cancelled"].includes(order.status)}
+            >
+              ❌ Hủy đơn
+            </Button>
           </div>
         </Card>
+
 
         <div style={{ marginTop: 24 }}>
           <Link to="/admin/orders" className="ant-btn ant-btn-default">
