@@ -7,6 +7,7 @@ const sendOrderConfirmationEmail = require("../utils/sendEmail");
 const { generateOrderCode } = require("../utils/orderCode");
 const Cart = require("../models/carts");
 const Variant = require("../models/variants");
+const { createOrderSchema } = require("../validate/orderValidate");
 
 exports.getAllOrder = async (req, res) => {
   try {
@@ -87,6 +88,15 @@ exports.getAllByIdUser = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   try {
+    const { error } = createOrderSchema.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      return res.status(400).json({
+        message: "Dữ liệu không hợp lệ",
+        details: error.details.map((err) => err.message),
+      });
+    }
     const {
       user_id,
       items,

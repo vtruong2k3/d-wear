@@ -8,7 +8,11 @@ voucherRouter.post(
   authAdminMiddelware,
   voucherController.createVoucher
 );
-voucherRouter.post("/voucher/check", voucherController.checkVoucher);
+voucherRouter.post(
+  "/voucher/check",
+  authAdminMiddelware,
+  voucherController.checkVoucher
+);
 voucherRouter.get(
   "/voucher",
   authAdminMiddelware,

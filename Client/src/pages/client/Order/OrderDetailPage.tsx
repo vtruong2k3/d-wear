@@ -196,7 +196,9 @@ const OrderDetailPage = () => {
                 <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg">
                   <img
                     src={item.product_id.imageUrls && item.product_id.imageUrls.length > 0
-                      ? item.product_id.imageUrls[0]
+                      ? item.product_id.imageUrls[0].startsWith("http")
+                        ? item.product_id.imageUrls[0]
+                        : `http://localhost:5000/${item.product_id.imageUrls[0].replace(/\\/g, "/")}`
                       : "/default.png"}
                     alt={item.product_id.product_name}
                     className="w-16 h-16 object-cover rounded-lg mr-4"
