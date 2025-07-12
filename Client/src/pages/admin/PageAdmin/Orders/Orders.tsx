@@ -20,6 +20,8 @@ import { formatCurrency } from "../../../../utils/Format";
 import type { ColumnsType } from "antd/es/table";
 import socket from "../../../../sockets/socket";
 import { toast } from "react-toastify";
+import { useLoading } from "../../../../contexts/LoadingContext";
+import type { ErrorType } from "../../../../types/error/IError";
 
 
 const { Option } = Select;
@@ -46,11 +48,13 @@ const OrderList = () => {
   const [dateFilter, setDateFilter] = useState<string>("");
   const [sortTotal, setSortTotal] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
+  const { setLoading } = useLoading()
   const pageSize = 10;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
         const response = await fetchGetAllOrder();
         console.log("Dữ liệu trả về từ API:", response);
         const all = response.orders || [];
@@ -58,13 +62,18 @@ const OrderList = () => {
         setHiddenOrders(hidden);
         setOrders(all);
         filterOrders(all, hidden);
-      } catch (err) {
-        message.error("Lỗi khi tải danh sách đơn hàng");
-        console.error("Lỗi gọi API:", err);
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false)
       }
     };
     fetchData();
-  }, []);
+  }, [setLoading]);
   useEffect(() => {
     // Tham gia phòng admin để nhận đơn mới
     socket.emit("joinRoom", "admin");

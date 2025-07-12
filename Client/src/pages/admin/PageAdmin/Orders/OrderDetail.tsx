@@ -8,7 +8,7 @@ import {
   Typography,
   Row,
   Col,
-  Spin,
+
   Button,
   Modal,
   message,
@@ -18,17 +18,20 @@ import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
 import { fetchGetOrderDetail } from "../../../../services/admin/orderService";
 import type { OrderDetailResponse, IOrder } from "../../../../types/order/IOrder";
+import { useLoading } from "../../../../contexts/LoadingContext";
+
 
 const { Title } = Typography;
 
 const OrderDetail = () => {
+  const { setLoading } = useLoading()
   const { id } = useParams();
   const [data, setData] = useState<OrderDetailResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  console.log(id)
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
         const res = await fetchGetOrderDetail(id);
         setData(res);
       } catch (error) {
@@ -43,7 +46,7 @@ const OrderDetail = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, setLoading]);
   // Màu sắc tương ứng với trạng thái
   const statusColor: Record<string, string> = {
     pending: "default",
@@ -139,14 +142,7 @@ const OrderDetail = () => {
     },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", marginTop: 100 }}>
-        <Spin size="large" />
-        <div style={{ marginTop: 20 }}>Đang tải đơn hàng...</div>
-      </div>
-    );
-  }
+
 
   if (!data || !data.order || !data.orderItems) {
     return (
