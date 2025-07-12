@@ -21,12 +21,20 @@ import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
 import { toast } from "react-toastify";
-import axios from "axios";
+
 import { useCallback } from "react";
+import { fetCheckVoucher } from "../../../services/client/apiVoucherService";
+import type { ErrorType } from "../../../types/error/IError";
+import { createOrder } from "../../../services/client/orderAPI";
+import type { OrderData } from "../../../types/order/IOrder";
+import type { IVoucher } from "../../../types/voucher/IVoucher";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-
+export type VoucherPreview = Pick<
+  IVoucher,
+  "_id" | "code" | "discountType" | "discountValue" | "maxDiscountValue"
+>;
 const Checkout = () => {
   const location = useLocation();
   const selectedItems: string[] = location.state?.selectedItems || [];
@@ -36,7 +44,9 @@ const Checkout = () => {
   );
   const { user, token } = useSelector((state: RootState) => state.authenSlice);
   const [paymentMethod, setPaymentMethod] = useState("COD");
-  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
+
+
+  const [selectedVoucher, setSelectedVoucher] = useState<VoucherPreview | null>(null);
   const [form] = Form.useForm();
   // Thêm state note
   const [note, setNote] = useState("");
@@ -75,19 +85,17 @@ const Checkout = () => {
       }
       try {
         setIsLoading(true);
-        const res = await axios.post(
-          "http://localhost:5000/api/voucher/check",
-          {
-            code,
-            total: rawTotal,
-            user_id: user?._id,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        if (!user?._id) {
+          toast.error("Không tìm thấy thông tin người dùng");
+          return;
+        }
+        console.log(code, rawTotal)
+        const res = await fetCheckVoucher({
+          code,
+          total: rawTotal,
+          user_id: user._id,
+
+        });
 
         const data = res.data;
         setSelectedVoucher({
@@ -105,11 +113,12 @@ const Checkout = () => {
         });
 
         toast.success("Áp dụng mã thành công!");
-      } catch (error: any) {
-        toast.error(
-          error.response?.data?.message ||
-            "Mã voucher không hợp lệ hoặc hết hạn"
-        );
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          'Đã xảy ra lỗi, vui lòng thử lại.';
+        toast.error(errorMessage);
         setSelectedVoucher(null);
       } finally {
         setIsLoading(false);
@@ -122,7 +131,7 @@ const Checkout = () => {
   const discount = useMemo(() => {
     if (!selectedVoucher) return 0;
     if (selectedVoucher.discountType === "percentage") {
-      let percentage = (rawTotal * selectedVoucher.discountValue) / 100;
+      const percentage = (rawTotal * selectedVoucher.discountValue) / 100;
       return Math.min(percentage, selectedVoucher.maxDiscountValue);
     }
     return selectedVoucher.discountValue;
@@ -143,14 +152,25 @@ const Checkout = () => {
     try {
       const values = await form.validateFields();
 
-      const orderData = {
-        user_id: user?._id,
-        email: user?.email,
+      if (!user || !user._id || !user.email) {
+        toast.error("Không tìm thấy thông tin người dùng");
+        return;
+      }
+
+      const payment = paymentMethod.toLowerCase();
+      if (!["cod", "momo", "vnpay"].includes(payment)) {
+        toast.error("Phương thức thanh toán không hợp lệ");
+        return;
+      }
+
+      const orderData: OrderData = {
+        user_id: user._id,
+        email: user.email,
         receiverName: values.name,
         shippingAddress: values.address,
         phone: values.phone,
-        paymentMethod: paymentMethod.toLowerCase(), // "cod" hoặc "vnpay"
-        voucher_id: selectedVoucher?._id || null,
+        paymentMethod: payment as "cod" | "momo" | "vnpay",
+        voucher_id: selectedVoucher?._id ?? null,
         items: itemsToCheckout.map((item) => ({
           product_id: item.product_id._id,
           variant_id:
@@ -160,34 +180,28 @@ const Checkout = () => {
           quantity: item.quantity,
           price: item.price,
         })),
-        note: note || "", // lấy từ state note
+        note: note ?? "",
       };
 
       console.log("ORDER DATA gửi đi:", JSON.stringify(orderData, null, 2));
-      console.log("TOKEN:", token);
+      setIsLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:5000/api/orders",
-        orderData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await createOrder(orderData); // THÊM token nếu createOrder yêu cầu
 
       toast.success("Đặt hàng thành công!");
       navigate("/orders");
       console.log("Đơn hàng đã tạo:", res.data);
-    } catch (error: any) {
-      console.error("❌ Lỗi khi gửi đơn hàng:", error);
-      console.error("Chi tiết lỗi response:", error.response?.data);
-      toast.error(
-        error.response?.data?.message ||
-          "Vui lòng điền đầy đủ thông tin giao hàng hoặc kiểm tra dữ liệu"
-      );
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className="container mt-4">
@@ -246,9 +260,9 @@ const Checkout = () => {
                           item.product_id.imageUrls?.[0]?.startsWith("http")
                             ? item.product_id.imageUrls[0]
                             : `http://localhost:5000/${item.product_id.imageUrls?.[0]?.replace(
-                                /\\/g,
-                                "/"
-                              )}`
+                              /\\/g,
+                              "/"
+                            )}`
                         }
                         alt={item.product_id.product_name}
                         width={100}
@@ -262,11 +276,11 @@ const Checkout = () => {
                       <Space direction="vertical" size="small">
                         <div>
                           <Text>Kích thước: </Text>
-                          <Tag>{item.size || "M"}</Tag>
+                          <Tag>{item.variant_id.size || "M"}</Tag>
                         </div>
                         <div>
                           <Text>Màu sắc: </Text>
-                          <Tag>{item.color || "Đen"}</Tag>
+                          <Tag>{item.variant_id.color || "Đen"}</Tag>
                         </div>
                         <div>
                           <Text>Số lượng: </Text>

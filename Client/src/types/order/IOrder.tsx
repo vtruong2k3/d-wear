@@ -54,6 +54,26 @@ export interface OrderDetailResponse {
     orderItems: OrderItem[];
 }
 
+export interface OrderItems {
+    product_id: string;
+    variant_id: string;
+    quantity: number;
+    price: number;
+}
+
+export interface OrderData {
+    user_id: string;
+    email: string;
+    receiverName: string;
+    shippingAddress: string;
+    phone: string;
+    paymentMethod: "cod" | "momo" | "vnpay";
+    voucher_id: string | null;
+    items: OrderItems[];
+    note: string;
+}
+
+
 export interface GetOrdersResponse {
     orders: IOrder[];
 }

@@ -1,5 +1,11 @@
 const Voucher = require("../models/vouchers");
 const voucherValidate = require("../validate/voucherValidate");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc"); // ✅ Cần khai báo plugin utc
+const timezone = require("dayjs/plugin/timezone"); // ✅ Và timezone
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // POST /api/voucher/check
 exports.checkVoucher = async (req, res) => {
@@ -7,10 +13,12 @@ exports.checkVoucher = async (req, res) => {
     const { code, total } = req.body;
     const userId = req.user?.id || req.body.user_id;
 
-    if (!code || typeof total !== "number") {
-      return res
-        .status(400)
-        .json({ message: "Thiếu mã hoặc tổng tiền không hợp lệ" });
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ message: "Mã voucher không hợp lệ" });
+    }
+
+    if (typeof total !== "number" || total <= 0) {
+      return res.status(400).json({ message: "Tổng tiền không hợp lệ" });
     }
 
     if (!userId) {
@@ -24,15 +32,24 @@ exports.checkVoucher = async (req, res) => {
     if (!voucher || !voucher.isActive) {
       return res
         .status(400)
-        .json({ message: "Voucher không hợp lệ hoặc bị vô hiệu" });
+        .json({ message: "Voucher không tồn tại hoặc đã bị vô hiệu hóa" });
     }
 
-    const now = new Date();
-    if (now < voucher.startDate || now > voucher.endDate) {
+    // ✅ Thời gian hiện tại theo Việt Nam
+    const nowVN = dayjs().tz("Asia/Ho_Chi_Minh");
+
+    const startVN = dayjs(voucher.startDate).tz("Asia/Ho_Chi_Minh");
+    const endVN = dayjs(voucher.endDate).tz("Asia/Ho_Chi_Minh");
+
+    if (nowVN.isBefore(startVN)) {
+      return res.status(400).json({ message: "Voucher chưa bắt đầu áp dụng" });
+    }
+
+    if (nowVN.isAfter(endVN)) {
       return res.status(400).json({ message: "Voucher đã hết hạn" });
     }
 
-    // ✅ Check nếu user đã từng dùng
+    // ✅ Kiểm tra đã dùng chưa
     const alreadyUsed = voucher.usedUsers?.some(
       (usedId) => usedId.toString() === userId.toString()
     );
@@ -43,16 +60,25 @@ exports.checkVoucher = async (req, res) => {
         .json({ message: "Bạn đã sử dụng voucher này rồi" });
     }
 
-    if (voucher.maxUser > 0 && voucher.maxUser <= 0) {
-      return res.status(400).json({ message: "Voucher đã hết lượt sử dụng" });
+    // ✅ Kiểm tra số lượt tối đa
+    if (typeof voucher.maxUser === "number" && voucher.maxUser > 0) {
+      const usedCount = voucher.usedUsers?.length || 0;
+      if (usedCount >= voucher.maxUser) {
+        return res.status(400).json({ message: "Voucher đã hết lượt sử dụng" });
+      }
     }
 
+    // ✅ Kiểm tra giá trị tối thiểu
     if (total < voucher.minOrderValue) {
+      const formattedMin = new Intl.NumberFormat("vi-VN").format(
+        voucher.minOrderValue
+      );
       return res.status(400).json({
-        message: `Đơn hàng phải từ ${voucher.minOrderValue.toLocaleString()}₫ để áp dụng voucher`,
+        message: `Đơn hàng phải từ ${formattedMin}₫ để áp dụng voucher`,
       });
     }
 
+    // ✅ Tính giảm giá
     let discount = 0;
     if (voucher.discountType === "percentage") {
       discount = (total * voucher.discountValue) / 100;
@@ -93,8 +119,7 @@ exports.createVoucher = async (req, res) => {
       minOrderValue,
       maxDiscountValue,
       maxUser,
-      startDate,
-      endDate,
+
       isActive,
     } = req.body;
 
@@ -111,8 +136,11 @@ exports.createVoucher = async (req, res) => {
       minOrderValue,
       maxDiscountValue,
       maxUser,
-      startDate,
-      endDate,
+      startDate: dayjs(req.body.startDate)
+        .tz("Asia/Ho_Chi_Minh")
+        .utc()
+        .toDate(),
+      endDate: dayjs(req.body.endDate).tz("Asia/Ho_Chi_Minh").utc().toDate(),
       isActive,
     });
 

@@ -2,6 +2,7 @@ const express = require("express");
 const voucherRouter = express.Router();
 const voucherController = require("../controllers/voucher.controller");
 const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
+const authUserMiddelware = require("../middlewares/auth.middleware");
 
 voucherRouter.post(
   "/voucher",
@@ -10,7 +11,7 @@ voucherRouter.post(
 );
 voucherRouter.post(
   "/voucher/check",
-  authAdminMiddelware,
+  authUserMiddelware,
   voucherController.checkVoucher
 );
 voucherRouter.get(

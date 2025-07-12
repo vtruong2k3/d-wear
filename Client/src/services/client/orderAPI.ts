@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {
   GetOrdersResponse,
+  OrderData,
   OrderDetailResponse,
 } from "../../types/order/IOrder";
 
@@ -14,4 +15,9 @@ export const getOrderDetail = async (
 ): Promise<OrderDetailResponse> => {
   const res = await axios.get(`/api/orders/items/${orderId}`);
   return res.data;
+};
+
+export const createOrder = async (orderData: OrderData) => {
+  const res = await axios.post("/api/orders", orderData);
+  return res;
 };

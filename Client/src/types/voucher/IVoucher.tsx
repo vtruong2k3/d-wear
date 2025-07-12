@@ -31,3 +31,9 @@ export interface VoucherResponse {
         totalPages: number;
     };
 }
+export interface CheckVoucherPayload {
+    code: string;
+    total: number;
+    user_id: string | undefined;
+
+}
