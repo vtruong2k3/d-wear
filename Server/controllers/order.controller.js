@@ -186,6 +186,7 @@ exports.createOrder = async (req, res) => {
         details: error.details.map((err) => err.message),
       });
     }
+
     const {
       user_id,
       items,
@@ -195,10 +196,10 @@ exports.createOrder = async (req, res) => {
       shippingAddress,
       phone,
       note,
-      email, //  Nếu chưa dùng auth thì lấy email từ req.body
+      email,
     } = req.body;
 
-    const emailUser = req.user?.email || email; //  Ưu tiên từ JWT, fallback qua body
+    const emailUser = req.user?.email || email;
     const userId = req.user?.id || user_id;
 
     if (!userId || !items || items.length === 0) {
@@ -303,13 +304,15 @@ exports.createOrder = async (req, res) => {
 
     newOrder.orderItems = orderItemIds;
     await newOrder.save();
-    //  Xoá item khỏi giỏ hàng
+
+    // Xoá item khỏi giỏ hàng
     await Cart.deleteMany({
       user_id: user_id,
       variant_id: { $in: items.map((item) => item.variant_id) },
     });
+    console.log("🗑 Đã xoá các biến thể khỏi giỏ hàng.");
 
-    //  Cập nhật tồn kho
+    // Cập nhật tồn kho
     await Promise.all(
       items.map(async (item) => {
         const updated = await Variant.findOneAndUpdate(
@@ -324,25 +327,25 @@ exports.createOrder = async (req, res) => {
         }
       })
     );
+    console.log("📦 Tồn kho đã được cập nhật.");
+
     // Gửi email
     try {
       if (emailUser) {
         await sendOrderConfirmationEmail(emailUser, newOrder);
       }
-    } catch (emailError) {
-      console.error("❌ Lỗi khi gửi email xác nhận:", emailError.message);
-    }
+    } catch (emailError) {}
 
     // Emit socket
     const io = getIO();
     io.to("admin").emit("newOrder", { orders: newOrder });
     io.to("user").emit("newOrder", { orders: newOrder });
+
     return res.status(201).json({
       message: "Tạo đơn hàng thành công",
       order: newOrder,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi tạo đơn hàng:", error);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
