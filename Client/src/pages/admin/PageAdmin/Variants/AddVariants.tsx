@@ -90,6 +90,7 @@ const AddVariant: React.FC<AddVariantModalProps> = ({ visible, onCancel, onSubmi
             parser={(value) => value!.replace(/\$\s?|,*/g, '')}
           />
         </Form.Item>
+        
       </Form>
     </Modal>
   );

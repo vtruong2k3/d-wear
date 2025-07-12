@@ -1,57 +1,57 @@
 // src/pages/admin/Variants/index.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Card, Image, Input, Popconfirm, Table, Tag, Typography, message } from 'antd';
 import { DeleteOutlined, SearchOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import type { IVariants } from '../../../../types/IVariants';
 import AddVariants from './AddVariants';
 import EditVariant from './EditVariant';
 import { toast } from 'react-toastify';
+import { useLoading } from '../../../../contexts/LoadingContext';
+import type { ErrorType } from '../../../../types/error/IError';
+import { fetchAllVariants } from '../../../../services/variantService';
 
 const { Title } = Typography;
 
-const VariantsPage: React.FC = () => {
+const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingVariant, setEditingVariant] = useState<IVariants | null>(null);
+  const { setLoading } = useLoading();
 
-      const mockData: IVariants[] = [
-      {
-        id: 1,
-        product_id: 'PROD001',
-        size: 'L',
-        color: 'Đỏ',
-        stock: 50,
-        price: 299000,
-        imageVariant: ['https://via.placeholder.com/150x150/ff0000/ffffff?text=Red+L']
-      },
-      {
-        id: 2,
-        product_id: 'PROD001',
-        size: 'M',
-        color: 'Xanh',
-        stock: 30,
-        price: 299000,
-        imageVariant: ['https://via.placeholder.com/150x150/0000ff/ffffff?text=Blue+M']
-      },
-      {
-        id: 3,
-        product_id: 'PROD002',
-        size: 'XL',
-        color: 'Đen',
-        stock: 25,
-        price: 459000,
-        imageVariant: ['https://via.placeholder.com/150x150/000000/ffffff?text=Black+XL']
-      }
-    ];
+  // Fetch dữ liệu biến thể từ API khi load component
+  const fetchVariants = useCallback(async () => {
+     try {
+       setLoading(true);
+       const data = await fetchAllVariants();
+       console.log(data);
+       
+       setVariants(data);
+     } catch (error) {
+       const errorMessage =
+         (error as ErrorType).response?.data?.message ||
+         (error as ErrorType).message ||
+         "Đã xảy ra lỗi, vui lòng thử lại.";
+       toast.error(errorMessage);
+     } finally {
+       setLoading(false);
+     }
+   }, [setLoading]);
   useEffect(() => {
-    setVariants(mockData);
-  }, []);
+    fetchVariants();
+  }, [fetchVariants]);
 
-  const handleDelete = (id: number | string) => {
-    setVariants(prev => prev.filter(v => v.id !== id));
-    message.success('Xóa biến thể thành công!');
+
+  const handleDelete = async (id: number | string) => {
+    try {
+      await axios.delete(`/api/variants/${id}`);
+      setVariants(prev => prev.filter(v => v.id !== id));
+      message.success('Xóa biến thể thành công!');
+    } catch (error) {
+      message.error('Xóa thất bại!');
+    }
   };
 
   const handleAdd = () => {
@@ -63,19 +63,29 @@ const VariantsPage: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleAddSubmit = (values: any) => {
-    const newVariant = { id: Date.now(), imageVariant: [], ...values };
-    setVariants(prev => [...prev, newVariant]);
-    setShowAddModal(false);
-    toast('Thêm mới thành công!');
+  const handleAddSubmit = async (values: any) => {
+    try {
+      const res = await axios.post('/api/variant', values);
+      setVariants(prev => [...prev, res.data]);
+      console.log(variants);
+      
+      setShowAddModal(true);
+      toast('Thêm mới thành công!');
+    } catch (error) {
+      message.error('Thêm biến thể thất bại!');
+    }
   };
 
-  const handleEditSubmit = (values: any) => {
+  const handleEditSubmit = async (values: any) => {
     if (!editingVariant) return;
-    const updated = { ...editingVariant, ...values };
-    setVariants(prev => prev.map(v => v.id === updated.id ? updated : v));
-    setShowEditModal(false);
-    message.success('Cập nhật thành công!');
+    try {
+      const res = await axios.put(`/api/variant/${editingVariant.id}`, values);
+      setVariants(prev => prev.map(v => v.id === editingVariant.id ? res.data : v));
+      setShowEditModal(false);
+      message.success('Cập nhật thành công!');
+    } catch (error) {
+      message.error('Cập nhật thất bại!');
+    }
   };
 
   const filteredVariants = variants.filter(variant =>
@@ -116,7 +126,7 @@ const VariantsPage: React.FC = () => {
       key: 'imageVariant',
       render: (images: string[]) => (
         <div className="flex gap-1">
-          {images.slice(0, 2).map((img, index) => (
+          {images?.slice(0, 2).map((img, index) => (
             <Image
               key={index}
               width={40}
@@ -197,4 +207,4 @@ const VariantsPage: React.FC = () => {
   );
 };
 
-export default VariantsPage;
+export default Variants;
