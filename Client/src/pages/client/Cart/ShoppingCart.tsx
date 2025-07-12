@@ -94,7 +94,7 @@ const ShoppingCart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 text-center mb-2">
@@ -120,8 +120,8 @@ const ShoppingCart = () => {
         ) : (
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
+                <div className="bg-gray-50 px-6 py-4 ">
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -153,7 +153,7 @@ const ShoppingCart = () => {
                         />
 
                         <div className="flex-shrink-0">
-                          <div className="w-24 h-24 ml-5 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                          <div className="w-24 h-24 ml-5 rounded-lg overflow-hidden bg-gray-100 ">
                             <img
                               src={
                                 cart.product_id.imageUrls && cart.product_id.imageUrls.length > 0
@@ -245,11 +245,11 @@ const ShoppingCart = () => {
             </div>
 
             <div className="lg:col-span-4 mt-8 lg:mt-0">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 sticky top-8">
+              <div className="bg-white rounded-xl shadow-sm  sticky top-8">
                 <div className="p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Tổng đơn hàng</h2>
 
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="bg-green-50  rounded-lg p-4 mb-6">
                     <div className="flex items-center">
                       <svg
                         className="w-5 h-5 text-green-600 mr-2"
