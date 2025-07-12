@@ -1,28 +1,36 @@
-// src/redux/slices/cartSlice.ts
+// src/redux/features/client/cartSlice.ts
 
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
-import { addToCartThunk, getCartThunk } from "./thunks/cartThunk";
-import { createSlice } from "@reduxjs/toolkit";
+
+import {
+  addToCartThunk,
+  deleteCartItemThunk,
+  getCartThunk,
+  updateCartQuantityThunk,
+} from "./thunks/cartThunk";
 import type { ICartItem } from "../../../types/cart/ICart";
 
-interface CartItem {
-  _id: string;
-  product_id: string;
-  variant_id: string;
-  quantity: number;
-  price: number;
-}
+// export interface ICartItem {
+//   _id: string;
+//   user_id: string;
+//   product_id: IProduct;
+//   variant_id: IVariant;
+//   quantity: number;
+//   price: number;
+//   totalPrice: number;
+//   createdAt: string;
+//   updatedAt: string;
+// }
 
 interface CartState {
-  items: CartItem[];
   cartItems: ICartItem[];
   loading: boolean;
   error: string | null;
-  totalAmount: number; // ✅ Add this
+  totalAmount: number;
 }
 
 const initialState: CartState = {
-  items: [],
   cartItems: [],
   loading: false,
   error: null,
@@ -35,42 +43,111 @@ const cartSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Thêm sản phẩm vào giỏ
       .addCase(addToCartThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(addToCartThunk.fulfilled, (state, action) => {
-        const newItem = action.payload;
-        const existingIndex = state.items.findIndex(
-          (item) => item.variant_id === newItem.variant_id
-        );
 
-        if (existingIndex !== -1) {
-          state.items[existingIndex].quantity = newItem.quantity;
-        } else {
-          state.items.push(newItem);
+      .addCase(
+        addToCartThunk.fulfilled,
+        (state, action: PayloadAction<ICartItem>) => {
+          const newItem = action.payload;
+          const existingIndex = state.cartItems.findIndex(
+            (item) => item.variant_id._id === newItem.variant_id._id
+          );
+
+          if (existingIndex !== -1) {
+            // Cập nhật số lượng và tổng tiền nếu đã tồn tại
+            const existing = state.cartItems[existingIndex];
+            state.cartItems[existingIndex] = {
+              ...existing,
+              quantity: newItem.quantity,
+              totalPrice: newItem.price * newItem.quantity,
+              updatedAt: new Date().toISOString(),
+            };
+          } else {
+            // Thêm mới item
+            state.cartItems.push({
+              ...newItem,
+              totalPrice: newItem.price * newItem.quantity,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          }
+
+          state.loading = false;
         }
-
-        state.loading = false;
-      })
+      )
       .addCase(addToCartThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         toast.error(state.error);
-      });
+      })
 
-    builder
+      // Lấy giỏ hàng
       .addCase(getCartThunk.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      .addCase(getCartThunk.fulfilled, (state, action) => {
+      .addCase(
+        getCartThunk.fulfilled,
+        (
+          state,
+          action: PayloadAction<{ carts: ICartItem[]; totalAmount: number }>
+        ) => {
+          state.loading = false;
+          state.cartItems = action.payload.carts;
+          state.totalAmount = action.payload.totalAmount;
+        }
+      )
+      .addCase(
+        deleteCartItemThunk.fulfilled,
+        (state, action: PayloadAction<string>) => {
+          state.cartItems = state.cartItems.filter(
+            (item) => item._id !== action.payload
+          );
+        }
+      )
+      .addCase(getCartThunk.rejected, (state, action) => {
         state.loading = false;
-        state.cartItems = action.payload.carts;
-        console.log(state.cartItems);
-        state.totalAmount = action.payload.totalAmount;
+        state.error = action.payload as string;
+        toast.error(state.error);
       })
-      .addCase(getCartThunk.rejected, (state) => {
+
+      // Cập nhật số lượng sản phẩm trong giỏ
+      .addCase(updateCartQuantityThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        updateCartQuantityThunk.fulfilled,
+        (state, action: PayloadAction<ICartItem>) => {
+          state.loading = false;
+          const updated = action.payload;
+
+          const idx = state.cartItems.findIndex(
+            (item) => item._id === updated._id // Tốt nhất nên so sánh theo _id của chính cart item
+          );
+
+          if (idx !== -1) {
+            state.cartItems[idx] = {
+              ...state.cartItems[idx],
+              quantity: updated.quantity,
+              totalPrice: updated.price * updated.quantity,
+              updatedAt: new Date().toISOString(),
+            };
+          } else {
+            // fallback thật sự cần thiết?
+            // bạn có thể bỏ đoạn này để tránh "tự thêm mới"
+            console.warn("Không tìm thấy item cần cập nhật, không thêm mới");
+          }
+        }
+      )
+      .addCase(updateCartQuantityThunk.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload as string;
+        toast.error(state.error);
       });
   },
 });

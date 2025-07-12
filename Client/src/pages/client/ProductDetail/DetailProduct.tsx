@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Backdrop, CircularProgress, Grow } from "@mui/material";
 
@@ -34,7 +34,7 @@ import { addToCartThunk } from "../../../redux/features/client/thunks/cartThunk"
 const DetailProduct = () => {
   const divRef = useRef<HTMLDivElement | null>(null);
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+
   const dispatch = useDispatch<AppDispatch>();
   const { requireAuth } = useAuth();
 

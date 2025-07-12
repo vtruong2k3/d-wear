@@ -2,20 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../redux/store";
 
-import { toast } from "react-toastify";
+
 import useAuth from "../../../hooks/Client/useAuth";
 import { useNavigate } from "react-router-dom";
-import { getCartThunk } from "../../../redux/features/client/thunks/cartThunk";
+import { deleteCartItemThunk, getCartThunk, updateCartQuantityThunk } from "../../../redux/features/client/thunks/cartThunk";
 import { formatCurrency } from "../../../utils/Format";
+import type { ICartItem } from "../../../types/cart/ICart";
+import toast from "react-hot-toast";
 
 
-interface CartItem {
-  id: number;
-  title: string;
-  price: number;
-  thumbnail: string;
-  quantity: number;
-}
+
 
 const ShoppingCart = () => {
 
@@ -23,40 +19,51 @@ const ShoppingCart = () => {
   const { isAuthenticated } = useAuth();
 
   const { cartItems } = useSelector((state: RootState) => state.cartSlice);
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     dispatch(getCartThunk());
   }, [dispatch])
   const selectedTotal = useMemo(() => {
-    console.log(cartItems)
     return cartItems
-      .filter((item) => selectedItems.includes(item._id))
-      .reduce((sum, item) => sum + item.price * item.quantity, 0);
+      .filter((item: ICartItem) => item._id && selectedItems.includes(item._id))
+      .reduce((sum, item) => {
+        const price = Number(item.price);
+        const qty = Number(item.quantity);
+        return sum + (isNaN(price) || isNaN(qty) ? 0 : price * qty);
+      }, 0);
   }, [cartItems, selectedItems]);
 
-  // const handleAddToCart = (cart: CartItem) => {
-  //   dispatch(addToCartThunk({ ...cart, quantity: cart.quantity + 1 }));
-  //   toast.success("Tăng số lượng thành công");
-  // };
 
-  const handleReduceFormCart = (cart: CartItem) => {
-    if (cart.quantity <= 1) {
-      toast.warning("Không thể giảm tiếp số lượng!");
-      return;
-    }
-    // dispatch(reduceFormCart(cart));
-    toast.success("Giảm số lượng thành công");
+  const handleAddToCart = (cartItems: ICartItem) => {
+    console.log("Cart items:", cartItems.variant_id._id);
+    dispatch(updateCartQuantityThunk({
+      product_id: cartItems.product_id._id,
+      variant_id: cartItems.variant_id._id, // hoặc _id của variant
+      quantity: cartItems.quantity + 1
+    }))
+      .unwrap()
+      .catch(() => {
+        toast.error("Tăng số lượng thất bại");
+      });
   };
 
-  const handleDeleteCart = (id: number) => {
-    // dispatch(deleteFormCart(id));
-    setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
-    toast.success("Xóa thành công");
-  };
 
-  const handleSelectItem = (id: number) => {
+  const handleReduceFormCart = (cartItems: ICartItem) => {
+
+
+    dispatch(updateCartQuantityThunk({
+      product_id: cartItems.product_id._id,
+      variant_id: cartItems.variant_id._id, // hoặc _id của variant
+      quantity: cartItems.quantity - 1
+    }))
+      .unwrap()
+      .catch(() => {
+        toast.error("Giảm số lượng thất bại");
+      });
+  };
+  const handleSelectItem = (id: string) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
@@ -69,15 +76,17 @@ const ShoppingCart = () => {
       setSelectedItems(cartItems.map((item) => item._id));
     }
   };
-
+  const handleDeleteCart = (cartId: string) => {
+    dispatch(deleteCartItemThunk(cartId));
+  };
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
-      toast.warning("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
+      toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
       return;
     }
 
     if (!isAuthenticated) {
-      toast.info("Vui lòng đăng nhập để thanh toán");
+      toast.error("Vui lòng đăng nhập để thanh toán");
       navigate("/login");
     } else {
       navigate("/checkout", { state: { selectedItems } });
@@ -85,7 +94,7 @@ const ShoppingCart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 text-center mb-2">
@@ -111,8 +120,8 @@ const ShoppingCart = () => {
         ) : (
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
+                <div className="bg-gray-50 px-6 py-4 ">
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -130,7 +139,7 @@ const ShoppingCart = () => {
                   {cartItems.map((cart) => (
                     <div
                       key={cart._id}
-                      className={`p-6 transition-all duration-200 ${selectedItems.includes(cart.id)
+                      className={`p-6 transition-all duration-200 ${selectedItems.includes(cart._id)
                         ? "bg-blue-50 border-l-4 border-blue-500"
                         : "hover:bg-gray-50"
                         }`}
@@ -144,7 +153,7 @@ const ShoppingCart = () => {
                         />
 
                         <div className="flex-shrink-0">
-                          <div className="w-24 h-24 ml-5 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                          <div className="w-24 h-24 ml-5 rounded-lg overflow-hidden bg-gray-100 ">
                             <img
                               src={
                                 cart.product_id.imageUrls && cart.product_id.imageUrls.length > 0
@@ -236,11 +245,11 @@ const ShoppingCart = () => {
             </div>
 
             <div className="lg:col-span-4 mt-8 lg:mt-0">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 sticky top-8">
+              <div className="bg-white rounded-xl shadow-sm  sticky top-8">
                 <div className="p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Tổng đơn hàng</h2>
 
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="bg-green-50  rounded-lg p-4 mb-6">
                     <div className="flex items-center">
                       <svg
                         className="w-5 h-5 text-green-600 mr-2"
@@ -276,7 +285,7 @@ const ShoppingCart = () => {
                     </div>
                     <div className="flex justify-between text-gray-600 text-sm">
                       <span>Tạm tính</span>
-                      <span>${selectedTotal.toFixed(2)}</span>
+                      <span>{formatCurrency(selectedTotal)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600 text-sm">
                       <span>Phí vận chuyển</span>
@@ -284,7 +293,7 @@ const ShoppingCart = () => {
                         {selectedTotal >= 100 ? (
                           <span className="text-green-600 font-semibold">Miễn phí</span>
                         ) : (
-                          "$10.00"
+                          "30.000đ"
                         )}
                       </span>
                     </div>
@@ -303,7 +312,7 @@ const ShoppingCart = () => {
                   <button
                     onClick={handleCheckout}
                     disabled={selectedItems.length === 0}
-                    className={`w-full mt-6 py-3 rounded-lg text-white font-semibold ${selectedItems.length === 0
+                    className={`w-full h-16 mt-6 py-3 rounded-lg text-white font-semibold ${selectedItems.length === 0
                       ? "bg-gray-300 cursor-not-allowed"
                       : "bg-black hover:bg-gray-900"
                       } transition-colors`}
@@ -319,21 +328,7 @@ const ShoppingCart = () => {
                 </div>
               </div>
 
-              {/* Ghi chú đơn hàng */}
-              <div className="mt-6">
-                <label
-                  htmlFor="order-note"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Ghi chú cho người bán (tuỳ chọn)
-                </label>
-                <textarea
-                  id="order-note"
-                  rows={4}
-                  className="w-full rounded-md border border-gray-300 p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                  placeholder="Nhập ghi chú đặc biệt cho đơn hàng..."
-                />
-              </div>
+
             </div>
           </div>
         )}

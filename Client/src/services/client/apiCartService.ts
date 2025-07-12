@@ -5,8 +5,14 @@ interface UpdateQuantityPayload {
   variant_id: string;
   quantity: number;
 }
+
+export const deleteProductCart = async (id: string | undefined) => {
+  const res = await axios.delete(`/api/cart/items/${id}`);
+  return res.data;
+};
 export const updateCartQuantity = async (payload: UpdateQuantityPayload) => {
-  const response = await axios.patch("/api/cart/items", payload);
+  console.log(payload);
+  const response = await axios.put("/api/cart/items", payload);
   return response.data; // { message, cart }
 };
 export const fetchAddToCart = async (data: AddToCartPayload) => {
