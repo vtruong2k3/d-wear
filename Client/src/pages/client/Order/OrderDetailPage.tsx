@@ -9,6 +9,7 @@ import { getOrderDetail } from '../../../services/client/orderAPI';
 import type { ErrorType } from '../../../types/error/IError';
 import { useLoading } from '../../../contexts/LoadingContext';
 import { formatCurrency } from '../../../utils/Format';
+import socket from '../../../sockets/socket';
 
 
 
@@ -109,7 +110,26 @@ const OrderDetailPage = () => {
       <div className={`w-4 h-4 rounded-full ${colorClass} inline-block mr-2`} />
     );
   };
+  useEffect(() => {
+    if (!orderId) return;
 
+    socket.emit('joinRoom', orderId); // ✅ Tham gia room theo orderId
+
+    socket.on('orderStatusUpdate', (data) => {
+      if (data?.orderId === orderId) {
+        setOrder((prev) => prev ? {
+          ...prev,
+          order: { ...prev.order, status: data.status }
+        } : prev);
+        toast.success(`Trạng thái đơn hàng đã cập nhật: ${data.status}`);
+      }
+    });
+
+    return () => {
+      socket.emit('leaveRoom', orderId); // ✅ Rời room khi unmount
+      socket.off('orderStatusUpdate');
+    };
+  }, [orderId]);
 
   if (error) {
     return (

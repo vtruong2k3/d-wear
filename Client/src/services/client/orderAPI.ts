@@ -12,6 +12,6 @@ export const getOrders = async (): Promise<GetOrdersResponse> => {
 export const getOrderDetail = async (
   orderId: string | undefined
 ): Promise<OrderDetailResponse> => {
-  const res = await axios.get(`/api/orders/${orderId}`);
+  const res = await axios.get(`/api/orders/items/${orderId}`);
   return res.data;
 };

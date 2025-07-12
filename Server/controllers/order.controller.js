@@ -9,6 +9,65 @@ const Cart = require("../models/carts");
 const Variant = require("../models/variants");
 const { createOrderSchema } = require("../validate/orderValidate");
 
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status: newStatus } = req.body;
+
+    if (!newStatus) {
+      return res.status(400).json({ message: "Trạng thái là bắt buộc" });
+    }
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: "Đơn hàng không tồn tại" });
+    }
+
+    const currentStatus = order.status;
+
+    // ✅ Các trạng thái được phép chuyển tiếp
+    const validTransitions = {
+      pending: ["processing", "cancelled"],
+      processing: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [],
+      cancelled: [],
+    };
+
+    const allowedStatuses = validTransitions[currentStatus] || [];
+
+    if (!allowedStatuses.includes(newStatus)) {
+      return res.status(400).json({
+        message: `Không thể chuyển trạng thái từ "${currentStatus}" sang "${newStatus}"`,
+      });
+    }
+
+    // ✅ Cập nhật trạng thái
+    order.status = newStatus;
+    await order.save();
+
+    // 🔥 Gửi socket để client cập nhật real-time
+    const io = getIO();
+    io.to(id).emit("orderStatusUpdate", {
+      orderId: id,
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return res.json({
+      message: "Cập nhật trạng thái đơn hàng thành công",
+      orderId: id,
+      status: newStatus,
+    });
+  } catch (error) {
+    console.error("❌ Lỗi khi cập nhật trạng thái:", error.message);
+    return res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
 exports.getAllOrder = async (req, res) => {
   try {
     const result = await Order.find().sort({ createdAt: -1 }).lean();
@@ -40,6 +99,36 @@ exports.getOrderById = async (req, res) => {
     // Nếu là user thì không được xem đơn hàng của người khác
     if (order.user_id.toString() !== userId && !req.user.isAdmin) {
       return res.status(403).json({ message: "Không có quyền truy cập" });
+    }
+
+    // Lấy chi tiết sản phẩm trong đơn
+    const orderItems = await OrderItem.find({ order_id: orderId })
+      .populate("product_id", "product_name imageUrls")
+      .populate("variant_id", "size color")
+      .lean();
+
+    return res.status(200).json({
+      message: "Lấy chi tiết đơn hàng thành công",
+      order,
+      orderItems,
+    });
+  } catch (error) {
+    console.error("❌ Lỗi getOrderById:", error.message);
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+exports.getOrderByIdAdmin = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+
+    // Lấy đơn hàng theo id
+    const order = await Order.findById(orderId).lean();
+
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
 
     // Lấy chi tiết sản phẩm trong đơn
@@ -247,7 +336,7 @@ exports.createOrder = async (req, res) => {
     // Emit socket
     const io = getIO();
     io.to("admin").emit("newOrder", { orders: newOrder });
-
+    io.to("user").emit("newOrder", { orders: newOrder });
     return res.status(201).json({
       message: "Tạo đơn hàng thành công",
       order: newOrder,

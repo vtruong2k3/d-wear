@@ -15,7 +15,7 @@ export interface IOrder {
     paymentMethod: 'cod' | 'vnpay' | 'banking'; // hoặc bạn mở rộng thêm
     paymentStatus: 'paid' | 'unpaid';
 
-    status: 'pending' | 'processing' | 'completed' | 'cancelled'; // tùy logic
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'; // tùy logic
 
     total: number;        // Tổng giá trước giảm giá
     discount: number;     // Giảm giá
