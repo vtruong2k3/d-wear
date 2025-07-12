@@ -123,9 +123,8 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCartQuantity = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { product_id, variant_id, quantity } = req.body;
-
+    const userId = req.user.id || req.body.user_id;
     // Validate dữ liệu đầu vào
     const { error } = cartValidate.addTocart.validate(
       { product_id, variant_id, quantity },

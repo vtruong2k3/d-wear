@@ -12,7 +12,9 @@ import type { RootState } from "../../../redux/store";
 // import CartModal from "../../../pages/client/Cart/CartModal";
 import '../../../styles/activeMenu.css'
 const Header = () => {
-  const cartItems = useSelector((state: RootState) => state.cartSlice.cartItems);
+  const cartItemsCount = useSelector(
+    (state: RootState) => state.cartSlice.cartItems.length
+  );
   const isLogin = useSelector((state: RootState) => state.authenSlice.isLogin);
 
   // const [openCart, setOpenCart] = useState(false);
@@ -100,7 +102,7 @@ const Header = () => {
             >
               <Link to={`/shopping-cart`}>
                 <span className="absolute -top-[8px] -right-[10px] size-[18px] bg-black text-white rounded-full text-xs grid place-items-center">
-                  {cartItems.length}
+                  {cartItemsCount}
                 </span>
                 <img className="size-5" src={ico_bag} alt="Cart" /></Link>
             </div>

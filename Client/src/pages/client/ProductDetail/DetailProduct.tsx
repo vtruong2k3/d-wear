@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Backdrop, CircularProgress, Grow } from "@mui/material";
 
 
@@ -18,21 +18,24 @@ import img_payment from "../../../assets/images/img_payment.avif";
 
 import apiServiceProduct from "../../../services/client/apiServiceProduct";
 import useAuth from "../../../hooks/Client/useAuth";
-import { addToCart } from "../../../redux/features/client/cartSlice";
+
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import type { IProductDetail } from "../../../types/IProducts";
 import type { IVariantDetail } from "../../../types/IVariants";
 import toast from "react-hot-toast";
 import '../../../styles/productDetail.css'
-import type { RootState } from "../../../redux/store";
+
 import star from "../../../assets/images/ico_star_active.png";
 import { formatCurrency } from "../../../utils/Format";
+
+import type { AppDispatch } from "../../../redux/store";
+import { addToCartThunk } from "../../../redux/features/client/thunks/cartThunk";
 const DetailProduct = () => {
   const divRef = useRef<HTMLDivElement | null>(null);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { requireAuth } = useAuth();
 
   const [dataDetail, setDataDetail] = useState<IProductDetail | null>(null);
@@ -48,7 +51,7 @@ const DetailProduct = () => {
     dataDetail?.category_id || "",
     dataDetail?._id || ""
   );
-  const user = useSelector((state: RootState) => state.authenSlice.user)
+
   // Lấy danh sách màu sắc và size duy nhất
   // const uniqueColors = [...new Set(variants.map(v => v.color).filter(Boolean))];
   const uniqueSizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
@@ -179,20 +182,22 @@ const DetailProduct = () => {
       toast.error(`Chỉ còn ${selectedVariant.stock} sản phẩm trong kho`);
       return;
     }
-
+    if (!selectedVariant) {
+      toast.error("Vui lòng chọn biến thể sản phẩm");
+      return;
+    }
     requireAuth(() => {
       const finalItem = {
-        user_id: user?._id,
+
         product_id: item._id,
         quantity,
-        price: selectedVariant?.price || item.basePrice,
-        variant_id: selectedVariant?._id,
+        variant_id: selectedVariant._id,
 
       };
-      console.log("Gio hang", finalItem)
-      dispatch(addToCart(finalItem));
-      toast.success(`Đã thêm ${item.product_name} vào giỏ hàng`);
-      navigate("/shopping-cart");
+
+      dispatch(addToCartThunk(finalItem))
+
+
     });
   };
 
