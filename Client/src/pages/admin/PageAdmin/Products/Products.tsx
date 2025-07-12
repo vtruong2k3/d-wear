@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
   Button,
   Popconfirm,
@@ -12,6 +13,7 @@ import {
   Typography,
   Divider,
 } from "antd";
+
 import useFetchList from "../../../../hooks/useFetchList";
 import useQuery from "../../../../hooks/useQuery";
 import type { ColumnsType } from "antd/es/table";
@@ -19,6 +21,7 @@ import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
 import { useNavigate } from "react-router-dom";
+
 import axios from "axios";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
@@ -26,9 +29,11 @@ import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 
+
 const { Title } = Typography;
 
 const Products: React.FC = () => {
+
   const navigate = useNavigate();
 
   const [query, updateQuery] = useQuery({
@@ -40,13 +45,29 @@ const Products: React.FC = () => {
   });
 
   const sortOptions: DefaultOptionType[] = [
-    { value: JSON.stringify({ sortBy: "basePrice", order: "asc" }), label: "Giá tăng dần" },
-    { value: JSON.stringify({ sortBy: "basePrice", order: "desc" }), label: "Giá giảm dần" },
-    { value: JSON.stringify({ sortBy: "product_name", order: "asc" }), label: "Tên A-Z" },
-    { value: JSON.stringify({ sortBy: "product_name", order: "desc" }), label: "Tên Z-A" },
+    {
+      value: JSON.stringify({ sortBy: "basePrice", order: "asc" }),
+      label: "Giá tăng dần",
+    },
+    {
+      value: JSON.stringify({ sortBy: "basePrice", order: "desc" }),
+      label: "Giá giảm dần",
+    },
+    {
+      value: JSON.stringify({ sortBy: "product_name", order: "asc" }),
+      label: "Tên A-Z",
+    },
+    {
+      value: JSON.stringify({ sortBy: "product_name", order: "desc" }),
+      label: "Tên Z-A",
+    },
   ];
 
-  const { data: rawProducts, loading, refetch } = useFetchList<IProduct>("product", query, {});
+  const {
+    data: rawProducts,
+    loading,
+    refetch,
+  } = useFetchList<IProduct>("product", query, {});
 
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
@@ -66,42 +87,73 @@ const Products: React.FC = () => {
       };
     }) || [];
 
+
   const columns: ColumnsType<IProduct> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
       width: 80,
+
       align: "center",
       render: (id) => <Tag color="blue">#{id}</Tag>,
+
     },
     {
       title: "Sản phẩm",
       key: "product",
       width: 300,
       render: (_, record) => (
+
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <img
-            src={record.thumbnail}
-            alt="product"
-            style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }}
-          />
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              flexShrink: 0,
+              borderRadius: 8,
+              border: "1px solid #f0f0f0",
+              overflow: "hidden", //k tràn ảnh
+              backgroundColor: "#fff",
+            }}
+          >
+            <img
+              src={record.thumbnail}
+              alt="product"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </div>
           <div>
-            <div style={{ fontWeight: "600", color: "#262626" }}>{record.title}</div>
-            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>{record.brand}</div>
+            <div style={{ fontWeight: "600", color: "#262626" }}>
+              {record.title}
+            </div>
+            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+
+              {record.brand}
+            </div>
           </div>
         </div>
       ),
     },
+
+
+
     {
       title: "Giá",
       dataIndex: "price",
       key: "price",
       width: 150,
+
       align: "right",
       render: (price) => (
         <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
           {typeof price === "number" ? formatCurrency(price) : "N/A"}
+
         </span>
       ),
     },
@@ -111,21 +163,29 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
-        <Tag color="geekblue" style={{ borderRadius: "12px" }}>{category}</Tag>
+
+        <Tag color="geekblue" style={{ borderRadius: "12px" }}>
+          {category}
+        </Tag>
       ),
+
     },
     {
       title: "Thao tác",
       key: "action",
       width: 120,
+
       align: "center",
+
       render: (_, record: any) => (
         <Space size="small">
           <Button
             type="text"
             icon={<FaPen />}
             onClick={() => navigate(`/admin/products/edit/${record.id}`)}
+
             style={{ color: "#1890ff" }}
+
             title="Chỉnh sửa"
           />
           <Popconfirm
@@ -136,11 +196,13 @@ const Products: React.FC = () => {
             cancelText="Hủy"
           >
             <Button type="text" danger icon={<MdDelete />} title="Xóa" />
+
           </Popconfirm>
         </Space>
       ),
     },
   ];
+
 
   const handleDelete = async (id: number) => {
     try {
@@ -167,12 +229,26 @@ const Products: React.FC = () => {
 
   return (
     <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
-      <Card style={{ marginBottom: 24, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-        <Title level={2} style={{ textAlign: "center", margin: "0 0 24px 0", color: "#262626" }}>
+      <Card
+        style={{
+          marginBottom: 24,
+          borderRadius: 12,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+      >
+        <Title
+          level={2}
+          style={{
+            textAlign: "center",
+            margin: "0 0 24px 0",
+            color: "#262626",
+          }}
+        >
           📦 Danh sách sản phẩm
         </Title>
 
         <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
+
           <Col flex="auto">
             <Space size="middle" wrap>
               <Search
@@ -186,11 +262,14 @@ const Products: React.FC = () => {
               <Select
                 placeholder="Sắp xếp theo"
                 style={{ minWidth: 180 }}
+
                 size="large"
                 onChange={handleSort}
                 options={sortOptions}
                 suffixIcon={<FaFilter />}
+
                 allowClear
+
               />
             </Space>
           </Col>
@@ -200,29 +279,41 @@ const Products: React.FC = () => {
               size="large"
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
-              style={{ borderRadius: 8, boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)" }}
+              style={{
+
+                borderRadius: 8,
+                boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
+
+              }}
             >
               Thêm sản phẩm
             </Button>
           </Col>
         </Row>
 
+
         <Divider />
+
 
         <Table
           loading={loading}
           dataSource={products}
+
           rowKey={(record) => record.id || record._id || record.title}
+
           columns={columns}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sản phẩm`,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} sản phẩm`,
+
             style: { marginTop: 16 },
           }}
           style={{ background: "white", borderRadius: 8 }}
           scroll={{ x: 800 }}
+
           size="middle"
         />
       </Card>
@@ -230,4 +321,6 @@ const Products: React.FC = () => {
   );
 };
 
+
 export default Products;
+

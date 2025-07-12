@@ -3,7 +3,10 @@ const variantValidate = require("../validate/variantValidate");
 
 exports.getAllVariant = async (req, res) => {
   try {
-    const variants = await Variant.find();
+    const variants = await Variant.find().populate({
+      path: "product_id",
+      select: "product_name", // chỉ lấy tên sản phẩm
+    });
     res.status(200).json({
       message: "Lấy tất cả sản phẩm thành công",
       variants,
@@ -63,6 +66,7 @@ exports.createVariant = async (req, res) => {
   req.body.image = req.files.imageVariant
     ? req.files.imageVariant.map((file) => file.path)
     : [];
+
   try {
     //Validate
     const { error } = variantValidate.create.validate(req.body, {
@@ -112,14 +116,19 @@ exports.createVariant = async (req, res) => {
 exports.updateVariant = async (req, res) => {
   const { id } = req.params;
 
-  req.body.image = req.files.imageVariant
-    ? req.files.imageVariant.map((file) => file.path)
-    : [];
+  // ✅ Chỉ gán image nếu có ảnh mới
+  if (req.files?.imageVariant && req.files.imageVariant.length > 0) {
+    req.body.image = req.files.imageVariant.map((file) => file.path);
+  } else {
+    delete req.body.image; // Không gửi field image => giữ ảnh cũ
+  }
+
   try {
     if (!id) {
       return res.status(400).json({ message: "ID không được để trống" });
     }
-    //Validate
+
+    //  Validate dữ liệu đầu vào
     const { error } = variantValidate.update.validate(req.body, {
       abortEarly: false,
     });
@@ -129,30 +138,18 @@ exports.updateVariant = async (req, res) => {
     }
 
     const { product_id, size, color, stock, price, image } = req.body;
-    // Kiểm tra trùng size + color cho product_id đó
-    const existingVariant = await Variant.findOne({
-      product_id,
-      size,
-      color,
-    });
 
-    if (existingVariant) {
-      return res.status(400).json({
-        message: "Biến thể với size và màu này đã tồn tại cho sản phẩm",
-      });
+    //  Có thể bỏ phần kiểm tra trùng size-color nếu đang sửa chính nó
+
+    const updateFields = { product_id, size, color, stock, price };
+
+    if (image) {
+      updateFields.image = image; //  Chỉ thêm nếu có ảnh mới
     }
-    const updateVariant = await Variant.findByIdAndUpdate(
-      id,
-      {
-        product_id,
-        size,
-        color,
-        stock,
-        price,
-        image,
-      },
-      { new: true }
-    );
+
+    const updateVariant = await Variant.findByIdAndUpdate(id, updateFields, {
+      new: true,
+    });
 
     if (!updateVariant) {
       return res.status(404).json({ message: "Không tìm thấy biến thể" });

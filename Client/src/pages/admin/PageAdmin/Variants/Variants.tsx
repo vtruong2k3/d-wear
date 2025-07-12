@@ -1,113 +1,105 @@
-// src/pages/admin/Variants/index.tsx
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Image, Input, Popconfirm, Table, Tag, Typography, message } from 'antd';
-import { DeleteOutlined, SearchOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import {
+  Button,
+  Card,
+  Image,
+  Input,
+  Popconfirm,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
+import {
+  DeleteOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import type { IVariants } from '../../../../types/IVariants';
-import AddVariants from './AddVariants';
-import EditVariant from './EditVariant';
 import { toast } from 'react-toastify';
-import { useLoading } from '../../../../contexts/LoadingContext';
+import {
+  deleteVariant,
+  getAllVariants,
+} from '../../../../services/admin/variantServices';
 import type { ErrorType } from '../../../../types/error/IError';
-import { fetchAllVariants } from '../../../../services/variantService';
+import { useLoading } from '../../../../contexts/LoadingContext';
+import { formatCurrency } from '../../../../utils/Format';
 
 const { Title } = Typography;
 
 const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingVariant, setEditingVariant] = useState<IVariants | null>(null);
   const { setLoading } = useLoading();
 
-  // Fetch dữ liệu biến thể từ API khi load component
   const fetchVariants = useCallback(async () => {
-     try {
-       setLoading(true);
-       const data = await fetchAllVariants();
-       console.log(data);
-       
-       setVariants(data);
-     } catch (error) {
-       const errorMessage =
-         (error as ErrorType).response?.data?.message ||
-         (error as ErrorType).message ||
-         "Đã xảy ra lỗi, vui lòng thử lại.";
-       toast.error(errorMessage);
-     } finally {
-       setLoading(false);
-     }
-   }, [setLoading]);
+    try {
+      setLoading(true);
+      const data = await getAllVariants();
+      setVariants(data);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi, vui lòng thử lại.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading]);
+
   useEffect(() => {
     fetchVariants();
   }, [fetchVariants]);
 
-
-  const handleDelete = async (id: number | string) => {
+  const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/variants/${id}`);
-      setVariants(prev => prev.filter(v => v.id !== id));
-      message.success('Xóa biến thể thành công!');
+      setLoading(true);
+      await deleteVariant(id);
+      setVariants((prev) => prev.filter((v) => v._id !== id));
+      toast.success('Xóa biến thể thành công!');
     } catch (error) {
-      message.error('Xóa thất bại!');
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi, vui lòng thử lại.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAdd = () => {
-    setShowAddModal(true);
-  };
-
-  const handleEdit = (variant: IVariants) => {
-    setEditingVariant(variant);
-    setShowEditModal(true);
-  };
-
-  const handleAddSubmit = async (values: any) => {
-    try {
-      const res = await axios.post('/api/variant', values);
-      setVariants(prev => [...prev, res.data]);
-      console.log(variants);
-      
-      setShowAddModal(true);
-      toast('Thêm mới thành công!');
-    } catch (error) {
-      message.error('Thêm biến thể thất bại!');
-    }
-  };
-
-  const handleEditSubmit = async (values: any) => {
-    if (!editingVariant) return;
-    try {
-      const res = await axios.put(`/api/variant/${editingVariant.id}`, values);
-      setVariants(prev => prev.map(v => v.id === editingVariant.id ? res.data : v));
-      setShowEditModal(false);
-      message.success('Cập nhật thành công!');
-    } catch (error) {
-      message.error('Cập nhật thất bại!');
-    }
-  };
-
-  const filteredVariants = variants.filter(variant =>
-    variant.product_id.toLowerCase().includes(searchText.toLowerCase()) ||
-    variant.size.toLowerCase().includes(searchText.toLowerCase()) ||
-    variant.color.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredVariants = variants.filter((variant) => {
+    const name = variant.product_id?.product_name || '';
+    return (
+      name.toLowerCase().includes(searchText.toLowerCase()) ||
+      variant.size.toLowerCase().includes(searchText.toLowerCase()) ||
+      variant.color.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-    { title: 'Mã sản phẩm', dataIndex: 'product_id', key: 'product_id' },
+    { title: 'ID', dataIndex: '_id', key: '_id', width: 80 },
+    {
+      title: 'Tên sản phẩm',
+      key: 'product_name',
+      render: (_: IVariants, record: IVariants) => {
+        return record.product_id?.product_name || (
+          <Tag color="red">Không có</Tag>
+        );
+      },
+    },
     {
       title: 'Kích thước',
       dataIndex: 'size',
       key: 'size',
-      render: (size: string) => <Tag color="blue">{size}</Tag>
+      render: (size: string) => <Tag color="blue">{size}</Tag>,
     },
     {
       title: 'Màu sắc',
       dataIndex: 'color',
       key: 'color',
-      render: (color: string) => <Tag color="green">{color}</Tag>
+      render: (color: string) => <Tag color="green">{color}</Tag>,
     },
     { title: 'Số lượng', dataIndex: 'stock', key: 'stock' },
     {
@@ -116,38 +108,42 @@ const Variants: React.FC = () => {
       key: 'price',
       render: (price: number) => (
         <span className="font-semibold text-blue-600">
-          {price.toLocaleString('vi-VN')}
+          {formatCurrency(price)}
         </span>
-      )
+      ),
     },
     {
       title: 'Hình ảnh',
-      dataIndex: 'imageVariant',
-      key: 'imageVariant',
-      render: (images: string[]) => (
+      dataIndex: 'image',
+      key: 'image',
+      render: (images: string[] = []) => (
         <div className="flex gap-1">
           {images?.slice(0, 2).map((img, index) => (
             <Image
               key={index}
               width={40}
               height={40}
-              src={img}
+              src={
+                img.startsWith('http')
+                  ? img
+                  : `http://localhost:5000/${img.replace(/\\/g, '/')}`
+              }
               className="rounded-md object-cover"
               preview={{ src: img }}
             />
           ))}
         </div>
-      )
+      ),
     },
     {
       title: 'Thao tác',
       key: 'actions',
-      render: (_: any, record: IVariants) => (
+      render: (_: IVariants, record: IVariants) => (
         <>
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Button style={{ marginRight: "20px" }} icon={<EditOutlined />} />
           <Popconfirm
             title="Xác nhận xóa"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -155,8 +151,8 @@ const Variants: React.FC = () => {
             <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -176,7 +172,7 @@ const Variants: React.FC = () => {
               onChange={(e) => setSearchText(e.target.value)}
               className="w-64"
             />
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            <Button type="primary" icon={<PlusOutlined />}>
               Thêm Biến Thể
             </Button>
           </div>
@@ -185,24 +181,11 @@ const Variants: React.FC = () => {
         <Table
           columns={columns}
           dataSource={filteredVariants}
-          rowKey="id"
+          rowKey="_id"
           pagination={{ pageSize: 8 }}
           scroll={{ x: 1000 }}
         />
       </Card>
-
-      <AddVariants
-        visible={showAddModal}
-        onCancel={() => setShowAddModal(false)}
-        onSubmit={handleAddSubmit}
-      />
-
-      <EditVariant
-        visible={showEditModal}
-        initialValues={editingVariant}
-        onCancel={() => setShowEditModal(false)}
-        onSubmit={handleEditSubmit}
-      />
     </div>
   );
 };

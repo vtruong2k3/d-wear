@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 const cartShema = new mongoose.Schema(
   {
@@ -36,3 +37,4 @@ const cartShema = new mongoose.Schema(
 cartShema.index({ user_id: 1, variant_id: 1 }, { unique: true });
 const Cart = mongoose.model("carts", cartShema);
 module.exports = Cart;
+

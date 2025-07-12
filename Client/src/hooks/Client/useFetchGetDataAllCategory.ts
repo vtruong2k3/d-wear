@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import apiServiceCategory from "../../services/apiServiceCategory";
+import apiServiceCategory from "../../services/client/apiServiceCategory";
 
 const useFetchGetDataAllCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -12,6 +12,6 @@ const useFetchGetDataAllCategory = () => {
   useEffect(() => {
     fetchDataCategory();
   }, []);
-  return {categories};
+  return { categories };
 };
 export default useFetchGetDataAllCategory;

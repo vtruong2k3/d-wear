@@ -2,8 +2,13 @@ const express = require("express");
 const variantRouter = express.Router();
 const variantControlller = require("../controllers/variant.controller");
 const upload = require("../middlewares/uploadProduct.middleware");
+const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 
-variantRouter.get("/variant", variantControlller.getAllVariant);
+variantRouter.get(
+  "/variant",
+  authAdminMiddelware,
+  variantControlller.getAllVariant
+);
 variantRouter.get("/variant/:id", variantControlller.getIdVariant);
 variantRouter.get(
   "/variant/product/:id",

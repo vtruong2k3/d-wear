@@ -1,34 +1,31 @@
 import { useEffect, useState } from "react";
-import apiServiceProduct from "../../services/apiServiceProduct";
+import apiServiceProduct from "../../services/client/apiServiceProduct";
+import type { IProducts } from "../../types/IProducts";
 
-const useFetchGetDataProduct = (category, filterParams) => {
-  const [products, setProducts] = useState([]);
-  const [totalProduct, setTotalProduct] = useState(0);
+const useFetchGetDataProduct = (category_id: string, exclude_id: string) => {
+  const [products, setProducts] = useState<IProducts[]>([]);
+
   useEffect(() => {
-    const fetchDataProductByCategory = async () => {
-      const res = await apiServiceProduct.getProdductsByCategory(category);
-      if (res.status === 200) {
-        setProducts(res.data.products);
+    if (!category_id) return;
+
+    const fetch = async () => {
+      try {
+        const res = await apiServiceProduct.getProductsByCategory(
+          category_id,
+          exclude_id
+        );
+        if (res.status === 200) {
+          setProducts(res.data.products);
+        }
+      } catch (err) {
+        console.error("Fetch related products failed", err);
       }
     };
 
-    const fetchDataAllProduct = async () => {
-      const res = await apiServiceProduct.getAllProducts(filterParams);
-      if (res.status === 200) {
-        setProducts(res.data.products);
-        setTotalProduct(res.data.total);
-      }
-    };
-    if (category) {
-      fetchDataProductByCategory();
-    } else {
-      fetchDataAllProduct();
-    }
-  }, [category, filterParams]);
-  return {
-    products,
-    totalProduct,
-  };
+    fetch();
+  }, [category_id, exclude_id]);
+
+  return { products };
 };
 
 export default useFetchGetDataProduct;

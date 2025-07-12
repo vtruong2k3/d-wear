@@ -1,0 +1,6 @@
+.active-menu-item span {
+  width: 100% !important;
+}
+.menu-item:hover span {
+  width: 100% !important;
+}

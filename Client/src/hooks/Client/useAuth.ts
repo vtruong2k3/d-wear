@@ -1,14 +1,12 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import type { RootState } from "../../redux/store";
 const useAuth = () => {
   //   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isLogin = useSelector((state) => state.authenSlice.isLogin);
+  const isLogin = useSelector((state: RootState) => state.authenSlice.isLogin);
 
-  console.log(isLogin, "isLoginisLogin");
-
-  const requireAuth = (action) => {
+  const requireAuth = (action: () => void) => {
     if (isLogin) {
       action();
     } else {

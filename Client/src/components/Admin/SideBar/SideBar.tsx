@@ -13,12 +13,15 @@ import {
     BranchesOutlined,
     GiftOutlined,
     AppstoreOutlined,
+    ColumnWidthOutlined,
+    BgColorsOutlined,
 } from '@ant-design/icons';
 interface SidebarProps {
     collapsed: boolean;
     onCollapse: () => void;
 }
-const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
+const AsideAdmin = ({ collapsed }: SidebarProps) => {
+
     const location = useLocation();
 
     const menuItems = [
@@ -43,9 +46,27 @@ const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
                     label: <Link to="/admin/products">Sản phẩm</Link>,
                 },
                 {
-                    key: '/admin/variants',
+                    key: 'variants-group',
                     icon: <TagsOutlined />,
-                    label: <Link to="/admin/variants">Biến thể</Link>,
+                    label: 'Biến thể',
+                    children: [
+                        {
+                            key: '/admin/variants',
+                            icon: <TagsOutlined />,
+                            label: <Link to="/admin/variants">Danh sách biến thể</Link>,
+                        },
+                        {
+                            key: '/admin/sizes',
+                            icon: <ColumnWidthOutlined />, // Hoặc ExpandOutlined
+                            label: <Link to="/admin/size">Kích thước</Link>,
+                        },
+                        {
+                            key: '/admin/colors',
+                            icon: <BgColorsOutlined />, // bạn cũng có thể dùng 'FormatPainterOutlined' hoặc icon khác nếu muốn
+                            label: <Link to="/admin/color">Màu sắc</Link>,
+                        },
+
+                    ],
                 },
                 {
                     key: '/admin/categories',
@@ -54,6 +75,7 @@ const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
                 },
             ],
         },
+
         {
             key: '/admin/brands',
             icon: <BranchesOutlined />,
@@ -65,6 +87,7 @@ const AsideAdmin = ({ collapsed, onCollapse }: SidebarProps) => {
             label: <Link to="/admin/voucher">Voucher</Link>
         },
         {
+
             key: '/admin/customers',
             icon: <UserOutlined />,
             label: <Link to="/admin/customers">Khách hàng</Link>,

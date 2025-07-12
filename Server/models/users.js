@@ -4,9 +4,10 @@ const userShema = new mongoose.Schema(
   {
     username: { type: String, require: true },
     email: { type: String, require: true, unique: true },
-    password: { type: String, require: false },
+    password: { type: String },
+    avatar: { type: String },
     isGoogleAccount: { type: Boolean, default: false },
-    phone: { type: String, require: true },
+    phone: { type: String },
     addresses: [
       {
         fullname: { type: String, require: true },

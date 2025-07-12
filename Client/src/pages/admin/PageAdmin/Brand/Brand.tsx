@@ -18,7 +18,7 @@ import { FaPen, FaSearch } from "react-icons/fa";
 import AddBrand from "./AddBrand";
 import EditBrand from "./EditBrand";
 import { useLoading } from "../../../../contexts/LoadingContext";
-import { fetchAllBrands, deleteBrandById } from "../../../../services/brandService";
+import { fetchAllBrands, deleteBrandById } from "../../../../services/admin/brandService";
 import type { IBrand } from "../../../../types/brand/IBrand";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";

@@ -5,7 +5,7 @@ const voucherShema = new mongoose.Schema(
   {
     code: { type: String, required: true, unique: true },
     // Mã voucher, kiểu chuỗi, bắt buộc, không được trùng lặp.
-
+    usedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
     discountType: {
       type: String,
       enum: ["percentage", "fixed"],

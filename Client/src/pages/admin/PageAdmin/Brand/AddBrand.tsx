@@ -1,6 +1,6 @@
 import { Modal, Form, Input, message } from "antd";
 import { useEffect } from "react";
-import { fetchCreateBrand } from "../../../../services/brandService"; // service đã tách
+import { fetchCreateBrand } from "../../../../services/admin/brandService"; // service đã tách
 import type { FC } from "react";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";

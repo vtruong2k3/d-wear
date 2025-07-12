@@ -1,3 +1,13 @@
+# Môi trường
+.env
+.env.*   # ví dụ: .env.local, .env.dev
+
+# Node Modules
+node_modules/
+
+# Bản build
+dist/
+build/
 # Logs
 logs
 *.log

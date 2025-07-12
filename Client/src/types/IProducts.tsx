@@ -10,15 +10,32 @@ export interface IProduct {
 }
 // add  product
 export interface IProducts {
+  _id: string;
   product_name: string;
   description: string;
   basePrice: number;
   brand_id: string;
+  imageUrls: string[];
   category_id: string;
   gender: string;
   material: string;
   variants?: Variant[];
 }
+export interface IProductDetail {
+  _id: string;
+  product_name: string;
+  description: string;
+  basePrice: number;
+  imageUrls: string[];
+  category_id: string;
+  brand_id: string;
+  gender: string;
+  material: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
 interface Variant {
   color: string;
   size: string;
@@ -46,7 +63,7 @@ export interface StatCardProps {
   title: string;
   value: string | number;
   change: string;
-  changeType: 'positive' | 'negative';
+  changeType: "positive" | "negative";
   icon: React.ReactNode;
   bgColor: string;
 }
@@ -55,6 +72,7 @@ export interface SidebarItemProps {
   icon: React.ReactNode;
   label: string;
   isActive?: boolean;
+
   onClick?: () => void;
 }
 

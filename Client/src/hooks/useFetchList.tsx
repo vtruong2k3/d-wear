@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
-
 
 interface UseFetchListResult<T> {
   data: T[];
@@ -16,10 +16,23 @@ interface BaseListResponse<T> {
   totalPages?: number;
   products: T[];
 }
-  
+===
+export const useFetchList= <T= any>(
+  path: string,
+  query: Record<string, any> = {},
+  config: Record<string, any> = {}
+): UseFetchListResult<T> => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+>>>>>>> 2f4304c4bb5670e0c2e5c2bee030a77089bb968c
+
 export const useFetchList = <
   T,
-  Q extends Record<string, string | number | boolean> = Record<string, string | number | boolean>
+  Q extends Record<string, string | number | boolean> = Record<
+    string,
+    string | number | boolean
+  >
 >(
   path: string,
   query: Q = {} as Q,

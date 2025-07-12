@@ -19,7 +19,7 @@ import { FaPen, FaSearch } from "react-icons/fa";
 import { useLoading } from "../../../../contexts/LoadingContext";
 import AddCategory from "./AddCategory";
 import EditCategory from "./EditCatgory";
-import { fetchGetAllCategory, deleteCategoryById } from "../../../../services/categoryService";
+import { fetchGetAllCategory, deleteCategoryById } from "../../../../services/admin/categoryService";
 import type { ICategory } from "../../../../types/category/ICategory";
 import type { ColumnsType } from "antd/es/table";
 import type { ErrorType } from "../../../../types/error/IError";

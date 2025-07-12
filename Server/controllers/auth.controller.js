@@ -2,7 +2,10 @@ const User = require("../models/users");
 const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
 const authValidate = require("../validate/authValidate");
-const { OAuth2Client } = require("google-auth-library");
+
+const axios = require("axios");
+const JWT_SECRET = process.env.JWT_SECRET;
+
 exports.login = async (req, res) => {
   try {
     const { error } = authValidate.login.validate(req.body, {
@@ -25,11 +28,24 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Mật khẩu không đúng" });
     }
 
-    const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = await jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
     // Ẩn mật khẩu khỏi response
-    const { password: _, ...userData } = user._doc;
+    const {
+      password: _v,
+      __v,
+      createdAt,
+      updatedAt,
+      isGoogleAccount,
+      isActive,
+      ...userData
+    } = user._doc;
+
     // Đăng nhập thành công
     res
       .status(200)
@@ -82,43 +98,59 @@ exports.register = async (req, res) => {
 };
 
 exports.loginWithGoogle = async (req, res) => {
-  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   try {
-    const { id_token } = req.body;
-    if (!id_token) return res.status(400).json({ message: "Thiếu id_token" });
+    const { access_token } = req.body;
+    if (!access_token) {
+      return res.status(400).json({ message: "Access token is required" });
+    }
 
-    const ticket = await client.verifyIdToken({
-      idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    // Gọi API Google lấy profile
+    const googleRes = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
 
-    const { email, name, picture } = ticket.getPayload();
+    const profile = googleRes.data;
 
-    let user = await User.findOne({ email });
-
+    // Tìm hoặc tạo user
+    let user = await User.findOne({ email: profile.email });
     if (!user) {
       user = await User.create({
-        username: name,
-        email,
-        avatar: picture,
+        username: profile.name,
+        email: profile.email,
+        avatar: profile.picture,
+        password: "google_oauth",
         isGoogleAccount: true,
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-
-    res.status(200).json({
-      message: "Đăng nhập thành công",
-      token,
-      user,
+    // Tạo JWT token
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
+      expiresIn: "1h",
     });
-  } catch (err) {
-    return res.status(500).json({ message: "Lỗi server", error: err.message });
+
+    // Lấy dữ liệu cần trả về (ẩn field nhạy cảm)
+    const {
+      password,
+      __v,
+      createdAt,
+      updatedAt,
+      isGoogleAccount,
+      isActive,
+      ...userData
+    } = user._doc;
+
+    return res.status(200).json({
+      message: "Đăng nhập Google thành công!",
+      user: userData,
+      token,
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    return res.status(500).json({ message: "Lỗi đăng nhập Google", error });
   }
 };

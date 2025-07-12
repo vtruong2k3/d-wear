@@ -1,6 +1,6 @@
 import { Modal, Form, Input } from "antd";
 import { useEffect } from "react";
-import { updateBrandById } from "../../../../services/brandService";
+import { updateBrandById } from "../../../../services/admin/brandService";
 import type { IBrand } from "../../../../types/brand/IBrand";
 import type { ErrorType } from "../../../../types/error/IError";
 import { toast } from "react-toastify";
