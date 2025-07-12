@@ -13,13 +13,15 @@ import Logout from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
 import { doLogout } from "../../../redux/features/client/authenSlice.ts";
 import type { RootState } from "../../../redux/store.ts";
+import { useNavigate } from "react-router-dom";
+import { ShoppingBagIcon } from "lucide-react";
 
 
 export default function AccountMenu() {
   const user = useSelector((state: RootState) => state.authenSlice.user);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const dispatch = useDispatch();
-
+  const navigate = useNavigate()
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -95,6 +97,16 @@ export default function AccountMenu() {
           <Avatar /> My account
         </MenuItem>
         <Divider />
+        {/* ✅ Thêm mục Đơn hàng ở đây */}
+        <MenuItem onClick={() => {
+          handleClose();
+          navigate("/orders"); // hoặc bất kỳ URL nào bạn định nghĩa
+        }}>
+          <ListItemIcon>
+            <ShoppingBagIcon fontSize="small" />
+          </ListItemIcon>
+          Đơn hàng của tôi
+        </MenuItem>
         <MenuItem onClick={handleClose}>
           <ListItemIcon>
             <PersonAdd fontSize="small" />

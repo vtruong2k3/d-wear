@@ -1,12 +1,17 @@
 import axios from "axios";
-import { configAxios } from "../../configs/AxiosConfig";
+import type {
+  GetOrdersResponse,
+  OrderDetailResponse,
+} from "../../types/order/IOrder";
 
-configAxios();
-
-export const getOrders = () => {
-  return axios.get("/orders");
+export const getOrders = async (): Promise<GetOrdersResponse> => {
+  const res = await axios.get("/api/orders/items");
+  return res.data;
 };
 
-export const getOrderDetail = (orderId: string) => {
-  return axios.get(`/orders/${orderId}`);
+export const getOrderDetail = async (
+  orderId: string | undefined
+): Promise<OrderDetailResponse> => {
+  const res = await axios.get(`/api/orders/${orderId}`);
+  return res.data;
 };
