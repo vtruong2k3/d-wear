@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Backdrop, CircularProgress, Grow } from "@mui/material";
 
 
@@ -19,6 +21,7 @@ import img_payment from "../../../assets/images/img_payment.avif";
 import apiServiceProduct from "../../../services/client/apiServiceProduct";
 import useAuth from "../../../hooks/Client/useAuth";
 
+
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import type { IProductDetail } from "../../../types/IProducts";
@@ -26,19 +29,19 @@ import type { IVariantDetail } from "../../../types/IVariants";
 import toast from "react-hot-toast";
 import '../../../styles/productDetail.css'
 
+
 import star from "../../../assets/images/ico_star_active.png";
 import { formatCurrency } from "../../../utils/Format";
-<<<<<<< HEAD
-import { getCart } from "../../../redux/features/client/thunks/cartThunk";
-=======
+
 
 import type { AppDispatch } from "../../../redux/store";
 import { addToCartThunk } from "../../../redux/features/client/thunks/cartThunk";
->>>>>>> 237ec89f5fde6e21b13f7d48d37ca75c967d511c
 const DetailProduct = () => {
 
   const divRef = useRef<HTMLDivElement | null>(null);
   const { id } = useParams<{ id: string }>();
+
+  const dispatch = useDispatch<AppDispatch>();
 
   const dispatch = useDispatch<AppDispatch>();
   const { requireAuth } = useAuth();
@@ -56,6 +59,7 @@ const DetailProduct = () => {
     dataDetail?.category_id || "",
     dataDetail?._id || ""
   );
+
 
   // Lấy danh sách màu sắc và size duy nhất
   // const uniqueColors = [...new Set(variants.map(v => v.color).filter(Boolean))];
@@ -198,14 +202,24 @@ console.log(cartItems);
       toast.error("Vui lòng chọn biến thể sản phẩm");
       return;
     }
+    if (!selectedVariant) {
+      toast.error("Vui lòng chọn biến thể sản phẩm");
+      return;
+    }
     requireAuth(() => {
       const finalItem = {
+
 
         product_id: item._id,
         quantity,
         variant_id: selectedVariant._id,
+        variant_id: selectedVariant._id,
 
       };
+
+      dispatch(addToCartThunk(finalItem))
+
+
 
       dispatch(addToCartThunk(finalItem))
 
