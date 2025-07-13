@@ -18,9 +18,9 @@ import {
 import { ArrowLeftOutlined, CheckOutlined } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../../redux/store";
-import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../../redux/store";
+
 
 import { useCallback } from "react";
 import { fetCheckVoucher } from "../../../services/client/apiVoucherService";
@@ -28,6 +28,9 @@ import type { ErrorType } from "../../../types/error/IError";
 import { createOrder } from "../../../services/client/orderAPI";
 import type { OrderData } from "../../../types/order/IOrder";
 import type { IVoucher } from "../../../types/voucher/IVoucher";
+import toast from "react-hot-toast";
+import { getCartThunk } from "../../../redux/features/client/thunks/cartThunk";
+
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -38,13 +41,12 @@ export type VoucherPreview = Pick<
 const Checkout = () => {
   const location = useLocation();
   const selectedItems: string[] = location.state?.selectedItems || [];
-
+  const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector(
     (state: RootState) => state.cartSlice.cartItems
   );
   const { user, token } = useSelector((state: RootState) => state.authenSlice);
   const [paymentMethod, setPaymentMethod] = useState("COD");
-
 
   const [selectedVoucher, setSelectedVoucher] = useState<VoucherPreview | null>(null);
   const [form] = Form.useForm();
@@ -52,16 +54,6 @@ const Checkout = () => {
   const [note, setNote] = useState("");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-
-  // Trong phần Ghi chú đơn hàng:
-  <Card title={<Title level={3}>Ghi chú đơn hàng</Title>} className="mt-3">
-    <TextArea
-      rows={4}
-      placeholder="Nhập ghi chú cho đơn hàng (nếu có)..."
-      value={note}
-      onChange={(e) => setNote(e.target.value)}
-    />
-  </Card>;
 
   // Memo lấy các sản phẩm được chọn
   const itemsToCheckout = useMemo(() => {
@@ -89,12 +81,11 @@ const Checkout = () => {
           toast.error("Không tìm thấy thông tin người dùng");
           return;
         }
-        console.log(code, rawTotal)
+
         const res = await fetCheckVoucher({
           code,
           total: rawTotal,
           user_id: user._id,
-
         });
 
         const data = res.data;
@@ -152,7 +143,7 @@ const Checkout = () => {
     try {
       const values = await form.validateFields();
 
-      if (!user || !user._id || !user.email) {
+      if (!user || !user._id) {
         toast.error("Không tìm thấy thông tin người dùng");
         return;
       }
@@ -165,7 +156,7 @@ const Checkout = () => {
 
       const orderData: OrderData = {
         user_id: user._id,
-        email: user.email,
+        email: values.email,
         receiverName: values.name,
         shippingAddress: values.address,
         phone: values.phone,
@@ -186,11 +177,12 @@ const Checkout = () => {
       console.log("ORDER DATA gửi đi:", JSON.stringify(orderData, null, 2));
       setIsLoading(true);
 
-      const res = await createOrder(orderData); // THÊM token nếu createOrder yêu cầu
+      const res = await createOrder(orderData);
 
-      toast.success("Đặt hàng thành công!");
+      toast.success(res.data.message || "Đặt hàng thành công!");
+
       navigate("/orders");
-      console.log("Đơn hàng đã tạo:", res.data);
+      dispatch(getCartThunk());
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -223,6 +215,16 @@ const Checkout = () => {
                 rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
               >
                 <Input placeholder="Nhập họ và tên" />
+              </Form.Item>
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[
+                  { required: true, message: "Vui lòng nhập email" },
+                  { type: "email", message: "Email không đúng định dạng" }
+                ]}
+              >
+                <Input placeholder="Nhập email" />
               </Form.Item>
               <Form.Item
                 name="phone"
@@ -299,39 +301,6 @@ const Checkout = () => {
             />
           </Card>
 
-          {/* Voucher */}
-          <Card
-            title={<Title level={3}>Mã giảm giá (Voucher)</Title>}
-            className="mt-3"
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {selectedVoucher ? (
-                <>
-                  <Text strong>Mã đã chọn:</Text>
-                  <Tag color="green">{selectedVoucher.code}</Tag>
-                  <Text type="success">
-                    {selectedVoucher.discountType === "percentage"
-                      ? `Giảm ${selectedVoucher.discountValue.toFixed(2)}%`
-                      : `Giảm ${formatCurrency(selectedVoucher.discountValue)}`}
-                  </Text>
-                  <Button onClick={() => setSelectedVoucher(null)}>
-                    Hủy mã
-                  </Button>
-                </>
-              ) : (
-                <Text type="secondary">Bạn chưa chọn mã giảm giá nào</Text>
-              )}
-
-              <Input.Search
-                placeholder="Nhập mã giảm giá"
-                enterButton="Áp dụng"
-                onSearch={checkVoucher}
-                allowClear
-                loading={isLoading}
-              />
-            </Space>
-          </Card>
-
           {/* Ghi chú */}
           <Card
             title={<Title level={3}>Ghi chú đơn hàng</Title>}
@@ -346,7 +315,7 @@ const Checkout = () => {
           </Card>
         </Col>
 
-        {/* Tổng thanh toán */}
+        {/* Tổng thanh toán và Voucher */}
         <Col xs={24} lg={8}>
           <Card title={<Title level={3}>Tổng thanh toán</Title>}>
             <Space direction="vertical" style={{ width: "100%" }}>
@@ -396,12 +365,45 @@ const Checkout = () => {
                 block
                 icon={<CheckOutlined />}
                 onClick={handleSubmit}
-                loading={isLoading} // show loading spinner
+                loading={isLoading}
               >
                 {paymentMethod === "COD"
                   ? "Xác nhận đặt hàng"
                   : "Thanh toán với VNPay"}
               </Button>
+            </Space>
+          </Card>
+
+          {/* Voucher - Đã di chuyển xuống dưới */}
+          <Card
+            title={<Title level={3}>Mã giảm giá (Voucher)</Title>}
+            className="mt-3"
+          >
+            <Space direction="vertical" style={{ width: "100%" }}>
+              {selectedVoucher ? (
+                <>
+                  <Text strong>Mã đã chọn:</Text>
+                  <Tag color="green">{selectedVoucher.code}</Tag>
+                  <Text type="success">
+                    {selectedVoucher.discountType === "percentage"
+                      ? `Giảm ${selectedVoucher.discountValue.toFixed(2)}%`
+                      : `Giảm ${formatCurrency(selectedVoucher.discountValue)}`}
+                  </Text>
+                  <Button onClick={() => setSelectedVoucher(null)}>
+                    Hủy mã
+                  </Button>
+                </>
+              ) : (
+                <Text type="secondary">Bạn chưa chọn mã giảm giá nào</Text>
+              )}
+
+              <Input.Search
+                placeholder="Nhập mã giảm giá"
+                enterButton="Áp dụng"
+                onSearch={checkVoucher}
+                allowClear
+                loading={isLoading}
+              />
             </Space>
           </Card>
         </Col>

@@ -199,7 +199,7 @@ exports.createOrder = async (req, res) => {
       email,
     } = req.body;
 
-    const emailUser = req.user?.email || email;
+    const emailUser = email || req.user?.email;
     const userId = req.user?.id || user_id;
 
     if (!userId || !items || items.length === 0) {

@@ -11,7 +11,6 @@ export const deleteProductCart = async (id: string | undefined) => {
   return res.data;
 };
 export const updateCartQuantity = async (payload: UpdateQuantityPayload) => {
-  console.log(payload);
   const response = await axios.put("/api/cart/items", payload);
   return response.data; // { message, cart }
 };
@@ -25,7 +24,6 @@ export const fetchGetCart = async (): Promise<{
   totalAmount: number;
 }> => {
   const res = await axios.get("/api/cart");
-  console.log(res.data);
   return res.data;
 };
 export const fetchUpdateCartQuantity = async (

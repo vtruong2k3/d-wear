@@ -125,7 +125,6 @@ exports.updateCartQuantity = async (req, res) => {
   try {
     const { product_id, variant_id, quantity } = req.body;
     const userId = req.user.id || req.body.user_id;
-    console.log("dư liệu vào: ", req.body);
 
     // Validate dữ liệu đầu vào
     const { error } = cartValidate.addTocart.validate(req.body, {

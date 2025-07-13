@@ -26,7 +26,6 @@ export const addToCartThunk = createAsyncThunk<
   try {
     const res = await fetchAddToCart(payload);
     dispatch(getCartThunk());
-
     toast.success(res.message);
     return res.data;
   } catch (error) {

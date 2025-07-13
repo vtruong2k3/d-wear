@@ -112,7 +112,6 @@ const cartSlice = createSlice({
       .addCase(getCartThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        toast.error(state.error);
       })
 
       // Cập nhật số lượng sản phẩm trong giỏ

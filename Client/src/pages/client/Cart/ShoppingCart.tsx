@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../redux/store";
 
-
 import useAuth from "../../../hooks/Client/useAuth";
 import { useNavigate } from "react-router-dom";
 import { deleteCartItemThunk, getCartThunk, updateCartQuantityThunk } from "../../../redux/features/client/thunks/cartThunk";
@@ -10,11 +9,7 @@ import { formatCurrency } from "../../../utils/Format";
 import type { ICartItem } from "../../../types/cart/ICart";
 import toast from "react-hot-toast";
 
-
-
-
 const ShoppingCart = () => {
-
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -25,6 +20,7 @@ const ShoppingCart = () => {
   useEffect(() => {
     dispatch(getCartThunk());
   }, [dispatch])
+
   const selectedTotal = useMemo(() => {
     return cartItems
       .filter((item: ICartItem) => item._id && selectedItems.includes(item._id))
@@ -35,12 +31,11 @@ const ShoppingCart = () => {
       }, 0);
   }, [cartItems, selectedItems]);
 
-
   const handleAddToCart = (cartItems: ICartItem) => {
     console.log("Cart items:", cartItems.variant_id._id);
     dispatch(updateCartQuantityThunk({
       product_id: cartItems.product_id._id,
-      variant_id: cartItems.variant_id._id, // hoặc _id của variant
+      variant_id: cartItems.variant_id._id,
       quantity: cartItems.quantity + 1
     }))
       .unwrap()
@@ -49,13 +44,10 @@ const ShoppingCart = () => {
       });
   };
 
-
   const handleReduceFormCart = (cartItems: ICartItem) => {
-
-
     dispatch(updateCartQuantityThunk({
       product_id: cartItems.product_id._id,
-      variant_id: cartItems.variant_id._id, // hoặc _id của variant
+      variant_id: cartItems.variant_id._id,
       quantity: cartItems.quantity - 1
     }))
       .unwrap()
@@ -63,6 +55,7 @@ const ShoppingCart = () => {
         toast.error("Giảm số lượng thất bại");
       });
   };
+
   const handleSelectItem = (id: string) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
@@ -76,9 +69,11 @@ const ShoppingCart = () => {
       setSelectedItems(cartItems.map((item) => item._id));
     }
   };
+
   const handleDeleteCart = (cartId: string) => {
     dispatch(deleteCartItemThunk(cartId));
   };
+
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
       toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
@@ -120,8 +115,8 @@ const ShoppingCart = () => {
         ) : (
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-8">
-              <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
-                <div className="bg-gray-50 px-6 py-4 ">
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-gray-50 px-6 py-4">
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -144,16 +139,16 @@ const ShoppingCart = () => {
                         : "hover:bg-gray-50"
                         }`}
                     >
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-start space-x-4">
                         <input
                           type="checkbox"
                           checked={selectedItems.includes(cart._id)}
                           onChange={() => handleSelectItem(cart._id)}
-                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-1"
                         />
 
                         <div className="flex-shrink-0">
-                          <div className="w-24 h-24 ml-5 rounded-lg overflow-hidden bg-gray-100 ">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
                             <img
                               src={
                                 cart.product_id.imageUrls && cart.product_id.imageUrls.length > 0
@@ -172,71 +167,78 @@ const ShoppingCart = () => {
                           <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                             {cart.product_id.product_name}
                           </h3>
+
+                          {/* Hiển thị size và màu */}
+                          <div className="flex items-center space-x-4 mb-3">
+                            {cart.variant_id?.size && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-500">Size:</span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                  {cart.variant_id.size}
+                                </span>
+                              </div>
+                            )}
+                            {cart.variant_id?.color && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-500">Màu:</span>
+                                <div className="flex items-center space-x-1">
+                                  <div
+                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                    style={{ backgroundColor: cart.variant_id.color }}
+                                  ></div>
+                                  <span className="text-sm text-gray-700">{cart.variant_id.color}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
                           <p className="text-xl font-bold text-blue-600">{formatCurrency(cart.price)}</p>
-                        </div>
 
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => handleReduceFormCart(cart)}
-                            className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                          >
-                            <svg
-                              className="w-4 h-4 text-gray-600"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                            </svg>
-                          </button>
-                          <span className="w-12 ml-3 text-center font-semibold text-gray-900">
-                            {cart.quantity}
-                          </span>
-                          <button
-                            onClick={() => handleAddToCart(cart)}
-                            className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                          >
-                            <svg
-                              className="w-4 h-4 text-gray-600"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-
-                        <div className="text-right ">
-                          <div className="m-0 text-xl font-bold text-gray-900">
-                            {formatCurrency(cart.price * cart.quantity)}
+                          {/* Nút điều khiển số lượng mới */}
+                          <div className="flex items-center mt-3">
+                            <span className="text-sm text-gray-500 mr-3">Số lượng:</span>
+                            <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                              <button
+                                onClick={() => handleReduceFormCart(cart)}
+                                disabled={cart.quantity <= 1}
+                                className={`flex items-center justify-center w-8 h-8 rounded-l-lg transition-colors ${cart.quantity <= 1
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : "bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-800"
+                                  }`}
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
+                              </button>
+                              <div className="flex items-center justify-center w-12 h-8 bg-gray-50 text-sm font-semibold text-gray-900 border-x border-gray-300">
+                                {cart.quantity}
+                              </div>
+                              <button
+                                onClick={() => handleAddToCart(cart)}
+                                className="flex items-center justify-center w-8 h-8 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-800 rounded-r-lg transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleDeleteCart(cart._id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                          aria-label="Xóa sản phẩm"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                        <div className="text-right flex flex-col items-end space-y-2">
+                          <div className="text-xl font-bold text-gray-900">
+                            {formatCurrency(cart.price * cart.quantity)}
+                          </div>
+                          <button
+                            onClick={() => handleDeleteCart(cart._id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                            aria-label="Xóa sản phẩm"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -245,24 +247,14 @@ const ShoppingCart = () => {
             </div>
 
             <div className="lg:col-span-4 mt-8 lg:mt-0">
-              <div className="bg-white rounded-xl shadow-sm  sticky top-8">
+              <div className="bg-white rounded-xl shadow-sm sticky top-8">
                 <div className="p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Tổng đơn hàng</h2>
 
-                  <div className="bg-green-50  rounded-lg p-4 mb-6">
+                  <div className="bg-green-50 rounded-lg p-4 mb-6">
                     <div className="flex items-center">
-                      <svg
-                        className="w-5 h-5 text-green-600 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
+                      <svg className="w-5 h-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span className="text-sm font-medium text-green-800">
                         Miễn phí vận chuyển cho đơn hàng trên 100.000đ
@@ -300,7 +292,6 @@ const ShoppingCart = () => {
                     <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between font-bold text-xl">
                       <span>Tổng cộng</span>
                       <span>
-
                         {formatCurrency((
                           selectedTotal +
                           (selectedTotal >= 100 ? 0 : 10)
@@ -327,8 +318,6 @@ const ShoppingCart = () => {
                   </p>
                 </div>
               </div>
-
-
             </div>
           </div>
         )}
