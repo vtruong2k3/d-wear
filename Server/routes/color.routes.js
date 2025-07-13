@@ -5,7 +5,7 @@ const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 
 // Tạo màu
 colorRouter.post("/colors", authAdminMiddelware, colorController.createColor);
-
+colorRouter.get("/colors/items", colorController.getAllColorItems);
 // Lấy tất cả màu
 colorRouter.get("/colors", colorController.getAllColors);
 

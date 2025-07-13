@@ -9,7 +9,7 @@ sizeRouter.post("/sizes", authAdminMiddelware, sizeController.createSize);
 
 // Lấy danh sách tất cả size
 sizeRouter.get("/sizes", sizeController.getAllSizes);
-
+sizeRouter.get("/sizes/items", sizeController.getAllSizesItems);
 // Lấy chi tiết size theo ID
 sizeRouter.get("/sizes/:id", sizeController.getSizeById);
 

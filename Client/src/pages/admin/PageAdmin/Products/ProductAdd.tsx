@@ -94,8 +94,8 @@ const ProductAdd = () => {
         const [brandRes, categoryRes, sizeRes, colorRes] = await Promise.all([
           axios.get("/api/brand"),
           axios.get("/api/category"),
-          axios.get("/api/sizes"),
-          axios.get("/api/colors"),
+          axios.get("/api/sizes/items"),
+          axios.get("/api/colors/items"),
         ]);
 
         const brandsData = Array.isArray(brandRes.data.data)
