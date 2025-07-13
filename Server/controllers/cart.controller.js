@@ -123,14 +123,13 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCartQuantity = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { product_id, variant_id, quantity } = req.body;
+    const userId = req.user.id || req.body.user_id;
 
     // Validate dữ liệu đầu vào
-    const { error } = cartValidate.addTocart.validate(
-      { product_id, variant_id, quantity },
-      { abortEarly: false }
-    );
+    const { error } = cartValidate.addTocart.validate(req.body, {
+      abortEarly: false,
+    });
     if (error) {
       const errors = error.details.map((err) => err.message);
       return res.status(400).json({ message: "Dữ liệu không hợp lệ", errors });

@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cartRouter = express.Router();
 const cartController = require("../controllers/cart.controller");
@@ -19,4 +18,3 @@ cartRouter.delete(
 cartRouter.delete("/cart", authUserMiddelware, cartController.deleteAllCart);
 
 module.exports = cartRouter;
-

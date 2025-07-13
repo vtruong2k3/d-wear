@@ -15,7 +15,7 @@ export interface IOrder {
     paymentMethod: 'cod' | 'vnpay' | 'banking'; // hoặc bạn mở rộng thêm
     paymentStatus: 'paid' | 'unpaid';
 
-    status: 'pending' | 'processing' | 'completed' | 'cancelled'; // tùy logic
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'; // tùy logic
 
     total: number;        // Tổng giá trước giảm giá
     discount: number;     // Giảm giá
@@ -53,6 +53,26 @@ export interface OrderDetailResponse {
     order: IOrder;
     orderItems: OrderItem[];
 }
+
+export interface OrderItems {
+    product_id: string;
+    variant_id: string;
+    quantity: number;
+    price: number;
+}
+
+export interface OrderData {
+    user_id: string;
+    email: string;
+    receiverName: string;
+    shippingAddress: string;
+    phone: string;
+    paymentMethod: "cod" | "momo" | "vnpay";
+    voucher_id: string | null;
+    items: OrderItems[];
+    note: string;
+}
+
 
 export interface GetOrdersResponse {
     orders: IOrder[];

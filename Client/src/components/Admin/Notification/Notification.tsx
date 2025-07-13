@@ -1,177 +1,134 @@
-import { useState } from 'react';
-import '../../../styles/notification.css'
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../../../styles/notification.css';
 import { Dropdown, Badge, Button, List, Typography, Tag, Empty } from 'antd';
 import {
     BellOutlined,
-
     CheckOutlined,
     DeleteOutlined,
     SettingOutlined,
-    ExclamationCircleOutlined,
-    InfoCircleOutlined,
     CheckCircleOutlined,
-    CloseCircleOutlined,
 } from '@ant-design/icons';
+import socket from '../../../sockets/socket';
+import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
 
+interface NotificationItem {
+    id: string | number;
+    type: 'success' | 'warning' | 'info' | 'error';
+    title: string;
+    message: string;
+    time: string;
+    read: boolean;
+    avatar: JSX.Element;
+    orderId?: string;
+}
+
 const NotificationDropdown = () => {
-    const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            type: 'success',
-            title: 'Đơn hàng thành công',
-            message: 'Đơn hàng #12345 đã được xử lý thành công',
-            time: '2 phút trước',
-            read: false,
-            avatar: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
-        },
-        {
-            id: 2,
-            type: 'warning',
-            title: 'Cảnh báo hệ thống',
-            message: 'Dung lượng server đang đạt 85%',
-            time: '15 phút trước',
-            read: false,
-            avatar: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-        },
-        {
-            id: 3,
-            type: 'info',
-            title: 'Người dùng mới',
-            message: 'Có 3 người dùng mới đăng ký hôm nay',
-            time: '1 giờ trước',
-            read: true,
-            avatar: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
-        },
-        {
-            id: 4,
-            type: 'error',
-            title: 'Lỗi kết nối',
-            message: 'Không thể kết nối đến database chính',
-            time: '2 giờ trước',
-            read: false,
-            avatar: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
-        },
-        {
-            id: 5,
-            type: 'info',
-            title: 'Báo cáo hàng tháng',
-            message: 'Báo cáo tháng 6 đã sẵn sàng để xem',
-            time: '1 ngày trước',
-            read: true,
-            avatar: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
-        },
-    ]);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+    const navigate = useNavigate();
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    useEffect(() => {
+        socket.emit('joinRoom', 'admin');
+        socket.on('newOrder', (orders) => {
+            console.log(orders)
+            const newNotification: NotificationItem = {
+                id: orders.orders._id,
+                type: 'success',
+                title: '🛒 Đơn hàng mới',
+                message: `Đơn hàng #${orders.orders._id} vừa được tạo.`,
+                time: dayjs().format('HH:mm:ss DD/MM/YYYY'),
+                read: false,
+                avatar: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+                orderId: orders.orders._id,
+            };
 
-    const markAsRead = (id: number) => {
-        setNotifications(prev =>
-            prev.map(notification =>
-                notification.id === id
-                    ? { ...notification, read: true }
-                    : notification
-            )
+            setNotifications((prev) => [newNotification, ...prev]);
+        });
+
+        return () => {
+            socket.off('newOrder');
+        };
+    }, []);
+
+    const unreadCount = notifications.filter((n) => !n.read).length;
+
+    const markAsRead = (id: string | number) => {
+        setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
         );
     };
 
     const markAllAsRead = () => {
-        setNotifications(prev =>
-            prev.map(notification => ({ ...notification, read: true }))
-        );
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     };
 
-    const deleteNotification = (id: number) => {
-        setNotifications(prev => prev.filter(notification => notification.id !== id));
+    const deleteNotification = (id: string | number) => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
     };
 
-    type AlertType = 'success' | 'warning' | 'info' | 'error';
+    const handleNotificationClick = (item: NotificationItem) => {
+        markAsRead(item.id);
+        if (item.orderId) {
+            navigate(`/admin/orders/${item.orderId}`);
+        }
+    };
 
-
-
-    const getTypeColor = (type: string): string => {
-        const colors: Record<AlertType, string> = {
+    const getTypeColor = (type: NotificationItem['type']): string => {
+        const colors = {
             success: '#52c41a',
             warning: '#faad14',
             info: '#1890ff',
             error: '#ff4d4f',
         };
-
-        return colors[type as AlertType] || '#1890ff';
+        return colors[type];
     };
 
-
-    const getTypeTag = (type: string) => {
-        const tags: Record<AlertType, { color: string; text: string }> = {
+    const getTypeTag = (type: NotificationItem['type']) => {
+        const tags = {
             success: { color: 'success', text: 'Thành công' },
             warning: { color: 'warning', text: 'Cảnh báo' },
             info: { color: 'processing', text: 'Thông tin' },
             error: { color: 'error', text: 'Lỗi' },
         };
-
-        return tags[type as AlertType] || { color: 'default', text: 'Khác' };
+        return tags[type];
     };
 
-
-
     const notificationContent = (
-        <div className="notification-dropdown-content" style={{
-            width: 380,
-            maxHeight: 500,
-            overflow: 'hidden',
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 20px rgba(0, 0, 0, 0.1)'
-        }}>
+        <div className="notification-dropdown-content" style={{ width: 380, maxHeight: 500, overflow: 'hidden', background: 'white', borderRadius: '12px' }}>
             {/* Header */}
-            <div className="notification-header" style={{
-                padding: '16px 20px 12px',
-                borderBottom: '1px solid #f0f0f0',
-                background: 'white',
-                color: '#333',
-                borderRadius: '12px 12px 0 0',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Title level={5} style={{ margin: 0, color: '#333', fontSize: '16px' }}>
+            <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #f0f0f0', background: 'white' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Title level={5} style={{ margin: 0 }}>
                         <BellOutlined style={{ marginRight: 8 }} />
                         Thông báo ({unreadCount})
                     </Title>
                     {unreadCount > 0 && (
-                        <Button
-                            type="text"
-                            size="small"
-                            onClick={markAllAsRead}
-                            style={{ color: '#666', fontSize: '12px' }}
-                            icon={<CheckOutlined />}
-                        >
+                        <Button type="text" size="small" onClick={markAllAsRead} icon={<CheckOutlined />} style={{ fontSize: 12 }}>
                             Đánh dấu tất cả
                         </Button>
                     )}
                 </div>
             </div>
 
-            {/* Notifications List */}
-            <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px 0', background: 'white' }}>
+            {/* Notifications */}
+            <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px 0' }}>
                 {notifications.length > 0 ? (
                     <List
                         dataSource={notifications}
                         renderItem={(item) => (
                             <List.Item
+                                onClick={() => handleNotificationClick(item)}
                                 style={{
                                     padding: '12px 20px',
                                     background: item.read ? 'white' : 'rgba(24, 144, 255, 0.02)',
                                     borderLeft: item.read ? 'none' : `3px solid ${getTypeColor(item.type)}`,
                                     cursor: 'pointer',
-                                    transition: 'all 0.3s ease',
                                     margin: '0 8px 4px',
-                                    borderRadius: '8px',
-                                    position: 'relative',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                                    border: '1px solid rgba(0, 0, 0, 0.02)'
+                                    borderRadius: 8,
+                                    border: '1px solid rgba(0, 0, 0, 0.02)',
                                 }}
-                                className="notification-item"
                                 actions={[
                                     !item.read && (
                                         <Button
@@ -182,7 +139,6 @@ const NotificationDropdown = () => {
                                                 e.stopPropagation();
                                                 markAsRead(item.id);
                                             }}
-                                            style={{ color: '#52c41a' }}
                                         />
                                     ),
                                     <Button
@@ -193,8 +149,7 @@ const NotificationDropdown = () => {
                                             e.stopPropagation();
                                             deleteNotification(item.id);
                                         }}
-                                        style={{ color: '#ff4d4f' }}
-                                    />
+                                    />,
                                 ]}
                             >
                                 <List.Item.Meta
@@ -207,68 +162,21 @@ const NotificationDropdown = () => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            fontSize: '18px'
+                                            fontSize: 18,
                                         }}>
                                             {item.avatar}
                                         </div>
                                     }
                                     title={
-                                        <div>
-                                            <div style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'flex-start',
-                                                marginBottom: 4
-                                            }}>
-                                                <Text strong={!item.read} style={{ fontSize: '14px' }}>
-                                                    {item.title}
-                                                </Text>
-                                                <Tag
-                                                    color={getTypeTag(item.type).color}
-                                                    size="small"
-                                                    style={{ fontSize: '10px', padding: '0 6px' }}
-                                                >
-                                                    {getTypeTag(item.type).text}
-                                                </Tag>
-                                            </div>
-                                            {!item.read && (
-                                                <div
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: 12,
-                                                        top: 12,
-                                                        width: 8,
-                                                        height: 8,
-                                                        borderRadius: '50%',
-                                                        background: getTypeColor(item.type),
-                                                        animation: 'pulse 2s infinite'
-                                                    }}
-                                                />
-                                            )}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Text strong={!item.read}>{item.title}</Text>
+                                            <Tag color={getTypeTag(item.type).color}>{getTypeTag(item.type).text}</Tag>
                                         </div>
                                     }
                                     description={
                                         <div>
-                                            <Text
-                                                type="secondary"
-                                                style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    marginBottom: 4,
-                                                    opacity: item.read ? 0.7 : 1
-                                                }}
-                                            >
-                                                {item.message}
-                                            </Text>
-                                            <Text
-                                                type="secondary"
-                                                style={{
-                                                    fontSize: '11px',
-                                                    opacity: 0.6
-                                                }}
-                                            >
-                                                {item.time}
-                                            </Text>
+                                            <Text type="secondary" style={{ display: 'block' }}>{item.message}</Text>
+                                            <Text type="secondary" style={{ fontSize: 11 }}>{item.time}</Text>
                                         </div>
                                     }
                                 />
@@ -276,62 +184,30 @@ const NotificationDropdown = () => {
                         )}
                     />
                 ) : (
-                    <Empty
-                        description="Không có thông báo nào"
-                        style={{ padding: '40px 20px' }}
-                        imageStyle={{ height: 60 }}
-                    />
+                    <Empty description="Không có thông báo nào" style={{ padding: '40px 20px' }} imageStyle={{ height: 60 }} />
                 )}
             </div>
 
             {/* Footer */}
             {notifications.length > 0 && (
-                <div style={{
-                    padding: '12px 20px',
-                    borderTop: '1px solid #f0f0f0',
-                    background: 'white',
-                    borderRadius: '0 0 12px 12px',
-                    textAlign: 'center',
-                    boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04)'
-                }}>
-                    <Button
-                        type="link"
-                        icon={<SettingOutlined />}
-                        style={{ fontSize: '13px' }}
-                    >
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #f0f0f0', background: 'white', textAlign: 'center' }}>
+                    <Button type="link" icon={<SettingOutlined />} style={{ fontSize: 13 }}>
                         Xem tất cả thông báo
                     </Button>
                 </div>
             )}
-
-
         </div>
     );
 
     return (
         <div className="relative">
-            <Dropdown
-                dropdownRender={() => notificationContent}
-                placement="bottomRight"
-                trigger={['click']}
-                overlayClassName="notification-dropdown-overlay"
-            >
+            <Dropdown dropdownRender={() => notificationContent} placement="bottomRight" trigger={['click']}>
                 <div>
-                    <Badge
-                        count={unreadCount}
-                        size="small"
-                        className="notification-badge"
-                    >
-                        <Button
-                            type="text"
-                            icon={<BellOutlined />}
-                            className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md relative overflow-hidden"
-                        />
+                    <Badge count={unreadCount} size="small">
+                        <Button type="text" icon={<BellOutlined />} />
                     </Badge>
                 </div>
             </Dropdown>
-
-
         </div>
     );
 };

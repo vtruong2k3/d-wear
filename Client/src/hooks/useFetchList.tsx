@@ -16,16 +16,7 @@ interface BaseListResponse<T> {
   totalPages?: number;
   products: T[];
 }
-===
-export const useFetchList= <T= any>(
-  path: string,
-  query: Record<string, any> = {},
-  config: Record<string, any> = {}
-): UseFetchListResult<T> => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
->>>>>>> 2f4304c4bb5670e0c2e5c2bee030a77089bb968c
+
 
 export const useFetchList = <
   T,

@@ -1,124 +1,98 @@
-
 import { useEffect, useState } from "react";
-import { Table, Button, Select, DatePicker, message, Pagination, Tag } from "antd";
-import { EyeOutlined, DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Button,
+  Select,
+  DatePicker,
+  message,
+  Pagination,
+  Tag,
+} from "antd";
+import {
+  EyeOutlined,
+  DeleteOutlined,
+  RollbackOutlined,
+} from "@ant-design/icons";
 import { Link } from "react-router-dom";
-import Title from "antd/es/typography/Title";
+import type { IOrder } from "../../../../types/order/IOrder";
+import { fetchGetAllOrder, updateOrderStatus } from "../../../../services/admin/orderService";
+import { formatCurrency } from "../../../../utils/Format";
+import type { ColumnsType } from "antd/es/table";
+import socket from "../../../../sockets/socket";
+import { toast } from "react-toastify";
+import { useLoading } from "../../../../contexts/LoadingContext";
+import type { ErrorType } from "../../../../types/error/IError";
+
 
 const { Option } = Select;
 
-const fetchOrders = async () => {
-  const fakeOrders = [
-    {
-      _id: "1",
-      createdAt: "2025-06-20T10:00:00Z",
-      shippingAddress: {
-        name: "Nguyễn Văn A",
-        phone: "0901234567",
-        address: "123 Đường ABC, Quận 1, TP.HCM"
-      },
-      total: 500000,
-      discount: 50000,
-      finalAmount: 450000,
-      status: "pending",
-      paymentStatus: "unpaid"
-    },
-    {
-      _id: "2",
-      createdAt: "2025-06-19T12:30:00Z",
-      shippingAddress: {
-        name: "Trần Thị B",
-        phone: "0912345678",
-        address: "456 Đường XYZ, Quận 3, TP.HCM"
-      },
-      total: 1000000,
-      discount: 100000,
-      finalAmount: 900000,
-      status: "paid",
-      paymentStatus: "paid"
-    },
-    {
-      _id: "3",
-      createdAt: "2025-06-18T09:15:00Z",
-      shippingAddress: {
-        name: "Lê Văn C",
-        phone: "0987654321",
-        address: "789 Đường DEF, Quận 5, TP.HCM"
-      },
-      total: 200000,
-      discount: 0,
-      finalAmount: 200000,
-      status: "shipper",
-      paymentStatus: "paid"
-    },
-    {
-      _id: "4",
-      createdAt: "2025-06-17T15:45:00Z",
-      shippingAddress: {
-        name: "Phạm Thị D",
-        phone: "0978123456",
-        address: "321 Đường LMN, Quận 7, TP.HCM"
-      },
-      total: 150000,
-      discount: 20000,
-      finalAmount: 130000,
-      status: "cancelled",
-      paymentStatus: "unpaid"
-    }
-  ];
-
-  return {
-    data: {
-      data: fakeOrders
-    }
-  };
-};
-
-// Format ngày
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   if (!dateString) return "Không có";
   const date = new Date(dateString);
-  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+  return `${String(date.getDate()).padStart(2, "0")}/${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}/${date.getFullYear()}`;
 };
 
-// Normalize text
-const normalizeString = (str) => {
+const normalizeString = (str: string) => {
   if (!str) return "";
   return str.trim().normalize("NFC").replace(/\s+/g, " ").toLowerCase();
 };
 
 const OrderList = () => {
-  const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [hiddenOrders, setHiddenOrders] = useState([]);
+  const [orders, setOrders] = useState<IOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<IOrder[]>([]);
+  const [hiddenOrders, setHiddenOrders] = useState<string[]>([]);
   const [showHidden, setShowHidden] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
-  const [sortTotal, setSortTotal] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [dateFilter, setDateFilter] = useState<string>("");
+  const [sortTotal, setSortTotal] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
+  const { setLoading } = useLoading()
   const pageSize = 10;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetchOrders();
-        const all = response.data.data || [];
-        const hidden = JSON.parse(localStorage.getItem("hiddenOrders")) || [];
+        setLoading(true)
+        const response = await fetchGetAllOrder();
+        console.log("Dữ liệu trả về từ API:", response);
+        const all = response.orders || [];
+        const hidden = JSON.parse(localStorage.getItem("hiddenOrders") || "[]");
         setHiddenOrders(hidden);
         setOrders(all);
         filterOrders(all, hidden);
-      } catch (err) {
-        message.error("Lỗi khi tải danh sách đơn hàng");
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false)
       }
     };
     fetchData();
-  }, []);
+  }, [setLoading]);
+  useEffect(() => {
+    // Tham gia phòng admin để nhận đơn mới
+    socket.emit("joinRoom", "admin");
 
+    // Nhận đơn hàng mới
+    socket.on("newOrder", ({ orders: newOrder }) => {
+      setOrders((prev) => [newOrder, ...prev]); // thêm vào đầu danh sách
+      toast.success("📦 Có đơn hàng mới!");
+    });
+
+    return () => {
+      socket.off("newOrder");
+    };
+  }, []);
   useEffect(() => {
     filterOrders(orders, hiddenOrders);
   }, [orders, hiddenOrders, showHidden, statusFilter, dateFilter, sortTotal]);
 
-  const filterOrders = (data, hidden) => {
+  const filterOrders = (data: IOrder[], hidden: string[]) => {
     let filtered = [...data];
 
     filtered = showHidden
@@ -127,11 +101,15 @@ const OrderList = () => {
 
     if (statusFilter) {
       const normalized = normalizeString(statusFilter);
-      filtered = filtered.filter((o) => normalizeString(o.status) === normalized);
+      filtered = filtered.filter(
+        (o) => normalizeString(o.status) === normalized
+      );
     }
 
     if (dateFilter) {
-      filtered = filtered.filter((o) => formatDate(o.createdAt) === dateFilter);
+      filtered = filtered.filter(
+        (o) => formatDate(o.createdAt) === dateFilter
+      );
     }
 
     if (sortTotal === "low-to-high") {
@@ -144,101 +122,203 @@ const OrderList = () => {
     setCurrentPage(1);
   };
 
-  const handleHide = (id) => {
+  const handleHide = (id: string) => {
     const updated = [...hiddenOrders, id];
     setHiddenOrders(updated);
     localStorage.setItem("hiddenOrders", JSON.stringify(updated));
     message.success("Đã ẩn đơn hàng");
   };
 
-  const handleRestore = (id) => {
+  const handleRestore = (id: string) => {
     const updated = hiddenOrders.filter((i) => i !== id);
     setHiddenOrders(updated);
     localStorage.setItem("hiddenOrders", JSON.stringify(updated));
     message.success("Đã khôi phục đơn hàng");
   };
 
-  const statusColor = {
-    pending: "default",
-    paid: "green",
-    shipper: "blue",
-    cancelled: "red",
+  // Hàm xử lý thay đổi trạng thái đơn hàng
+  const handleStatusChange = async (orderId: string, newStatus: IOrder["status"]) => {
+    try {
+      // Gọi API để cập nhật trạng thái (cần thêm service này)
+      await updateOrderStatus(orderId, newStatus);
+
+      // Cập nhật state local
+      const updatedOrders = orders.map(order =>
+        order._id === orderId ? { ...order, status: newStatus } : order
+      );
+      setOrders(updatedOrders);
+
+      message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+    } catch (error) {
+      message.error("Lỗi khi cập nhật trạng thái đơn hàng");
+      console.error("Lỗi cập nhật trạng thái:", error);
+    }
   };
 
-  const paymentColor = {
+  //   // Hàm xử lý thay đổi trạng thái thanh toán
+  //   const handleOrderStatusChange = async (orderId: string, newStatus: string) => {
+  //   try {
+  //     // Gọi API backend để cập nhật
+  //     await updateOrderStatus(orderId, newStatus);
+
+  //     // Cập nhật state local
+  //     const updatedOrders = orders.map(order =>
+  //       order._id === orderId ? { ...order, status: newStatus } : order
+  //     );
+  //     setOrders(updatedOrders);
+
+  //     message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+  //   } catch (error) {
+  //     message.error("Lỗi khi cập nhật trạng thái đơn hàng");
+  //     console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
+  //   }
+  // };
+
+  // Hàm lấy label cho trạng thái đơn hàng
+  const getStatusLabel = (status: string) => {
+    const statusLabels: Record<string, string> = {
+      pending: "Chờ xử lý",
+      processing: "Đang xử lý",
+      shipped: "Đã giao hàng",
+      delivered: "Đã giao",
+      cancelled: "Đã hủy"
+    };
+    return statusLabels[status] || status;
+  };
+
+  // Hàm lấy label cho trạng thái thanh toán
+  // const getPaymentStatusLabel = (paymentStatus: string) => {
+  //   const paymentLabels: Record<string, string> = {
+  //     unpaid: "Chưa thanh toán",
+  //     paid: "Đã thanh toán"
+  //   };
+  //   return paymentLabels[paymentStatus] || paymentStatus;
+  // };
+
+  // const statusColor: Record<string, string> = {
+  //   pending: "default",
+  //   processing: "orange",
+  //   shipped: "green",
+  //   delivered: "blue",
+  //   cancelled: "red",
+  // };
+
+  const paymentColor: Record<string, string> = {
     unpaid: "volcano",
     paid: "green",
   };
 
-  const columns = [
+  const columns: ColumnsType<IOrder> = [
     {
       title: "STT",
-      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
+      render: (_: unknown, __: IOrder, index: number) =>
+        (currentPage - 1) * pageSize + index + 1,
       width: 60,
     },
+
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
-      render: (date) => formatDate(date),
+      render: (date: string) => formatDate(date),
     },
     {
       title: "Người nhận",
       dataIndex: ["shippingAddress", "name"],
-      render: (val, record) => val || record.shippingInfo?.name || "Không có",
+      render: (_: IOrder, record: IOrder) =>
+        record.receiverName || "Không có",
     },
     {
       title: "Số điện thoại",
       dataIndex: ["shippingAddress", "phone"],
-      render: (val, record) => val || record.shippingInfo?.phone || "Không có",
+      render: (_: IOrder, record: IOrder) =>
+        record.phone || "Không có",
     },
     {
       title: "Địa chỉ",
       dataIndex: ["shippingAddress", "address"],
-      render: (val, record) => val || record.shippingInfo?.address || "Không có",
+      render: (_: IOrder, record: IOrder) =>
+        record.shippingAddress || "Không có",
     },
     {
       title: "Tổng tiền",
-      dataIndex: "total",
-      render: (val) => val ? `${val.toLocaleString()} VND` : "Không có",
+      render: (_: IOrder, record: IOrder) =>
+        formatCurrency(record.total),
     },
     {
       title: "Giảm giá",
-      dataIndex: "discount",
-      render: (val) => val ? `-${val.toLocaleString()} VND` : "0 VND",
+      render: (_: IOrder, record: IOrder) =>
+        formatCurrency(record.discount),
     },
     {
       title: "Thành tiền",
       dataIndex: "finalAmount",
-      render: (val) => val ? `${val.toLocaleString()} VND` : "Không có",
+      render: (_: IOrder, record: IOrder) =>
+        formatCurrency(record.finalAmount),
     },
     {
       title: "Trạng thái đơn",
-      dataIndex: "status",
-      render: (status) => (
-        <Tag color={statusColor[status] || "default"}>
-          {status || "Không có"}
-        </Tag>
-      ),
+      render: (_: IOrder, record: IOrder) => (
+        <Select
+          value={record.status}
+          style={{ width: 120 }}
+          onChange={(value) => handleStatusChange(record._id, value)}
+          size="small"
+          bordered={false}
+        >
+          <Option
+            value="pending"
+            disabled={["shipped", "delivered"].includes(record.status)}
+          >
+            <span style={{ color: "#d9d9d9" }}>Chờ xử lý</span>
+          </Option>
+
+          <Option
+            value="processing"
+            disabled={["shipped", "delivered"].includes(record.status)}
+          >
+            <span style={{ color: "#fa8c16" }}>Đang xử lý</span>
+          </Option>
+
+          <Option value="shipped">
+            <span style={{ color: "#52c41a" }}>Đang giao hàng</span>
+          </Option>
+
+          <Option value="delivered">
+            <span style={{ color: "#1890ff" }}>Đã giao</span>
+          </Option>
+
+          <Option
+            value="cancelled"
+            disabled={["shipped", "delivered"].includes(record.status)}
+          >
+            <span style={{ color: "#ff4d4f" }}>Đã hủy</span>
+          </Option>
+        </Select>
+      )
+
+
     },
     {
       title: "Thanh toán",
-      dataIndex: "paymentStatus",
-      render: (paymentStatus) => (
-        <Tag color={paymentColor[paymentStatus] || "default"}>
-          {paymentStatus || "Không có"}
-        </Tag>
+      render: (_: IOrder, record: IOrder) => (
+        <Tag color={paymentColor[record.paymentStatus] || "default"}>{record.paymentStatus}</Tag>
       ),
     },
     {
       title: "Hành động",
-      render: (record) => (
+      render: (record: IOrder) => (
         <>
-          <Link to={`/admin/orders/detail/${record._id}`}>
-            <Button icon={<EyeOutlined />} type="primary" size="small" style={{ marginRight: 8 }}>
+          <Link to={`/admin/orders/${record._id}`}>
+            <Button
+              icon={<EyeOutlined />}
+              type="primary"
+              size="small"
+              style={{ marginRight: 8 }}
+            >
               Xem
             </Button>
           </Link>
-          {!showHidden && record.status === "paid" && (
+          {!showHidden && record.paymentStatus === "paid" && (
             <Button
               icon={<DeleteOutlined />}
               onClick={() => handleHide(record._id)}
@@ -265,9 +345,7 @@ const OrderList = () => {
 
   return (
     <div>
-      <Title level={2} style={{ textAlign: 'center', margin: '0 0 40px 0', color: '#262626' }}>
-        📦 Danh sách đơn hàng
-      </Title>
+      <h2>📦 Danh sách đơn hàng</h2>
       <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
         <Select
           placeholder="Lọc theo trạng thái đơn"
@@ -276,14 +354,21 @@ const OrderList = () => {
           onChange={setStatusFilter}
         >
           <Option value="pending">Chờ xử lý</Option>
-          <Option value="paid">Đã thanh toán</Option>
-          <Option value="shipper">Đang giao</Option>
+          <Option value="processing">Đang xử lý</Option>
+          <Option value="shipped">Đã giao hàng</Option>
+          <Option value="delivered">Đã giao</Option>
           <Option value="cancelled">Đã hủy</Option>
         </Select>
 
         <DatePicker
           format="DD/MM/YYYY"
-          onChange={(date, dateString) => setDateFilter(dateString)}
+          onChange={(_, dateStrings) => {
+            if (Array.isArray(dateStrings)) {
+              setDateFilter(dateStrings[0]); // hoặc ghép lại nếu cần
+            } else {
+              setDateFilter(dateStrings);
+            }
+          }}
           placeholder="Lọc theo ngày"
         />
 
@@ -302,9 +387,12 @@ const OrderList = () => {
         </Button>
       </div>
 
-      <Table
+      <Table<IOrder>
         columns={columns}
-        dataSource={filteredOrders}
+        dataSource={filteredOrders.slice(
+          (currentPage - 1) * pageSize,
+          currentPage * pageSize
+        )}
         rowKey="_id"
         pagination={false}
       />

@@ -25,7 +25,7 @@ const adminRouter = [
       { path: "variants", element: <Variants /> },
 
       { path: "orders", element: <Orders /> },
-      { path: "orders/detail/:id", element: <Orderdetail /> },
+      { path: "orders/:id", element: <Orderdetail /> },
       { path: "brands", element: <Brand /> },
       { path: "voucher", element: <Voucher /> },
       { path: "size", element: <Sizes /> },
