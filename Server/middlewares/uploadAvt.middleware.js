@@ -1,4 +1,3 @@
-
 const multer = require("multer");
 const path = require("path");
 
@@ -14,7 +13,28 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+// File filter (chỉ cho jpg, jpeg, png, webp)
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|webp/;
+  const extName = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
+  const mimeType = allowedTypes.test(file.mimetype);
+
+  if (extName && mimeType) {
+    cb(null, true);
+  } else {
+    cb(new Error("Chỉ cho phép file .jpg, .jpeg, .png, .webp"));
+  }
+};
+
+// Tạo middleware upload với giới hạn kích thước 2MB (tuỳ chọn)
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});
 
 module.exports = upload;
-
