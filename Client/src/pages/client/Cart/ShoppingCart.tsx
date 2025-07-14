@@ -139,7 +139,7 @@ const ShoppingCart = () => {
                         : "hover:bg-gray-50"
                         }`}
                     >
-                      <div className="flex items-start space-x-4">
+                      <div className="flex items-start  space-x-4">
                         <input
                           type="checkbox"
                           checked={selectedItems.includes(cart._id)}
@@ -147,7 +147,7 @@ const ShoppingCart = () => {
                           className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-1"
                         />
 
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 ml-3">
                           <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
                             <img
                               src={
@@ -158,7 +158,7 @@ const ShoppingCart = () => {
                                   : "/default.png"
                               }
                               alt={cart.product_id.product_name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain "
                             />
                           </div>
                         </div>

@@ -2,10 +2,14 @@ const mongoose = require("mongoose");
 const paymentShema = mongoose.Schema(
   {
     order_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "orders",
+      type: String,
       required: true,
     },
+    // order_id: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "orders",
+    //   required: true,
+    // },
 
     // Cổng thanh toán
     method: {
