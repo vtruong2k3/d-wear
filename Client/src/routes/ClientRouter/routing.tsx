@@ -42,7 +42,7 @@ const clientRoutes = [
         element: <OrdersPage />,
       },
       {
-        path: "orders/:orderId", // ✅ Chi tiết đơn hàng
+        path: "orders/:id", // ✅ Chi tiết đơn hàng
         element: <OrderDetailPage />,
       },
       {
