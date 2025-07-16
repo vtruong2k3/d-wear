@@ -68,17 +68,34 @@ const OrderDetail = () => {
   //   delivered: "Đã giao",
   //   cancelled: "Đã huỷ",
   // };
+  const validTransitions: Record<IOrder["status"], IOrder["status"][]> = {
+    pending: ["processing", "cancelled"],
+    processing: ["shipped", "cancelled"],
+    shipped: ["delivered"],
+    delivered: [],
+    cancelled: [],
+  };
   const handleStatusChange = async (newStatus: IOrder["status"]) => {
     if (!order?._id) return;
 
+    const currentStatus = order.status;
+
+    // ✅ Validate trạng thái
+    const allowedStatuses = validTransitions[currentStatus];
+    if (!allowedStatuses.includes(newStatus)) {
+      toast.error(
+        `Không thể chuyển trạng thái từ "${getStatusLabel(currentStatus)}" sang "${getStatusLabel(newStatus)}"`
+      );
+      return;
+    }
+
     try {
-      // Hiện loading nếu cần
       setLoading(true);
 
       // Gọi API cập nhật trạng thái đơn hàng
       await updateOrderStatus(order._id, newStatus);
 
-      // Cập nhật lại state `data` sau khi thành công
+      // Cập nhật lại state
       setData((prev) =>
         prev
           ? {
@@ -102,6 +119,7 @@ const OrderDetail = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (!id) return;
 
@@ -277,29 +295,31 @@ const OrderDetail = () => {
                 >
                   <Option
                     value="pending"
-                    disabled={["shipped", "delivered"].includes(order.status)}
+                    disabled={["shipped", "delivered", "cancelled"].includes(order.status)}
                   >
                     <span style={{ color: "#d9d9d9" }}>Chờ xử lý</span>
                   </Option>
 
                   <Option
                     value="processing"
-                    disabled={["shipped", "delivered"].includes(order.status)}
+                    disabled={["shipped", "delivered", "cancelled"].includes(order.status)}
                   >
                     <span style={{ color: "#fa8c16" }}>Đang xử lý</span>
                   </Option>
 
-                  <Option value="shipped">
+                  <Option value="shipped"
+                    disabled={["delivered", "cancelled"].includes(order.status)}>
                     <span style={{ color: "#52c41a" }}>Đang giao hàng</span>
                   </Option>
 
-                  <Option value="delivered">
+                  <Option value="delivered"
+                    disabled={["cancelled"].includes(order.status)}>
                     <span style={{ color: "#1890ff" }}>Đã giao</span>
                   </Option>
 
                   <Option
                     value="cancelled"
-                    disabled={["shipped", "delivered"].includes(order.status)}
+                    disabled={["processing", "shipped", "delivered", "cancelled"].includes(order.status)}
                   >
                     <span style={{ color: "#ff4d4f" }}>Đã hủy</span>
                   </Option>

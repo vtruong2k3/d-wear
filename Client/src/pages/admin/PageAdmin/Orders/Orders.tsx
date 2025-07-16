@@ -4,7 +4,7 @@ import {
   Button,
   Select,
   DatePicker,
-  message,
+
   Pagination,
   Tag,
 } from "antd";
@@ -73,7 +73,7 @@ const OrderList = () => {
       }
     };
     fetchData();
-  }, [setLoading]);
+  }, []);
   useEffect(() => {
     // Tham gia phòng admin để nhận đơn mới
     socket.emit("joinRoom", "admin");
@@ -153,17 +153,23 @@ const OrderList = () => {
   };
 
   const handleHide = (id: string) => {
+    if (hiddenOrders.includes(id)) {
+      toast.info("Đơn hàng này đã được ẩn trước đó.");
+      return;
+    }
+
     const updated = [...hiddenOrders, id];
     setHiddenOrders(updated);
     localStorage.setItem("hiddenOrders", JSON.stringify(updated));
-    message.success("Đã ẩn đơn hàng");
+    toast.success("Đã ẩn đơn hàng");
   };
+
 
   const handleRestore = (id: string) => {
     const updated = hiddenOrders.filter((i) => i !== id);
     setHiddenOrders(updated);
     localStorage.setItem("hiddenOrders", JSON.stringify(updated));
-    message.success("Đã khôi phục đơn hàng");
+    toast.success("Đã khôi phục đơn hàng");
   };
 
   // Hàm xử lý thay đổi trạng thái đơn hàng
@@ -180,7 +186,7 @@ const OrderList = () => {
 
       toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
-      message.error("Lỗi khi cập nhật trạng thái đơn hàng");
+      toast.error("Lỗi khi cập nhật trạng thái đơn hàng");
       console.error("Lỗi cập nhật trạng thái:", error);
     }
   };
@@ -297,23 +303,27 @@ const OrderList = () => {
         >
           <Option
             value="pending"
-            disabled={["shipped", "delivered"].includes(record.status)}
+            disabled={["shipped", "delivered", "cancelled"].includes(record.status)}
           >
             <span style={{ color: "#d9d9d9" }}>Chờ xử lý</span>
           </Option>
 
           <Option
             value="processing"
-            disabled={["shipped", "delivered"].includes(record.status)}
+            disabled={["shipped", "delivered", "cancelled"].includes(record.status)}
           >
             <span style={{ color: "#fa8c16" }}>Đang xử lý</span>
           </Option>
 
-          <Option value="shipped">
+          <Option value="shipped"
+            disabled={["delivered", "cancelled"].includes(record.status)}
+          >
             <span style={{ color: "#52c41a" }}>Đang giao hàng</span>
           </Option>
 
-          <Option value="delivered">
+          <Option value="delivered"
+            disabled={["cancelled"].includes(record.status)}
+          >
             <span style={{ color: "#1890ff" }}>Đã giao</span>
           </Option>
 
@@ -336,41 +346,49 @@ const OrderList = () => {
     },
     {
       title: "Hành động",
-      render: (record: IOrder) => (
-        <>
-          <Link to={`/admin/orders/${record._id}`}>
-            <Button
-              icon={<EyeOutlined />}
-              type="primary"
-              size="small"
-              style={{ marginRight: 8 }}
-            >
-              Xem
-            </Button>
-          </Link>
-          {!showHidden && record.paymentStatus === "paid" && (
-            <Button
-              icon={<DeleteOutlined />}
-              onClick={() => handleHide(record._id)}
-              danger
-              size="small"
-            >
-              Ẩn
-            </Button>
-          )}
-          {showHidden && (
-            <Button
-              icon={<RollbackOutlined />}
-              onClick={() => handleRestore(record._id)}
-              type="dashed"
-              size="small"
-            >
-              Khôi phục
-            </Button>
-          )}
-        </>
-      ),
-    },
+      render: (record: IOrder) => {
+        const isHidden = hiddenOrders.includes(String(record._id));
+        return (
+          <>
+            <Link to={`/admin/orders/${record._id}`}>
+              <Button
+                icon={<EyeOutlined />}
+                type="primary"
+                size="small"
+                style={{ marginRight: 8, marginBottom: 8 }}
+              >
+                Xem
+              </Button>
+            </Link>
+
+            {/* Nếu không phải danh sách đơn đã ẩn và đơn chưa bị ẩn mới hiện nút Ẩn */}
+            {!showHidden && !isHidden && (
+              <Button
+                icon={<DeleteOutlined />}
+                onClick={() => handleHide(record._id)}
+                danger
+                size="small"
+              >
+                Ẩn
+              </Button>
+            )}
+
+            {/* Nếu đang xem danh sách đơn đã ẩn thì hiện nút Khôi phục */}
+            {showHidden && isHidden && (
+              <Button
+                icon={<RollbackOutlined />}
+                onClick={() => handleRestore(record._id)}
+                type="dashed"
+                size="small"
+              >
+                Khôi phục
+              </Button>
+            )}
+          </>
+        );
+      },
+    }
+
   ];
 
   return (
@@ -413,7 +431,7 @@ const OrderList = () => {
         </Select>
 
         <Button type="default" onClick={() => setShowHidden(!showHidden)}>
-          {showHidden ? "🔙 Danh sách chính" : "👻 Đơn đã ẩn"}
+          {showHidden ? " Danh sách chính" : " Đơn đã ẩn"}
         </Button>
       </div>
 
