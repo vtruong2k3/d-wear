@@ -75,25 +75,57 @@ const OrderDetailPage = () => {
     }
   };
 
-  useEffect(() => {
-    const getDetailOrder = async (id: string | undefined) => {
-      try {
-        setLoading(true);
-        const res = await getOrderDetail(id);
-        setOrder(res);
-      } catch (error) {
-        const errorMessage =
-          (error as ErrorType).response?.data?.message ||
-          (error as ErrorType).message ||
-          "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-    getDetailOrder(id);
-  }, [id, setLoading]);
+  // Sửa socket orderStatusUpdate
+useEffect(() => {
+  if (!id || id === "payment") return; // ✅ Chặn lỗi Cast to ObjectId
+
+  socket.emit("joinRoom", id);
+
+  socket.on("orderStatusUpdate", (data) => {
+    if (data?.orderId === id) {
+      setOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              order: { ...prev.order, status: data.status },
+            }
+          : prev
+      );
+      toast.success(`Trạng thái đơn hàng đã cập nhật: ${getStatusText(data.status)}`);
+    }
+  });
+
+  return () => {
+    socket.emit("leaveRoom", id);
+    socket.off("orderStatusUpdate");
+  };
+}, [id]);
+
+// Sửa socket cancelOrder
+useEffect(() => {
+  if (!id || id === "payment") return; // ✅ Chặn lỗi Cast to ObjectId
+
+  socket.emit("joinRoom", id);
+
+  socket.on("cancelOrder", (data) => {
+    if (data?.orderId === id) {
+      setOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              order: { ...prev.order, status: data.status },
+            }
+          : prev
+      );
+    }
+  });
+
+  return () => {
+    socket.emit("leaveRoom", id);
+    socket.off("cancelOrder");
+  };
+}, [id]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":

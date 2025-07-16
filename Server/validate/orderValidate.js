@@ -32,8 +32,8 @@ const createOrderSchema = Joi.object({
       "array.base": "items phải là một mảng",
     }),
   voucher_id: Joi.string().allow("", null).optional(),
-  paymentMethod: Joi.string().valid("cod", "vnpay").required().messages({
-    "any.only": 'paymentMethod phải là "cod" hoặc "vnpay"',
+  paymentMethod: Joi.string().valid("cod", "vnpay","momo").required().messages({
+    "any.only": 'paymentMethod phải là "cod" hoặc "vnpay","momo"',
     "any.required": "paymentMethod là bắt buộc",
   }),
   receiverName: Joi.string().required().messages({

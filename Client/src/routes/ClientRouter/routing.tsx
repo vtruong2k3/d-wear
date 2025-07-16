@@ -4,9 +4,9 @@ import DetailProduct from "../../pages/client/ProductDetail/DetailProduct";
 import Login from "../../pages/client/Login/Login";
 import Register from "../../pages/client/Login/Register";
 import ListProduct from "../../pages/client/Product/ListProduct";
-
 import ShoppingCart from "../../pages/client/Cart/ShoppingCart";
 import Checkout from "../../pages/client/Order/Checkout";
+import PaymentResult from "../../pages/client/Order/PaymentResult";
 import OrdersPage from "../../pages/client/Order/OrdersPage";
 import OrderDetailPage from "../../pages/client/Order/OrderDetailPage";
 const clientRoutes = [
@@ -36,6 +36,10 @@ const clientRoutes = [
       {
         path: "checkout",
         element: <Checkout />,
+      },
+      {
+        path: "payment",
+        element: <PaymentResult />,
       },
       {
         path: "orders", // ✅ Danh sách đơn hàng

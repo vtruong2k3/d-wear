@@ -25,6 +25,6 @@ routerManager.use("/api", authAmdinRouter);
 routerManager.use("/api", colorRouter);
 routerManager.use("/api", sizeRouter);
 routerManager.use("/api", orderRouter);
-routerManager.use("/api", momoRouter);
+routerManager.use("/api/momo", momoRouter);
 
 module.exports = routerManager;

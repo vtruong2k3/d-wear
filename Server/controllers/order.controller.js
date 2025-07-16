@@ -1,6 +1,6 @@
 const OrderItem = require("../models/orderItems");
 const Order = require("../models/orders");
-
+const axios = require("axios");
 const { getIO } = require("../sockets/socketManager");
 const Voucher = require("../models/vouchers");
 const sendOrderConfirmationEmail = require("../utils/sendEmail");
@@ -274,9 +274,7 @@ exports.getAllByIdUser = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   try {
-    const { error } = createOrderSchema.validate(req.body, {
-      abortEarly: false,
-    });
+    const { error } = createOrderSchema.validate(req.body, { abortEarly: false });
     if (error) {
       return res.status(400).json({
         message: "Dữ liệu không hợp lệ",
@@ -300,9 +298,7 @@ exports.createOrder = async (req, res) => {
     const userId = req.user?.id || user_id;
 
     if (!userId || !items || items.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Thiếu thông tin đơn hàng hoặc người dùng." });
+      return res.status(400).json({ message: "Thiếu thông tin đơn hàng hoặc người dùng." });
     }
 
     // Tính tổng giá trị đơn hàng
@@ -312,36 +308,26 @@ exports.createOrder = async (req, res) => {
     });
 
     let discount = 0;
-
     if (voucher_id) {
       const voucher = await Voucher.findById(voucher_id);
-
       if (!voucher || !voucher.isActive) {
-        return res
-          .status(400)
-          .json({ message: "Voucher không hợp lệ hoặc đã bị vô hiệu hóa." });
+        return res.status(400).json({ message: "Voucher không hợp lệ hoặc đã bị vô hiệu hóa." });
       }
 
       const now = new Date();
       if (now < voucher.startDate || now > voucher.endDate) {
-        return res
-          .status(400)
-          .json({ message: "Voucher hiện không còn hiệu lực." });
+        return res.status(400).json({ message: "Voucher hiện không còn hiệu lực." });
       }
 
       const alreadyUsed = voucher.usedUsers?.some(
         (usedId) => usedId.toString() === userId.toString()
       );
       if (alreadyUsed) {
-        return res
-          .status(400)
-          .json({ message: "Bạn đã sử dụng voucher này rồi." });
+        return res.status(400).json({ message: "Bạn đã sử dụng voucher này rồi." });
       }
 
       if (voucher.maxUser > 0 && voucher.maxUser <= 0) {
-        return res
-          .status(400)
-          .json({ message: "Voucher đã hết lượt sử dụng." });
+        return res.status(400).json({ message: "Voucher đã hết lượt sử dụng." });
       }
 
       if (total < voucher.minOrderValue) {
@@ -359,7 +345,6 @@ exports.createOrder = async (req, res) => {
         discount = voucher.discountValue;
       }
 
-      // Cập nhật voucher
       await Voucher.findByIdAndUpdate(voucher_id, {
         $inc: { maxUser: -1 },
         $addToSet: { usedUsers: userId },
@@ -368,7 +353,7 @@ exports.createOrder = async (req, res) => {
 
     const finalAmount = total - discount;
 
-    // Tạo Order
+    // Tạo đơn hàng
     const newOrder = await Order.create({
       user_id: userId,
       order_code: generateOrderCode(),
@@ -384,9 +369,8 @@ exports.createOrder = async (req, res) => {
       note,
     });
 
-    // Tạo OrderItems
+    // Tạo các item
     const orderItemIds = [];
-
     await Promise.all(
       items.map(async (item) => {
         const orderItem = await OrderItem.create({
@@ -403,14 +387,13 @@ exports.createOrder = async (req, res) => {
     newOrder.orderItems = orderItemIds;
     await newOrder.save();
 
-    // Xoá item khỏi giỏ hàng
+    // Xoá giỏ hàng
     await Cart.deleteMany({
-      user_id: user_id,
+      user_id: userId,
       variant_id: { $in: items.map((item) => item.variant_id) },
     });
-    console.log("🗑 Đã xoá các biến thể khỏi giỏ hàng.");
 
-    // Cập nhật tồn kho
+    // Trừ tồn kho
     await Promise.all(
       items.map(async (item) => {
         const updated = await Variant.findOneAndUpdate(
@@ -419,41 +402,27 @@ exports.createOrder = async (req, res) => {
         );
 
         if (!updated) {
-          throw new Error(
-            `Biến thể sản phẩm ${item.variant_id} không đủ tồn kho`
-          );
+          throw new Error(`Biến thể sản phẩm ${item.variant_id} không đủ tồn kho`);
         }
       })
     );
 
-    // Gửi email
-    // Gửi email xác nhận đơn hàng (có danh sách sản phẩm)
+    // Gửi email xác nhận đơn hàng
     try {
       if (emailUser) {
-        // Lấy danh sách OrderItems và populate variant + product
-        const orderItems = await OrderItem.find({
-          order_id: newOrder._id,
-        }).populate({
+        const orderItems = await OrderItem.find({ order_id: newOrder._id }).populate({
           path: "variant_id",
-          populate: {
-            path: "product_id",
-            select: "product_name", // Lấy tên sản phẩm
-          },
+          populate: { path: "product_id", select: "product_name" },
         });
 
-        // Tạo danh sách sản phẩm chi tiết để gửi qua email
         const populatedItems = orderItems.map((item) => {
           const variant = item.variant_id;
           const product = variant?.product_id;
-          const rawImage = Array.isArray(variant?.image)
-            ? variant.image[0]
-            : variant?.image;
+          const rawImage = Array.isArray(variant?.image) ? variant.image[0] : variant?.image;
           const imagePath = rawImage?.replace(/\\/g, "/");
           const fullImageUrl = imagePath
             ? `https://a85ff2e29d03.ngrok-free.app/${imagePath}`
             : "";
-
-          console.log("Full image URL:", fullImageUrl);
 
           return {
             name: product?.product_name || "Sản phẩm",
@@ -465,14 +434,13 @@ exports.createOrder = async (req, res) => {
           };
         });
 
-        // Gửi email xác nhận đơn hàng với danh sách sản phẩm
         await sendOrderConfirmationEmail(emailUser, {
           ...newOrder.toObject(),
           items: populatedItems,
         });
       }
     } catch (emailError) {
-      console.error(" Gửi email thất bại:", emailError.message);
+      console.error("Gửi email thất bại:", emailError.message);
     }
 
     // Emit socket
@@ -480,14 +448,71 @@ exports.createOrder = async (req, res) => {
     io.to("admin").emit("newOrder", { orders: newOrder });
     io.to("user").emit("newOrder", { orders: newOrder });
 
+    // Nếu chọn thanh toán bằng MoMo thì tạo thanh toán
+    if (paymentMethod === "momo") {
+      const crypto = require("crypto");
+      const axios = require("axios");
+
+      const partnerCode = process.env.MOMO_PARTNER_CODE || "MOMO";
+      const accessKey = process.env.MOMO_ACCESS_KEY;
+      const secretKey = process.env.MOMO_SECRET_KEY;
+      const requestType = "captureWallet";
+      const redirectUrl = process.env.MOMO_REDIRECT_URL || "http://localhost:5173/payment";
+      const ipnUrl = process.env.MOMO_IPN_URL || "http://localhost:5000/api/momo/ipn";
+      const orderId = newOrder._id.toString();
+      const requestId = `${orderId}-${Date.now()}`;
+      const orderInfo = `Thanh toán đơn hàng #${orderId}`;
+      const amount = finalAmount.toString();
+      const extraData = "";
+
+      const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+
+      const signature = crypto.createHmac("sha256", secretKey).update(rawSignature).digest("hex");
+
+      const requestBody = {
+        partnerCode,
+        accessKey,
+        requestId,
+        amount,
+        orderId,
+        orderInfo,
+        redirectUrl,
+        ipnUrl,
+        extraData,
+        requestType,
+        signature,
+        lang: "vi",
+      };
+
+      const momoRes = await axios.post("https://test-payment.momo.vn/v2/gateway/api/create", requestBody);
+      const payUrl = momoRes.data?.payUrl;
+
+      if (!payUrl) {
+        return res.status(500).json({ message: "Không lấy được liên kết thanh toán từ MoMo" });
+      }
+      console.log("👉 finalAmount trả về:", finalAmount);
+      return res.status(200).json({
+        message: "Tạo đơn hàng thành công - chuyển đến MoMo",
+        order_id: newOrder._id,
+        finalAmount,
+        payUrl,
+      });
+      
+    }
+
+    // Nếu là COD
     return res.status(201).json({
-      message: "Tạo đơn hàng thành công",
-      order: newOrder,
+      message: "Tạo đơn hàng thành công (COD)",
+      order_id: newOrder._id,
+      finalAmount,
     });
   } catch (error) {
+    console.error("Lỗi tạo đơn hàng:", error.message);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
     });
   }
 };
+
+
