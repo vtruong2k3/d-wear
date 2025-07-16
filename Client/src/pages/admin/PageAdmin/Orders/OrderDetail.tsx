@@ -274,6 +274,7 @@ const OrderDetail = () => {
             <Descriptions title="Thông tin người nhận" bordered size="small" column={1}>
               <Descriptions.Item label="Tên">{order.receiverName}</Descriptions.Item>
               <Descriptions.Item label="SĐT">{order.phone}</Descriptions.Item>
+              <Descriptions.Item label="Email">{order.email}</Descriptions.Item>
               <Descriptions.Item label="Địa chỉ">{order.shippingAddress}</Descriptions.Item>
             </Descriptions>
           </Col>

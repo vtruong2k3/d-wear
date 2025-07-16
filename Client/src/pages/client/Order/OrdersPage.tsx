@@ -46,6 +46,22 @@ const OrdersPage = () => {
 
     fetchOrders();
   }, [setLoading]);
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Chờ xử lý";
+      case "processing":
+        return "Đang xử lý";
+      case "shipped":
+        return "Đang giao hàng";
+      case "delivered":
+        return "Đã giao hàng";
+      case "cancelled":
+        return "Đã hủy";
+      default:
+        return "Không xác định";
+    }
+  };
 
   useEffect(() => {
     if (orders.length === 0) return;
@@ -62,7 +78,7 @@ const OrdersPage = () => {
 
         const updatedOrder = updated.find(order => order._id === orderId);
         if (updatedOrder) {
-          toast.success(`Trạng thái đơn hàng đã cập nhật: ${status}`);
+          toast.success(`Trạng thái đơn hàng đã cập nhật: ${getStatusText(status)}`);
         }
 
         return updated;

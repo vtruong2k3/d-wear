@@ -16,14 +16,15 @@ import type { OrderDetailResponse } from "../../../types/order/IOrder";
 
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { getOrderDetail } from "../../../services/client/orderAPI";
+import { cancelOrder, getOrderDetail } from "../../../services/client/orderAPI";
 
 import type { ErrorType } from "../../../types/error/IError";
 import { useLoading } from "../../../contexts/LoadingContext";
 import { formatCurrency } from "../../../utils/Format";
 import socket from "../../../sockets/socket";
 import { Modal, Input } from "antd";
-import axios from "axios";
+
+
 
 const OrderDetailPage = () => {
   const navigate = useNavigate();
@@ -51,19 +52,11 @@ const OrderDetailPage = () => {
     }
 
     try {
-      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const reason = reasonToSend;
 
-      await axios.post(`/api/orders/${id}/cancel`, {
-        reason: reasonToSend,
-      });
+      const res = await cancelOrder(id, reason);
 
-      socket.emit("userCancelledOrder", {
-        id,
-        userId: userData.id,
-        reason: reasonToSend,
-      });
-
-      toast.success("Đơn hàng đã được hủy!");
+      toast.success(res.message);
 
       setOrder((prev) =>
         prev ? { ...prev, order: { ...prev.order, status: "cancelled" } } : prev
@@ -73,8 +66,12 @@ const OrderDetailPage = () => {
       setSelectedReason("");
       setCancelReason("");
     } catch (error) {
-      toast.error("Hủy đơn hàng thất bại");
-      console.error(error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -194,16 +191,17 @@ const OrderDetailPage = () => {
     socket.emit("joinRoom", id);
 
     socket.on("orderStatusUpdate", (data) => {
-      if (data?.id === id) {
+
+      if (data?.orderId === id) {
         setOrder((prev) =>
           prev
             ? {
-                ...prev,
-                order: { ...prev.order, status: data.status },
-              }
+              ...prev,
+              order: { ...prev.order, status: data.status },
+            }
             : prev
         );
-        toast.success(`Trạng thái đơn hàng đã cập nhật: ${data.status}`);
+        toast.success(`Trạng thái đơn hàng đã cập nhật: ${getStatusText(data.status)}`);
       }
     });
 
@@ -219,13 +217,13 @@ const OrderDetailPage = () => {
     socket.emit("joinRoom", id);
 
     socket.on("cancelOrder", (data) => {
-      if (data?.id === id) {
+      if (data?.orderId === id) {
         setOrder((prev) =>
           prev
             ? {
-                ...prev,
-                order: { ...prev.order, status: data.status },
-              }
+              ...prev,
+              order: { ...prev.order, status: data.status },
+            }
             : prev
         );
       }
@@ -347,13 +345,13 @@ const OrderDetailPage = () => {
                   <img
                     src={
                       item.product_id.imageUrls &&
-                      item.product_id.imageUrls.length > 0
+                        item.product_id.imageUrls.length > 0
                         ? item.product_id.imageUrls[0].startsWith("http")
                           ? item.product_id.imageUrls[0]
                           : `http://localhost:5000/${item.product_id.imageUrls[0].replace(
-                              /\\/g,
-                              "/"
-                            )}`
+                            /\\/g,
+                            "/"
+                          )}`
                         : "/default.png"
                     }
                     alt={item.product_id.product_name}

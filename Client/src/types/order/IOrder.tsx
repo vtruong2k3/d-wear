@@ -11,7 +11,7 @@ export interface IOrder {
     shippingAddress: string;
     phone: string;
     note?: string;
-
+    email?: string; // Thêm trường email nếu cần
     paymentMethod: 'cod' | 'vnpay' | 'banking'; // hoặc bạn mở rộng thêm
     paymentStatus: 'paid' | 'unpaid';
 

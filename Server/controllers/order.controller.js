@@ -374,6 +374,7 @@ exports.createOrder = async (req, res) => {
       order_code: generateOrderCode(),
       voucher_id: voucher_id || null,
       total,
+      email: emailUser,
       discount,
       finalAmount,
       paymentMethod,

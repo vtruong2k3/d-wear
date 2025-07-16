@@ -22,3 +22,9 @@ export const createOrder = async (orderData: OrderData) => {
   const res = await axios.post("/api/orders", orderData);
   return res;
 };
+export const cancelOrder = async (id: string | undefined, reason: string) => {
+  const response = await axios.post(`/api/orders/${id}/cancel`, {
+    reason,
+  });
+  return response.data;
+};

@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     order_code: { type: String, unique: true, required: true },
-
+    email: { type: String, required: false },
     orderItems: [
       {
         type: mongoose.Schema.Types.ObjectId,
