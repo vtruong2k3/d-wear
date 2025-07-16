@@ -17,6 +17,7 @@ interface BaseListResponse<T> {
   products: T[];
 }
 
+
 export const useFetchList = <
   T,
   Q extends Record<string, string | number | boolean> = Record<

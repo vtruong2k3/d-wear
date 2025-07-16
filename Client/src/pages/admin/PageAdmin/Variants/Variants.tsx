@@ -27,7 +27,7 @@ import { formatCurrency } from '../../../../utils/Format';
 
 const { Title } = Typography;
 
-const VariantsPage: React.FC = () => {
+const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState('');
   const { setLoading } = useLoading();
@@ -118,7 +118,7 @@ const VariantsPage: React.FC = () => {
       key: 'image',
       render: (images: string[] = []) => (
         <div className="flex gap-1">
-          {images.slice(0, 2).map((img, index) => (
+          {images?.slice(0, 2).map((img, index) => (
             <Image
               key={index}
               width={40}
@@ -190,4 +190,4 @@ const VariantsPage: React.FC = () => {
   );
 };
 
-export default VariantsPage;
+export default Variants;
