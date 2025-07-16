@@ -81,13 +81,43 @@ const OrderList = () => {
     // Nhận đơn hàng mới
     socket.on("newOrder", ({ orders: newOrder }) => {
       setOrders((prev) => [newOrder, ...prev]); // thêm vào đầu danh sách
-      toast.success("📦 Có đơn hàng mới!");
+      toast.success("Có đơn hàng mới!");
     });
 
     return () => {
       socket.off("newOrder");
     };
   }, []);
+  useEffect(() => {
+    if (orders.length === 0) return;
+
+    orders.forEach((order) => {
+      socket.emit('joinRoom', order._id);
+    });
+
+    socket.on('cancelOrder', ({ orderId, status }) => {
+      setOrders((prevOrders) => {
+        const updated = prevOrders.map((order) =>
+          order._id === orderId ? { ...order, status } : order
+        );
+
+        const updatedOrder = updated.find(order => order._id === orderId);
+        if (updatedOrder) {
+          toast.success(`Đơn hàng ${updatedOrder.order_code} đã bị hủy`);
+        }
+
+        return updated;
+      });
+    });
+
+
+    return () => {
+      orders.forEach((order) => {
+        socket.emit('leaveRoom', order._id);
+      });
+      socket.off('cancelOrder');
+    };
+  }, [orders]);
   useEffect(() => {
     filterOrders(orders, hiddenOrders);
   }, [orders, hiddenOrders, showHidden, statusFilter, dateFilter, sortTotal]);
@@ -148,7 +178,7 @@ const OrderList = () => {
       );
       setOrders(updatedOrders);
 
-      message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+      toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
       message.error("Lỗi khi cập nhật trạng thái đơn hàng");
       console.error("Lỗi cập nhật trạng thái:", error);

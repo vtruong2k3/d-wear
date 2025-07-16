@@ -38,7 +38,19 @@ exports.createSize = async (req, res) => {
       .json({ message: "Server Error", error: error.message });
   }
 };
-
+exports.getAllSizesItems = async (req, res) => {
+  try {
+    const sizes = await Size.find();
+    return res.status(200).json({
+      message: "Lấy danh sách Size thành công",
+      data: sizes,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
+  }
+};
 exports.getAllSizes = async (req, res) => {
   try {
     // Lấy page và limit từ query, nếu không có thì mặc định

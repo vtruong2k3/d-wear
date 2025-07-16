@@ -2,7 +2,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import cartSlice from "./features/client/cartSlice";
 import authenSlice from "./features/client/authenSlice";
 import authAdminSlice from "./features/admin/adminSlice";
-
+import userAdminSlice from "./features/admin/userSlice";
 // Định nghĩa type cho extra (truyền từ component vào thunk)
 interface ExtraArg {
   setLoading?: (value: boolean) => void;
@@ -12,6 +12,7 @@ const reducer = combineReducers({
   cartSlice,
   authenSlice,
   authAdminSlice,
+  userAdminSlice,
 });
 
 const store = configureStore({

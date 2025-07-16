@@ -11,6 +11,7 @@ const sizeRouter = require("./size.routes");
 const colorRouter = require("./color.routes");
 
 const orderRouter = require("./order.routes");
+const momoRouter = require("./momo.routes");
 const routerManager = express.Router();
 
 routerManager.use("/api", brandRouter);
@@ -24,4 +25,6 @@ routerManager.use("/api", authAmdinRouter);
 routerManager.use("/api", colorRouter);
 routerManager.use("/api", sizeRouter);
 routerManager.use("/api", orderRouter);
+routerManager.use("/api", momoRouter);
+
 module.exports = routerManager;

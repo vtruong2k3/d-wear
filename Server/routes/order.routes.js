@@ -10,7 +10,11 @@ orderRouter.post(
   orderController.updateOrderStatus
 );
 orderRouter.post("/orders", authUserMiddelware, orderController.createOrder);
-
+orderRouter.post(
+  "/orders/:id/cancel",
+  authUserMiddelware,
+  orderController.cancelOrder
+);
 // lấy giỏ hàng từ của user bên client
 orderRouter.get(
   "/orders/items",

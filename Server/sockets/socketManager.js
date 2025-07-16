@@ -10,7 +10,7 @@ const initSocket = (httpServer) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("✅ Socket connected:", socket.id);
+    console.log("Socket connected:", socket.id);
 
     // Admin hoặc client join vào room cụ thể
     socket.on("joinRoom", (roomName) => {

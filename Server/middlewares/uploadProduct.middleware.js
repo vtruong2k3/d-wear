@@ -19,6 +19,7 @@
 const multer = require("multer");
 const path = require("path");
 
+// Storage setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/products");
@@ -30,6 +31,28 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+// File filter (allow jpg, jpeg, png, webp)
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|webp/;
+  const extName = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
+  const mimeType = allowedTypes.test(file.mimetype);
 
-module.exports = upload; //  export upload object
+  if (extName && mimeType) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only .jpg, .jpeg, .png, and .webp files are allowed"));
+  }
+};
+
+// Upload middleware with limits
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});
+
+module.exports = upload;

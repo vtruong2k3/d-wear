@@ -113,7 +113,7 @@ const OrderDetailPage = () => {
   useEffect(() => {
     if (!orderId) return;
 
-    socket.emit('joinRoom', orderId); // ✅ Tham gia room theo orderId
+    socket.emit('joinRoom', orderId);
 
     socket.on('orderStatusUpdate', (data) => {
       if (data?.orderId === orderId) {
@@ -131,6 +131,27 @@ const OrderDetailPage = () => {
     };
   }, [orderId]);
 
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    socket.emit('joinRoom', orderId);
+
+    socket.on('cancelOrder', (data) => {
+      if (data?.orderId === orderId) {
+        setOrder((prev) => prev ? {
+          ...prev,
+          order: { ...prev.order, status: data.status }
+        } : prev);
+
+      }
+    });
+
+    return () => {
+      socket.emit('leaveRoom', orderId); // ✅ Rời room khi unmount
+      socket.off('cancelOrder');
+    };
+  }, [orderId]);
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

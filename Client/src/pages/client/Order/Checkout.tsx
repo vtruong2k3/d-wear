@@ -29,7 +29,8 @@ import { createOrder } from "../../../services/client/orderAPI";
 import type { OrderData } from "../../../types/order/IOrder";
 import type { IVoucher } from "../../../types/voucher/IVoucher";
 import toast from "react-hot-toast";
-import { getCartThunk } from "../../../redux/features/client/thunks/cartThunk";
+
+import { removeOrderedItems } from "../../../redux/features/client/cartSlice";
 
 
 const { Title, Text } = Typography;
@@ -174,15 +175,22 @@ const Checkout = () => {
         note: note ?? "",
       };
 
-      console.log("ORDER DATA gửi đi:", JSON.stringify(orderData, null, 2));
+      // console.log("ORDER DATA gửi đi:", JSON.stringify(orderData, null, 2));
       setIsLoading(true);
 
       const res = await createOrder(orderData);
 
       toast.success(res.data.message || "Đặt hàng thành công!");
+      const orderedItemIds = itemsToCheckout.map((item) => item._id);
+
+
+      dispatch(removeOrderedItems(orderedItemIds));
+
+
 
       navigate("/orders");
-      dispatch(getCartThunk());
+
+
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||

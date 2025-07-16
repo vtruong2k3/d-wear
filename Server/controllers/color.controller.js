@@ -39,7 +39,19 @@ exports.createColor = async (req, res) => {
     });
   }
 };
-
+exports.getAllColorItems = async (req, res) => {
+  try {
+    const colors = await Color.find();
+    return res.status(200).json({
+      message: "Lấy danh sách Color thành công",
+      data: colors,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Lỗi server", error: error.message });
+  }
+};
 exports.getAllColors = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

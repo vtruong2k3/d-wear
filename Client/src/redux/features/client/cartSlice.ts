@@ -40,7 +40,29 @@ const initialState: CartState = {
 const cartSlice = createSlice({
   name: "cart",
   initialState,
-  reducers: {},
+  reducers: {
+    // THAY THẾ REDUCER clearCart BẰNG REDUCER NÀY
+    /**
+     * Xóa các item đã được đặt hàng khỏi giỏ hàng.
+     * @param payload - Một mảng các chuỗi, là các _id của các cart item cần xóa.
+     */
+    removeOrderedItems: (state, action: PayloadAction<string[]>) => {
+      const removedItemIds = action.payload; // Lấy danh sách ID cần xóa từ payload
+
+      // 1. Lọc ra khỏi cartItems những item có _id nằm trong danh sách cần xóa
+      state.cartItems = state.cartItems.filter(
+        (item) => !removedItemIds.includes(item._id)
+      );
+
+      // 2. Tính toán lại tổng tiền của các sản phẩm CÒN LẠI trong giỏ
+      state.totalAmount = state.cartItems.reduce(
+        (total, item) => total + item.totalPrice,
+        0
+      );
+
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Thêm sản phẩm vào giỏ
@@ -53,6 +75,7 @@ const cartSlice = createSlice({
         addToCartThunk.fulfilled,
         (state, action: PayloadAction<ICartItem>) => {
           const newItem = action.payload;
+
           const existingIndex = state.cartItems.findIndex(
             (item) => item.variant_id._id === newItem.variant_id._id
           );
@@ -98,6 +121,7 @@ const cartSlice = createSlice({
         ) => {
           state.loading = false;
           state.cartItems = action.payload.carts;
+
           state.totalAmount = action.payload.totalAmount;
         }
       )
@@ -150,5 +174,5 @@ const cartSlice = createSlice({
       });
   },
 });
-
+export const { removeOrderedItems } = cartSlice.actions;
 export default cartSlice.reducer;

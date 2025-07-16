@@ -12,9 +12,8 @@ import type { RootState } from "../../../redux/store";
 // import CartModal from "../../../pages/client/Cart/CartModal";
 import '../../../styles/activeMenu.css'
 const Header = () => {
-  const cartItemsCount = useSelector(
-    (state: RootState) => state.cartSlice.cartItems.length
-  );
+  const cartItemsCount = useSelector((state: RootState) => state.cartSlice.cartItems.length);
+
   const isLogin = useSelector((state: RootState) => state.authenSlice.isLogin);
 
   // const [openCart, setOpenCart] = useState(false);

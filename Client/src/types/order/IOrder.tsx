@@ -20,7 +20,7 @@ export interface IOrder {
     total: number;        // Tổng giá trước giảm giá
     discount: number;     // Giảm giá
     finalAmount: number;  // Tổng giá sau giảm giá
-
+    cancellationReason?: string; // Lý do hủy đơn hàng, nếu có
     voucher_id?: string;
 }
 

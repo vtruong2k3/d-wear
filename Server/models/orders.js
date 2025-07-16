@@ -1,3 +1,4 @@
+const { required } = require("joi");
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
@@ -34,8 +35,10 @@ const orderSchema = new mongoose.Schema(
     //Tên ngươi nhận hàng
     receiverName: { type: String, required: true },
     shippingAddress: { type: String, required: true },
+
     phone: { type: String, required: true, maxlength: 20 },
     note: { type: String },
+    cancellationReason: { type: String, required: false },
     status: {
       type: String,
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
