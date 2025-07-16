@@ -77,6 +77,37 @@ const OrdersPage = () => {
       socket.off('orderStatusUpdate');
     };
   }, [orders]);
+
+  useEffect(() => {
+    if (orders.length === 0) return;
+
+    orders.forEach((order) => {
+      socket.emit('joinRoom', order._id);
+    });
+
+    socket.on('cancelOrder', ({ orderId, status }) => {
+      setOrders((prevOrders) => {
+        const updated = prevOrders.map((order) =>
+          order._id === orderId ? { ...order, status } : order
+        );
+
+        const updatedOrder = updated.find(order => order._id === orderId);
+        if (updatedOrder) {
+          toast.success(`Đơn hàng đã bị hủy: ${updatedOrder.order_code}`);
+        }
+
+        return updated;
+      });
+    });
+
+
+    return () => {
+      orders.forEach((order) => {
+        socket.emit('leaveRoom', order._id);
+      });
+      socket.off('cancelOrder');
+    };
+  }, [orders]);
   useEffect(() => {
     // Tham gia phòng admin để nhận đơn mới
     socket.emit("joinRoom", "user");

@@ -8,6 +8,103 @@ const { generateOrderCode } = require("../utils/orderCode");
 const Cart = require("../models/carts");
 const Variant = require("../models/variants");
 const { createOrderSchema } = require("../validate/orderValidate");
+const sendOrderCancellationEmail = require("../utils/sendOrderCancellationEmail");
+exports.cancelOrder = async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const userId = req.user.id;
+    const { reason } = req.body;
+
+    const order = await Order.findById(order_id).lean();
+
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
+
+    if (order.user_id.toString() !== userId) {
+      return res.status(403).json({
+        message: "Bạn không có quyền hủy đơn hàng này",
+      });
+    }
+
+    // Cập nhật trạng thái đơn hàng
+    const updatedOrder = await Order.findByIdAndUpdate(
+      order_id,
+      {
+        status: "cancelled",
+        cancellationReason: reason,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    ).lean();
+
+    // 🔍 Lấy danh sách sản phẩm từ OrderItem
+    const orderItems = await OrderItem.find({ order_id })
+      .populate("product_id", "product_name")
+      .populate("variant_id", "size color image")
+      .lean();
+
+    // 🛠 Chuẩn hoá danh sách item để gửi email
+    const items = orderItems.map((item) => {
+      const variant = item.variant_id;
+      const product = item.product_id;
+
+      const rawImage = Array.isArray(variant?.image)
+        ? variant.image[0]
+        : variant?.image;
+      const imagePath = rawImage?.replace(/\\/g, "/");
+      const fullImageUrl = imagePath
+        ? `https://a85ff2e29d03.ngrok-free.app/${imagePath}`
+        : "";
+
+      return {
+        name: product?.product_name || "Sản phẩm",
+        image: fullImageUrl,
+        color: variant?.color || "-",
+        size: variant?.size || "-",
+        quantity: item.quantity,
+        price: item.price,
+      };
+    });
+    // Emit socket
+    const io = getIO();
+    io.to(order_id).emit("cancelOrder", {
+      orderId: order_id,
+      status: updatedOrder.status,
+      cancellationReason: updatedOrder.cancellationReason,
+      updatedAt: updatedOrder.updatedAt,
+    });
+
+    const email = order.email || req.user.email;
+
+    // 📨 Gửi email huỷ đơn hàng
+    try {
+      await sendOrderCancellationEmail(email, {
+        ...updatedOrder,
+        items, // danh sách sản phẩm từ OrderItem
+        receiverName: order.receiverName,
+        phone: order.phone,
+        shippingAddress: order.shippingAddress,
+        paymentMethod: order.paymentMethod,
+        finalAmount: order.finalAmount,
+        createdAt: order.createdAt,
+      });
+    } catch (mailErr) {
+      console.error("Lỗi khi gửi email huỷ đơn hàng:", mailErr.message);
+    }
+
+    res.status(200).json({
+      message: "Hủy đơn hàng thành công",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Lỗi khi hủy đơn hàng:", error.message);
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
 
 exports.updateOrderStatus = async (req, res) => {
   try {
@@ -25,7 +122,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     const currentStatus = order.status;
 
-    // ✅ Các trạng thái được phép chuyển tiếp
+    //  Các trạng thái được phép chuyển tiếp
     const validTransitions = {
       pending: ["processing", "cancelled"],
       processing: ["shipped", "cancelled"],
@@ -42,11 +139,11 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    // ✅ Cập nhật trạng thái
+    //  Cập nhật trạng thái
     order.status = newStatus;
     await order.save();
 
-    // 🔥 Gửi socket để client cập nhật real-time
+    //  Gửi socket để client cập nhật real-time
     const io = getIO();
     io.to(id).emit("orderStatusUpdate", {
       orderId: id,
@@ -327,14 +424,55 @@ exports.createOrder = async (req, res) => {
         }
       })
     );
-    console.log("📦 Tồn kho đã được cập nhật.");
 
     // Gửi email
+    // Gửi email xác nhận đơn hàng (có danh sách sản phẩm)
     try {
       if (emailUser) {
-        await sendOrderConfirmationEmail(emailUser, newOrder);
+        // Lấy danh sách OrderItems và populate variant + product
+        const orderItems = await OrderItem.find({
+          order_id: newOrder._id,
+        }).populate({
+          path: "variant_id",
+          populate: {
+            path: "product_id",
+            select: "product_name", // Lấy tên sản phẩm
+          },
+        });
+
+        // Tạo danh sách sản phẩm chi tiết để gửi qua email
+        const populatedItems = orderItems.map((item) => {
+          const variant = item.variant_id;
+          const product = variant?.product_id;
+          const rawImage = Array.isArray(variant?.image)
+            ? variant.image[0]
+            : variant?.image;
+          const imagePath = rawImage?.replace(/\\/g, "/");
+          const fullImageUrl = imagePath
+            ? `https://a85ff2e29d03.ngrok-free.app/${imagePath}`
+            : "";
+
+          console.log("Full image URL:", fullImageUrl);
+
+          return {
+            name: product?.product_name || "Sản phẩm",
+            image: fullImageUrl,
+            color: variant?.color || "-",
+            size: variant?.size || "-",
+            quantity: item.quantity,
+            price: item.price,
+          };
+        });
+
+        // Gửi email xác nhận đơn hàng với danh sách sản phẩm
+        await sendOrderConfirmationEmail(emailUser, {
+          ...newOrder.toObject(),
+          items: populatedItems,
+        });
       }
-    } catch (emailError) {}
+    } catch (emailError) {
+      console.error(" Gửi email thất bại:", emailError.message);
+    }
 
     // Emit socket
     const io = getIO();

@@ -22,6 +22,7 @@ import type { OrderDetailResponse, IOrder } from "../../../../types/order/IOrder
 import { useLoading } from "../../../../contexts/LoadingContext";
 import { formatCurrency } from "../../../../utils/Format";
 import { Option } from "antd/es/mentions";
+import socket from "../../../../sockets/socket";
 
 
 const { Title } = Typography;
@@ -101,6 +102,26 @@ const OrderDetail = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (!id) return;
+
+    socket.emit('joinRoom', id);
+
+    socket.on('cancelOrder', (data) => {
+      if (data?.orderId === id) {
+        setData((prev) => prev ? {
+          ...prev,
+          order: { ...prev.order, status: data.status, cancellationReason: data.cancellationReason }
+        } : prev);
+        toast.success(`Đơn hàng đã bị hủy vì lý do: ${data.cancellationReason || "Không có lý do"}`);
+      }
+    });
+
+    return () => {
+      socket.emit('leaveRoom', id); //  Rời room khi unmount
+      socket.off('cancelOrder');
+    };
+  }, [id]);
   const getStatusLabel = (status: string) => {
     const statusLabels: Record<string, string> = {
       pending: "Chờ xử lý",
@@ -288,6 +309,11 @@ const OrderDetail = () => {
               <Descriptions.Item label="Tổng tiền">{order.total.toLocaleString()}đ</Descriptions.Item>
               <Descriptions.Item label="Giảm giá">{order.discount.toLocaleString()}đ</Descriptions.Item>
               <Descriptions.Item label="Thành tiền">{order.finalAmount.toLocaleString()}đ</Descriptions.Item>
+              {order.status === "cancelled" && order.cancellationReason && (
+                <Descriptions.Item label="Lý do hủy">
+                  <span style={{ color: "#ff4d4f" }}>{order.cancellationReason}</span>
+                </Descriptions.Item>
+              )}
             </Descriptions>
           </Col>
         </Row>
