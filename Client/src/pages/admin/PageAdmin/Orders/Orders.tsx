@@ -73,7 +73,7 @@ const OrderList = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [setLoading]);
   useEffect(() => {
 
     // Tham gia phòng admin để nhận đơn mới
@@ -129,9 +129,6 @@ const OrderList = () => {
       socket.off('cancelOrder');
     };
   }, [orders]);
-  useEffect(() => {
-    filterOrders(orders, hiddenOrders);
-  }, [orders, hiddenOrders, showHidden, statusFilter, dateFilter, sortTotal]);
 
   const filterOrders = (data: IOrder[], hidden: string[]) => {
     let filtered = [...data];
@@ -162,6 +159,9 @@ const OrderList = () => {
     setFilteredOrders(filtered);
     setCurrentPage(1);
   };
+  useEffect(() => {
+    filterOrders(orders, hiddenOrders);
+  }, [orders, hiddenOrders, showHidden, statusFilter, dateFilter, sortTotal]);
 
   const handleHide = (id: string) => {
     if (hiddenOrders.includes(id)) {
@@ -234,13 +234,13 @@ const OrderList = () => {
   };
 
   // Hàm lấy label cho trạng thái thanh toán
-  // const getPaymentStatusLabel = (paymentStatus: string) => {
-  //   const paymentLabels: Record<string, string> = {
-  //     unpaid: "Chưa thanh toán",
-  //     paid: "Đã thanh toán"
-  //   };
-  //   return paymentLabels[paymentStatus] || paymentStatus;
-  // };
+  const getPaymentStatusLabel = (paymentStatus: string) => {
+    const paymentLabels: Record<string, string> = {
+      unpaid: "Chưa thanh toán",
+      paid: "Đã thanh toán"
+    };
+    return paymentLabels[paymentStatus] || paymentStatus;
+  };
 
   // const statusColor: Record<string, string> = {
   //   pending: "default",
@@ -352,7 +352,7 @@ const OrderList = () => {
     {
       title: "Thanh toán",
       render: (_: IOrder, record: IOrder) => (
-        <Tag color={paymentColor[record.paymentStatus] || "default"}>{record.paymentStatus}</Tag>
+        <Tag color={paymentColor[record.paymentStatus] || "default"}>{getPaymentStatusLabel(record.paymentStatus)}</Tag>
       ),
     },
     {

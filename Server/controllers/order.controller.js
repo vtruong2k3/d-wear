@@ -9,6 +9,7 @@ const Cart = require("../models/carts");
 const Variant = require("../models/variants");
 const { createOrderSchema } = require("../validate/orderValidate");
 const sendOrderCancellationEmail = require("../utils/sendOrderCancellationEmail");
+const sendOrderStatusUpdateEmail = require("../utils/updateSendEmail");
 exports.cancelOrder = async (req, res) => {
   try {
     const order_id = req.params.id;
@@ -143,6 +144,9 @@ exports.updateOrderStatus = async (req, res) => {
     order.status = newStatus;
     await order.save();
 
+    //  Gửi email cập nhật trạng thái
+    const email = order.email;
+    await sendOrderStatusUpdateEmail(email, order);
     //  Gửi socket để client cập nhật real-time
     const io = getIO();
     io.to(id).emit("orderStatusUpdate", {

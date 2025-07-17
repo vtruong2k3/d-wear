@@ -121,7 +121,7 @@ const OrderDetailPage = () => {
 
   // Sửa socket cancelOrder
   useEffect(() => {
-    if (!id || id === "payment") return; // ✅ Chặn lỗi Cast to ObjectId
+    if (!id || id === "payment") return; // s Chặn lỗi Cast to ObjectId
 
     socket.emit("joinRoom", id);
 
