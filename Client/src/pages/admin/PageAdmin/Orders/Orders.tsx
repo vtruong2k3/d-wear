@@ -75,13 +75,24 @@ const OrderList = () => {
     fetchData();
   }, []);
   useEffect(() => {
+
     // Tham gia phòng admin để nhận đơn mới
     socket.emit("joinRoom", "admin");
 
     // Nhận đơn hàng mới
     socket.on("newOrder", ({ orders: newOrder }) => {
-      setOrders((prev) => [newOrder, ...prev]); // thêm vào đầu danh sách
-      toast.success("Có đơn hàng mới!");
+      const isCod = newOrder.paymentMethod === "cod";
+      const isMomo = newOrder.paymentMethod === "momo" && newOrder.paymentStatus === "paid";
+      if (isCod) {
+        setOrders((prev) => [newOrder, ...prev]);
+        toast.success("Có đơn hàng mới!");
+      }
+      if (isMomo) {
+        setOrders((prev) => [newOrder, ...prev]);
+        toast.success("Có đơn hàng mới với thanh toán MoMo!");
+      }
+      console.log("Nhận đơn hàng mới từ server:", newOrder);
+
     });
 
     return () => {

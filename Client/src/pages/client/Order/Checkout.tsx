@@ -20,7 +20,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../redux/store";
-import axios from "axios";
+
 import { useCallback } from "react";
 import { fetCheckVoucher } from "../../../services/client/apiVoucherService";
 import type { ErrorType } from "../../../types/error/IError";
@@ -30,6 +30,7 @@ import type { IVoucher } from "../../../types/voucher/IVoucher";
 import toast from "react-hot-toast";
 
 import { removeOrderedItems } from "../../../redux/features/client/cartSlice";
+import { initiateMomoPayment } from "../../../services/client/momoService";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -45,7 +46,7 @@ const Checkout = () => {
     (state: RootState) => state.cartSlice.cartItems
   );
   const { user, token } = useSelector((state: RootState) => state.authenSlice);
-  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [paymentMethodValue, setPaymentMethod] = useState<string>("cod");
 
   const [selectedVoucher, setSelectedVoucher] = useState<VoucherPreview | null>(
     null
@@ -140,6 +141,69 @@ const Checkout = () => {
     }).format(value);
 
   // Trong handleSubmit, dùng note từ state để gửi
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      if (!user || !user._id) {
+        toast.error("Không tìm thấy thông tin người dùng");
+        return;
+      }
+
+      const payment = paymentMethodValue.toLowerCase();
+      if (!["cod", "momo", "vnpay"].includes(payment)) {
+        toast.error("Phương thức thanh toán không hợp lệ");
+        return;
+      }
+
+      const orderData: OrderData = {
+        user_id: user._id,
+        email: values.email,
+        receiverName: values.name,
+        shippingAddress: values.address,
+        phone: values.phone,
+        paymentMethod: payment as "cod" | "momo" | "vnpay",
+        voucher_id: selectedVoucher?._id ?? null,
+        items: itemsToCheckout.map((item) => ({
+          product_id: item.product_id._id,
+          variant_id:
+            typeof item.variant_id === "string"
+              ? item.variant_id
+              : item.variant_id._id,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        note: note ?? "",
+      };
+
+      // console.log("ORDER DATA gửi đi:", JSON.stringify(orderData, null, 2));
+      setIsLoading(true);
+
+      const res = await createOrder(orderData);
+      const { order_id, finalAmount, paymentMethod } = res.data;
+      if (paymentMethod === "cod") {
+        toast.success(res.data.message || "Đặt hàng thành công!");
+        dispatch(removeOrderedItems(itemsToCheckout.map((i) => i._id)));
+        navigate("/orders");
+        return;
+      }
+      if (paymentMethod === "momo") {
+        const res = await initiateMomoPayment(finalAmount, order_id);
+        const { payUrl } = res;
+        window.location.href = payUrl;
+        return;
+      }
+
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // const handleSubmit = async () => {
   //   try {
   //     const values = await form.validateFields();
@@ -175,18 +239,38 @@ const Checkout = () => {
   //       note: note ?? "",
   //     };
 
-  //     // console.log("ORDER DATA gửi đi:", JSON.stringify(orderData, null, 2));
+
+
   //     setIsLoading(true);
 
   //     const res = await createOrder(orderData);
 
-  //     toast.success(res.data.message || "Đặt hàng thành công!");
-  //     const orderedItemIds = itemsToCheckout.map((item) => item._id);
 
-  //     dispatch(removeOrderedItems(orderedItemIds));
 
-  //     navigate("/orders");
+  //     //  Nếu COD thì chỉ hiển thị thông báo
+  //     if (payment === "cod") {
+  //       toast.success(res.data.message || "Đặt hàng thành công!");
+  //       dispatch(removeOrderedItems(itemsToCheckout.map((i) => i._id)));
+  //       navigate("/orders");
+  //       return;
+  //     }
 
+  //     // ✅ Nếu MoMo thì chuyển hướng ngay
+  //     if (payment === "momo") {
+  //       const { order_id, finalAmount, payUrl } = res.data;
+
+  //       if (!order_id || !finalAmount || !payUrl) {
+  //         console.error(" Thiếu dữ liệu MoMo:", { order_id, finalAmount, payUrl });
+  //         toast.error("Không tạo được đơn hàng MoMo");
+  //         return;
+  //       }
+
+  //       window.location.href = payUrl;
+  //       return;
+  //     }
+
+  //     //  Tạm thời chưa hỗ trợ VNPay
+  //     toast.error("Phương thức thanh toán chưa được hỗ trợ");
   //   } catch (error) {
   //     const errorMessage =
   //       (error as ErrorType).response?.data?.message ||
@@ -197,86 +281,9 @@ const Checkout = () => {
   //     setIsLoading(false);
   //   }
   // };
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-  
-      if (!user || !user._id) {
-        toast.error("Không tìm thấy thông tin người dùng");
-        return;
-      }
-  
-      const payment = paymentMethod.toLowerCase();
-      if (!["cod", "momo", "vnpay"].includes(payment)) {
-        toast.error("Phương thức thanh toán không hợp lệ");
-        return;
-      }
-  
-      const orderData: OrderData = {
-        user_id: user._id,
-        email: values.email,
-        receiverName: values.name,
-        shippingAddress: values.address,
-        phone: values.phone,
-        paymentMethod: payment as "cod" | "momo" | "vnpay",
-        voucher_id: selectedVoucher?._id ?? null,
-        items: itemsToCheckout.map((item) => ({
-          product_id: item.product_id._id,
-          variant_id:
-            typeof item.variant_id === "string"
-              ? item.variant_id
-              : item.variant_id._id,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        note: note ?? "",
-      };
-  
-      console.log("📝 Dữ liệu gửi lên BE:", orderData);
-  
-      setIsLoading(true);
-  
-      const res = await createOrder(orderData);
-  
-      console.log("📦 createOrder response:", res.data);
-  
-      // ✅ Nếu COD thì chỉ hiển thị thông báo
-      if (payment === "cod") {
-        toast.success(res.data.message || "Đặt hàng thành công!");
-        dispatch(removeOrderedItems(itemsToCheckout.map((i) => i._id)));
-        navigate("/orders");
-        return;
-      }
-  
-      // ✅ Nếu MoMo thì chuyển hướng ngay
-      if (payment === "momo") {
-        const { order_id, finalAmount, payUrl } = res.data;
-  
-        if (!order_id || !finalAmount || !payUrl) {
-          console.error("❌ Thiếu dữ liệu MoMo:", { order_id, finalAmount, payUrl });
-          toast.error("Không tạo được đơn hàng MoMo");
-          return;
-        }
-  
-        window.location.href = payUrl;
-        return;
-      }
-  
-      // ✅ Tạm thời chưa hỗ trợ VNPay
-      toast.error("Phương thức thanh toán chưa được hỗ trợ");
-    } catch (error) {
-      const errorMessage =
-        (error as ErrorType).response?.data?.message ||
-        (error as ErrorType).message ||
-        "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  
-  
+
+
+
 
   return (
     <div className="container mt-4">
@@ -345,9 +352,9 @@ const Checkout = () => {
                           item.product_id.imageUrls?.[0]?.startsWith("http")
                             ? item.product_id.imageUrls[0]
                             : `http://localhost:5000/${item.product_id.imageUrls?.[0]?.replace(
-                                /\\/g,
-                                "/"
-                              )}`
+                              /\\/g,
+                              "/"
+                            )}`
                         }
                         alt={item.product_id.product_name}
                         width={100}
@@ -424,20 +431,20 @@ const Checkout = () => {
               )}
 
               <Button
-                type={paymentMethod === "COD" ? "primary" : "default"}
+                type={paymentMethodValue === "cod" ? "primary" : "default"}
                 size="large"
                 block
-                onClick={() => setPaymentMethod("COD")}
+                onClick={() => setPaymentMethod("cod")}
                 disabled={isOverFiveProducts}
               >
                 Thanh toán khi nhận hàng (COD)
               </Button>
 
               <Button
-                type={paymentMethod === "MoMo" ? "primary" : "default"}
+                type={paymentMethodValue === "momo" ? "primary" : "default"}
                 size="large"
                 block
-                onClick={() => setPaymentMethod("MoMo")}
+                onClick={() => setPaymentMethod("momo")}
               >
                 Thanh toán online với MoMo
               </Button>
@@ -450,11 +457,11 @@ const Checkout = () => {
                 onClick={handleSubmit}
                 loading={isLoading}
               >
-                {paymentMethod === "COD"
+                {paymentMethodValue === "cod"
                   ? "Xác nhận đặt hàng"
-                  : paymentMethod === "MoMo"
-                  ? "Thanh toán với MoMo"
-                  : "Thanh toán"}
+                  : paymentMethodValue === "momo"
+                    ? "Thanh toán với MoMo"
+                    : "Thanh toán"}
               </Button>
             </Space>
           </Card>

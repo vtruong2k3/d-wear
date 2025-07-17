@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { Result, Spin } from "antd";
 import { SmileOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import type { ErrorType } from "../../../types/error/IError";
 
 const PaymentResult = () => {
   const [searchParams] = useSearchParams();
@@ -36,11 +37,12 @@ const PaymentResult = () => {
         } else {
           toast.error("Thanh toán thất bại hoặc bị hủy");
         }
-      } catch (err: any) {
-        console.error("❌ Xác minh thanh toán thất bại:", err.response?.data || err.message);
-        toast.error(
-          err.response?.data?.message || "Xác minh thanh toán thất bại"
-        );
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
 

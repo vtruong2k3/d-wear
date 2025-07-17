@@ -74,57 +74,75 @@ const OrderDetailPage = () => {
       setError(errorMessage);
     }
   };
+  const getOrderDetails = async () => {
+    setLoading(true);
+    try {
+      const res = await getOrderDetail(id);
+      setOrder(res);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    if (!id) return;
+    getOrderDetails();
+  }, [id, setLoading]);
+  useEffect(() => {
+    if (!id || id === "payment") return; //  Chặn lỗi Cast to ObjectId
 
-  // Sửa socket orderStatusUpdate
-useEffect(() => {
-  if (!id || id === "payment") return; // ✅ Chặn lỗi Cast to ObjectId
+    socket.emit("joinRoom", id);
 
-  socket.emit("joinRoom", id);
-
-  socket.on("orderStatusUpdate", (data) => {
-    if (data?.orderId === id) {
-      setOrder((prev) =>
-        prev
-          ? {
+    socket.on("orderStatusUpdate", (data) => {
+      if (data?.orderId === id) {
+        setOrder((prev) =>
+          prev
+            ? {
               ...prev,
               order: { ...prev.order, status: data.status },
             }
-          : prev
-      );
-      toast.success(`Trạng thái đơn hàng đã cập nhật: ${getStatusText(data.status)}`);
-    }
-  });
+            : prev
+        );
+        toast.success(`Trạng thái đơn hàng đã cập nhật: ${getStatusText(data.status)}`);
+      }
+    });
 
-  return () => {
-    socket.emit("leaveRoom", id);
-    socket.off("orderStatusUpdate");
-  };
-}, [id]);
+    return () => {
+      socket.emit("leaveRoom", id);
+      socket.off("orderStatusUpdate");
+    };
+  }, [id]);
 
-// Sửa socket cancelOrder
-useEffect(() => {
-  if (!id || id === "payment") return; // ✅ Chặn lỗi Cast to ObjectId
+  // Sửa socket cancelOrder
+  useEffect(() => {
+    if (!id || id === "payment") return; // ✅ Chặn lỗi Cast to ObjectId
 
-  socket.emit("joinRoom", id);
+    socket.emit("joinRoom", id);
 
-  socket.on("cancelOrder", (data) => {
-    if (data?.orderId === id) {
-      setOrder((prev) =>
-        prev
-          ? {
+    socket.on("cancelOrder", (data) => {
+      if (data?.orderId === id) {
+        setOrder((prev) =>
+          prev
+            ? {
               ...prev,
               order: { ...prev.order, status: data.status },
             }
-          : prev
-      );
-    }
-  });
+            : prev
+        );
+      }
+    });
 
-  return () => {
-    socket.emit("leaveRoom", id);
-    socket.off("cancelOrder");
-  };
-}, [id]);
+    return () => {
+      socket.emit("leaveRoom", id);
+      socket.off("cancelOrder");
+    };
+  }, [id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

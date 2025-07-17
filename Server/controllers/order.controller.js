@@ -274,7 +274,9 @@ exports.getAllByIdUser = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   try {
-    const { error } = createOrderSchema.validate(req.body, { abortEarly: false });
+    const { error } = createOrderSchema.validate(req.body, {
+      abortEarly: false,
+    });
     if (error) {
       return res.status(400).json({
         message: "Dữ liệu không hợp lệ",
@@ -298,7 +300,9 @@ exports.createOrder = async (req, res) => {
     const userId = req.user?.id || user_id;
 
     if (!userId || !items || items.length === 0) {
-      return res.status(400).json({ message: "Thiếu thông tin đơn hàng hoặc người dùng." });
+      return res
+        .status(400)
+        .json({ message: "Thiếu thông tin đơn hàng hoặc người dùng." });
     }
 
     // Tính tổng giá trị đơn hàng
@@ -311,23 +315,31 @@ exports.createOrder = async (req, res) => {
     if (voucher_id) {
       const voucher = await Voucher.findById(voucher_id);
       if (!voucher || !voucher.isActive) {
-        return res.status(400).json({ message: "Voucher không hợp lệ hoặc đã bị vô hiệu hóa." });
+        return res
+          .status(400)
+          .json({ message: "Voucher không hợp lệ hoặc đã bị vô hiệu hóa." });
       }
 
       const now = new Date();
       if (now < voucher.startDate || now > voucher.endDate) {
-        return res.status(400).json({ message: "Voucher hiện không còn hiệu lực." });
+        return res
+          .status(400)
+          .json({ message: "Voucher hiện không còn hiệu lực." });
       }
 
       const alreadyUsed = voucher.usedUsers?.some(
         (usedId) => usedId.toString() === userId.toString()
       );
       if (alreadyUsed) {
-        return res.status(400).json({ message: "Bạn đã sử dụng voucher này rồi." });
+        return res
+          .status(400)
+          .json({ message: "Bạn đã sử dụng voucher này rồi." });
       }
 
       if (voucher.maxUser > 0 && voucher.maxUser <= 0) {
-        return res.status(400).json({ message: "Voucher đã hết lượt sử dụng." });
+        return res
+          .status(400)
+          .json({ message: "Voucher đã hết lượt sử dụng." });
       }
 
       if (total < voucher.minOrderValue) {
@@ -402,7 +414,9 @@ exports.createOrder = async (req, res) => {
         );
 
         if (!updated) {
-          throw new Error(`Biến thể sản phẩm ${item.variant_id} không đủ tồn kho`);
+          throw new Error(
+            `Biến thể sản phẩm ${item.variant_id} không đủ tồn kho`
+          );
         }
       })
     );
@@ -410,7 +424,9 @@ exports.createOrder = async (req, res) => {
     // Gửi email xác nhận đơn hàng
     try {
       if (emailUser) {
-        const orderItems = await OrderItem.find({ order_id: newOrder._id }).populate({
+        const orderItems = await OrderItem.find({
+          order_id: newOrder._id,
+        }).populate({
           path: "variant_id",
           populate: { path: "product_id", select: "product_name" },
         });
@@ -418,7 +434,9 @@ exports.createOrder = async (req, res) => {
         const populatedItems = orderItems.map((item) => {
           const variant = item.variant_id;
           const product = variant?.product_id;
-          const rawImage = Array.isArray(variant?.image) ? variant.image[0] : variant?.image;
+          const rawImage = Array.isArray(variant?.image)
+            ? variant.image[0]
+            : variant?.image;
           const imagePath = rawImage?.replace(/\\/g, "/");
           const fullImageUrl = imagePath
             ? `https://a85ff2e29d03.ngrok-free.app/${imagePath}`
@@ -445,66 +463,16 @@ exports.createOrder = async (req, res) => {
 
     // Emit socket
     const io = getIO();
+
     io.to("admin").emit("newOrder", { orders: newOrder });
+
     io.to("user").emit("newOrder", { orders: newOrder });
 
-    // Nếu chọn thanh toán bằng MoMo thì tạo thanh toán
-    if (paymentMethod === "momo") {
-      const crypto = require("crypto");
-      const axios = require("axios");
-
-      const partnerCode = process.env.MOMO_PARTNER_CODE || "MOMO";
-      const accessKey = process.env.MOMO_ACCESS_KEY;
-      const secretKey = process.env.MOMO_SECRET_KEY;
-      const requestType = "captureWallet";
-      const redirectUrl = process.env.MOMO_REDIRECT_URL || "http://localhost:5173/payment";
-      const ipnUrl = process.env.MOMO_IPN_URL || "http://localhost:5000/api/momo/ipn";
-      const orderId = newOrder._id.toString();
-      const requestId = `${orderId}-${Date.now()}`;
-      const orderInfo = `Thanh toán đơn hàng #${orderId}`;
-      const amount = finalAmount.toString();
-      const extraData = "";
-
-      const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
-
-      const signature = crypto.createHmac("sha256", secretKey).update(rawSignature).digest("hex");
-
-      const requestBody = {
-        partnerCode,
-        accessKey,
-        requestId,
-        amount,
-        orderId,
-        orderInfo,
-        redirectUrl,
-        ipnUrl,
-        extraData,
-        requestType,
-        signature,
-        lang: "vi",
-      };
-
-      const momoRes = await axios.post("https://test-payment.momo.vn/v2/gateway/api/create", requestBody);
-      const payUrl = momoRes.data?.payUrl;
-
-      if (!payUrl) {
-        return res.status(500).json({ message: "Không lấy được liên kết thanh toán từ MoMo" });
-      }
-      console.log("👉 finalAmount trả về:", finalAmount);
-      return res.status(200).json({
-        message: "Tạo đơn hàng thành công - chuyển đến MoMo",
-        order_id: newOrder._id,
-        finalAmount,
-        payUrl,
-      });
-      
-    }
-
-    // Nếu là COD
     return res.status(201).json({
-      message: "Tạo đơn hàng thành công (COD)",
+      message: "Đặt hàng thành công - Chờ xác nhận",
       order_id: newOrder._id,
-      finalAmount,
+      finalAmount: newOrder.finalAmount,
+      paymentMethod: newOrder.paymentMethod,
     });
   } catch (error) {
     console.error("Lỗi tạo đơn hàng:", error.message);
@@ -514,5 +482,3 @@ exports.createOrder = async (req, res) => {
     });
   }
 };
-
-
