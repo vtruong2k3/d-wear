@@ -185,6 +185,7 @@ const OrderList = () => {
 
   // Hàm xử lý thay đổi trạng thái đơn hàng
   const handleStatusChange = async (orderId: string, newStatus: IOrder["status"]) => {
+    setLoading(true);
     try {
       // Gọi API để cập nhật trạng thái (cần thêm service này)
       await updateOrderStatus(orderId, newStatus);
@@ -197,8 +198,13 @@ const OrderList = () => {
 
       toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
-      toast.error("Lỗi khi cập nhật trạng thái đơn hàng");
-      console.error("Lỗi cập nhật trạng thái:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 

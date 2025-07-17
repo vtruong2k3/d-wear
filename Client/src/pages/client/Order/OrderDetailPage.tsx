@@ -52,6 +52,7 @@ const OrderDetailPage = () => {
     }
 
     try {
+      setLoading(true);
       const reason = reasonToSend;
 
       const res = await cancelOrder(id, reason);
@@ -66,12 +67,16 @@ const OrderDetailPage = () => {
       setSelectedReason("");
       setCancelReason("");
     } catch (error) {
+
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
       toast.error(errorMessage);
       setError(errorMessage);
+
+    } finally {
+      setLoading(false);
     }
   };
   const getOrderDetails = async () => {
