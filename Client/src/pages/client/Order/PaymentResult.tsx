@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+
 import { Result, Spin } from "antd";
 import { SmileOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import type { ErrorType } from "../../../types/error/IError";
+import toast from "react-hot-toast";
 
 const PaymentResult = () => {
   const [searchParams] = useSearchParams();
@@ -26,13 +27,13 @@ const PaymentResult = () => {
     const verifyPayment = async () => {
       try {
         if (resultCode === "0") {
-          // ✅ Gửi verify lên BE với đủ dữ liệu
-          const res = await axios.post("/api/momo/verify", {
+          //  Gửi verify lên BE với đủ dữ liệu
+          await axios.post("/api/momo/verify", {
             order_id: orderId,
             trans_id: transId || "",
           });
 
-          console.log("✅ Xác minh thanh toán:", res.data);
+
           toast.success("Thanh toán thành công");
         } else {
           toast.error("Thanh toán thất bại hoặc bị hủy");
@@ -46,7 +47,7 @@ const PaymentResult = () => {
       } finally {
         setLoading(false);
 
-        // ✅ Tự động quay về trang đơn hàng sau 3 giây
+        //  Tự động quay về trang đơn hàng sau 3 giây
         setTimeout(() => {
           navigate("/orders");
         }, 3000);

@@ -26,6 +26,7 @@ import { Modal, Input } from "antd";
 
 
 
+
 const OrderDetailPage = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState<OrderDetailResponse | null>(null);
@@ -149,44 +150,12 @@ const OrderDetailPage = () => {
     };
   }, [id]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "processing":
-        return "bg-blue-100 text-blue-800";
-      case "shipped":
-        return "bg-purple-100 text-purple-800";
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="w-4 h-4" />;
-      case "processing":
-        return <Package className="w-4 h-4" />;
-      case "shipped":
-        return <Truck className="w-4 h-4" />;
-      case "delivered":
-        return <CheckCircle className="w-4 h-4" />;
-      case "cancelled":
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <Package className="w-4 h-4" />;
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "pending":
-        return "Chờ xử lý";
+        return "Chờ xác nhận";
       case "processing":
         return "Đang xử lý";
       case "shipped":
@@ -204,10 +173,10 @@ const OrderDetailPage = () => {
     switch (method) {
       case "cod":
         return "Tiền mặt";
-      case "card":
-        return "Thẻ tín dụng";
-      case "banking":
-        return "Chuyển khoản";
+      case "momo":
+        return "Ví MoMo";
+      case "vnpay":
+        return "Ví VNPAY";
       default:
         return "Không xác định";
     }
@@ -289,6 +258,60 @@ const OrderDetailPage = () => {
       socket.off("cancelOrder");
     };
   }, [id]);
+  const getStatusInVietnamese = (status: string) => {
+    const statusMap: {
+      [key: string]: { label: string; color: string; icon: React.ReactNode };
+    } = {
+      pending: {
+        label: 'Chờ xác nhận',
+        color: 'bg-yellow-100 text-yellow-800',
+        icon: <Clock className="w-4 h-4" />,
+      },
+      confirmed: {
+        label: 'Đã xác nhận',
+        color: 'bg-blue-100 text-blue-800',
+        icon: <CheckCircle className="w-4 h-4" />,
+      },
+      processing: {
+        label: 'Đang xử lý',
+        color: 'bg-blue-100 text-blue-800',
+        icon: <Package className="w-4 h-4" />,
+      },
+      shipped: {
+        label: 'Đang giao hàng',
+        color: 'bg-purple-100 text-purple-800',
+        icon: <Truck className="w-4 h-4" />,
+      },
+      delivered: {
+        label: 'Đã giao hàng',
+        color: 'bg-green-100 text-green-800',
+        icon: <CheckCircle className="w-4 h-4" />,
+      },
+      completed: {
+        label: 'Hoàn thành',
+        color: 'bg-green-100 text-green-800',
+        icon: <CheckCircle className="w-4 h-4" />,
+      },
+      cancelled: {
+        label: 'Đã hủy',
+        color: 'bg-red-100 text-red-800',
+        icon: <XCircle className="w-4 h-4" />,
+      },
+      refunded: {
+        label: 'Đã hoàn tiền',
+        color: 'bg-gray-100 text-gray-800',
+        icon: <XCircle className="w-4 h-4" />,
+      },
+    };
+
+    return (
+      statusMap[status.toLowerCase()] || {
+        label: 'Hoàn thành',
+        color: 'bg-green-100 text-green-800',
+        icon: <CheckCircle className="w-4 h-4" />,
+      }
+    );
+  };
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -317,6 +340,7 @@ const OrderDetailPage = () => {
     );
   }
 
+  const statusInfo = getStatusInVietnamese(order.order.status);
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -349,13 +373,11 @@ const OrderDetailPage = () => {
                 </p>
               </div>
               <div
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                  order.order.status
-                )}`}
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}
               >
-                {getStatusIcon(order.order.status)}
+                {statusInfo.icon}
                 <span className="ml-2">
-                  {getStatusText(order.order.status)}
+                  {statusInfo.label}
                 </span>
               </div>
             </div>

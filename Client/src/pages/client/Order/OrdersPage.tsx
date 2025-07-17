@@ -162,16 +162,16 @@ const OrdersPage = () => {
       },
       processing: {
         label: 'Đang xử lý',
-        color: 'bg-purple-100 text-purple-800',
+        color: 'bg-blue-100 text-blue-800',
         icon: <Package className="w-3 h-3" />,
       },
       shipped: {
-        label: 'Đang giao',
-        color: 'bg-indigo-100 text-indigo-800',
+        label: 'Đang giao hàng',
+        color: 'bg-purple-100 text-purple-800',
         icon: <Truck className="w-3 h-3" />,
       },
       delivered: {
-        label: 'Đã giao',
+        label: 'Đã giao hàng',
         color: 'bg-green-100 text-green-800',
         icon: <CheckCircle className="w-3 h-3" />,
       },
@@ -205,10 +205,10 @@ const OrdersPage = () => {
     switch (method) {
       case 'cod':
         return 'Tiền mặt';
-      case 'card':
-        return 'Thẻ tín dụng';
-      case 'banking':
-        return 'Chuyển khoản';
+      case 'momo':
+        return 'Ví MoMo';
+      case 'vnpay':
+        return 'Ví VNPAY';
       default:
         return 'Không xác định';
     }

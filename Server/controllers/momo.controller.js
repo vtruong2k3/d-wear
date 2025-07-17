@@ -163,7 +163,6 @@ exports.handleMomoIPN = async (req, res) => {
       { order_code: data.orderId },
       {
         paymentStatus: data.resultCode === 0 ? "paid" : "failed",
-        status: "processing",
       }
     );
 
@@ -245,9 +244,8 @@ exports.verifyPaymentFromRedirect = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
 
-    // ✅ Cập nhật trạng thái
+    //Cập nhật trạng thái
     order.paymentStatus = "paid";
-    order.status = "processing";
     order.momoTransactionId = trans_id;
     await order.save();
 
