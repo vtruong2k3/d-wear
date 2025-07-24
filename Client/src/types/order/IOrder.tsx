@@ -6,7 +6,7 @@ export interface IOrder {
     orderItems: string[]; // danh sách id của OrderItem
     createdAt: string; // ISO date string
     updatedAt: string;
-
+    shippingFee: number; // Phí vận chuyển
     receiverName: string;
     shippingAddress: string;
     phone: string;
@@ -40,8 +40,12 @@ export interface OrderItem {
     _id: string;
     order_id: string;
     product_id: Product;
+    product_image: string;
+    product_name: string;
     variant_id: Variant;
     quantity: number;
+    size: string;
+    color: string;
     price: number;
     createdAt: string;
     updatedAt: string;
@@ -67,6 +71,7 @@ export interface OrderData {
     receiverName: string;
     shippingAddress: string;
     phone: string;
+    shippingFee: number;
     paymentMethod: "cod" | "momo" | "vnpay";
     voucher_id: string | null;
     items: OrderItems[];

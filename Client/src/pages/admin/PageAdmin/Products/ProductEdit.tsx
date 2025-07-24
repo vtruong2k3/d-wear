@@ -131,6 +131,47 @@ const ProductEdit = () => {
   //   setVariantErrors(errors);
   //   return isValid;
   // };
+  // Validate ảnh sản phẩm
+  const beforeUploadProductImage = (file: File) => {
+    const isValidType =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/webp";
+
+    if (!isValidType) {
+      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      return Upload.LIST_IGNORE;
+    }
+
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      toast.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
+      return Upload.LIST_IGNORE;
+    }
+
+    return true;
+  };
+
+  // Validate ảnh biến thể
+  const beforeUploadVariantImage = (file: File) => {
+    const isValidType =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/webp";
+
+    if (!isValidType) {
+      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      return Upload.LIST_IGNORE;
+    }
+
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      toast.error("Ảnh biến thể phải nhỏ hơn 5MB!");
+      return Upload.LIST_IGNORE;
+    }
+
+    return true;
+  };
 
   //call api
   useEffect(() => {
@@ -325,7 +366,12 @@ const ProductEdit = () => {
     }
   };
 
-  const handleImageChange = (info: UploadChangeParam<UploadFile>) => {
+  const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
+    if (info.fileList.length > 8) {
+      toast.warning("Chỉ được tải tối đa 8 ảnh!");
+      return;
+    }
+
     setImageList(info.fileList);
   };
 
@@ -694,7 +740,7 @@ const ProductEdit = () => {
                         onChange={handleImageChange}
                         onPreview={handlePreview}
                         multiple
-                        beforeUpload={() => false}
+                        beforeUpload={beforeUploadProductImage}
                         className="product-image-upload"
                         accept="image/*"
                       >
@@ -876,7 +922,7 @@ const ProductEdit = () => {
                           onChange={(info) =>
                             handleVariantImageChange(index, info.fileList)
                           }
-                          beforeUpload={() => false}
+                          beforeUpload={beforeUploadVariantImage}
                           multiple
                         >
                           <Button icon={<UploadOutlined />}>

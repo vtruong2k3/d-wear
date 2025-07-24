@@ -50,55 +50,56 @@ const OrderList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { setLoading } = useLoading()
   const pageSize = 10;
-
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetchGetAllOrder();
+      console.log("Dữ liệu trả về từ API:", response);
+      const all = response.orders || [];
+      const hidden = JSON.parse(localStorage.getItem("hiddenOrders") || "[]");
+      setHiddenOrders(hidden);
+      setOrders(all);
+      filterOrders(all, hidden);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const response = await fetchGetAllOrder();
-        console.log("Dữ liệu trả về từ API:", response);
-        const all = response.orders || [];
-        const hidden = JSON.parse(localStorage.getItem("hiddenOrders") || "[]");
-        setHiddenOrders(hidden);
-        setOrders(all);
-        filterOrders(all, hidden);
-      } catch (error) {
-        const errorMessage =
-          (error as ErrorType).response?.data?.message ||
-          (error as ErrorType).message ||
-          "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false)
-      }
-    };
+
     fetchData();
-  }, [setLoading]);
+  }, []);
   useEffect(() => {
-
-    // Tham gia phòng admin để nhận đơn mới
     socket.emit("joinRoom", "admin");
 
-    // Nhận đơn hàng mới
     socket.on("newOrder", ({ orders: newOrder }) => {
-      const isCod = newOrder.paymentMethod === "cod";
-      const isMomo = newOrder.paymentMethod === "momo" && newOrder.paymentStatus === "paid";
-      if (isCod) {
-        setOrders((prev) => [newOrder, ...prev]);
-        toast.success("Có đơn hàng mới!");
-      }
-      if (isMomo) {
-        setOrders((prev) => [newOrder, ...prev]);
-        toast.success("Có đơn hàng mới với thanh toán MoMo!");
-      }
-      console.log("Nhận đơn hàng mới từ server:", newOrder);
 
+
+
+      setOrders((prev) => [newOrder, ...prev]);
+      toast.success(` Có đơn hàng mới ${newOrder.order_code}`);
+    });
+
+    socket.on("orderPaid", ({ orderId, paymentStatus }) => {
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === orderId ? { ...order, paymentStatus } : order
+        )
+      );
+      toast.info(`💰 Đơn hàng ${orderId} đã được thanh toán thành công.`);
     });
 
     return () => {
       socket.off("newOrder");
+      socket.off("orderPaid");
     };
   }, []);
+
   useEffect(() => {
     if (orders.length === 0) return;
 

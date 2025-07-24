@@ -6,6 +6,10 @@ const {
   generateMomoSignature,
   generateMomoIPNSignature,
 } = require("../utils/onlineSignature");
+const sendOrderConfirmationEmail = require("../utils/sendEmail");
+const OrderItem = require("../models/orderItems");
+const { log } = require("console");
+const { getIO } = require("../sockets/socketManager");
 
 exports.createPayment = async (req, res) => {
   try {
@@ -31,7 +35,7 @@ exports.createPayment = async (req, res) => {
     const orderInfo = "Thanh toán đơn hàng D-Wear";
     const ipnUrl =
       `${process.env.MOMO_IPN_URL}/api/momo/ipn` ||
-      "https://8ad10c5f6a1e.ngrok-free.app/api/momo/ipn";
+      "https://a62c528241c6.ngrok-free.app/api/momo/ipn";
     const redirectUrl =
       process.env.MOMO_REDIRECT_URL || "http://localhost:5173/payment";
     const requestType = "payWithMethod";
@@ -76,8 +80,6 @@ exports.createPayment = async (req, res) => {
       orderGroupId,
       signature,
     };
-
-    console.log(" Gửi yêu cầu tới MoMo:", requestBody);
 
     const momoRes = await axios.post(
       "https://test-payment.momo.vn/v2/gateway/api/create",
@@ -153,22 +155,73 @@ exports.handleMomoIPN = async (req, res) => {
       return res.status(400).json({ message: "Chữ ký không hợp lệ" });
     }
 
-    //  Chữ ký hợp lệ → cập nhật trạng thái đơn hàng
+    //  Cập nhật trạng thái đơn hàng
     await Payment.findOneAndUpdate(
       { order_id: data.orderId },
       { status: data.resultCode === 0 ? "success" : "failed" },
       { new: true }
     );
-    await Order.findOneAndUpdate(
-      { order_code: data.orderId },
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: data.orderId },
       {
         paymentStatus: data.resultCode === 0 ? "paid" : "failed",
-      }
+      },
+      { new: true }
     );
 
+    //  Nếu thanh toán thành công → gửi email
+    if (data.resultCode === 0 && updatedOrder?.email) {
+      const orderItems = await OrderItem.find({
+        order_id: updatedOrder._id,
+      });
+
+      const populatedItems = orderItems.map((item) => {
+        let fullImageUrl = "";
+        if (item.product_image?.startsWith("http")) {
+          fullImageUrl = item.product_image;
+        } else {
+          const cleanPath = item.product_image?.replace(/\\/g, "/");
+          fullImageUrl = `${process.env.BASE_URL}/${cleanPath}`;
+        }
+
+        return {
+          name: item.product_name || "Sản phẩm",
+          image: fullImageUrl,
+          color: item.color || "-",
+          size: item.size || "-",
+          quantity: item.quantity,
+          price: item.price,
+        };
+      });
+
+      await sendOrderConfirmationEmail(updatedOrder.email, {
+        ...updatedOrder.toObject(),
+        items: populatedItems,
+      });
+    }
+    // Emit socket nếu thanh toán thành công
+    if (data.resultCode === 0) {
+      const io = getIO();
+
+      io.to("admin").emit("orderPaid", {
+        orderId: updatedOrder._id,
+        paymentStatus: updatedOrder.paymentStatus,
+      });
+
+      io.to(updatedOrder._id.toString()).emit("orderPaid", {
+        orderId: updatedOrder._id,
+        paymentStatus: updatedOrder.paymentStatus,
+      });
+
+      io.to(`user_${updatedOrder.user_id}`).emit("orderPaid", {
+        orderId: updatedOrder._id,
+        paymentStatus: updatedOrder.paymentStatus,
+      });
+    }
     return res.status(200).json({ message: "IPN thành công" });
   } catch (error) {
-    console.error(" Lỗi khi xử lý IPN:", error.message);
+    console.error("Lỗi khi xử lý IPN:", error.message);
     return res.status(500).json({
       message: "Lỗi server khi xử lý IPN",
       error: error.message,

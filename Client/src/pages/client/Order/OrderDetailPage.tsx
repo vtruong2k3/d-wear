@@ -421,43 +421,43 @@ const OrderDetailPage = () => {
                 >
                   <img
                     src={
-                      item.product_id.imageUrls &&
-                        item.product_id.imageUrls.length > 0
-                        ? item.product_id.imageUrls[0].startsWith("http")
-                          ? item.product_id.imageUrls[0]
-                          : `http://localhost:5000/${item.product_id.imageUrls[0].replace(
+                      item.product_image &&
+                        item.product_image.length > 0
+                        ? item.product_image.startsWith("http")
+                          ? item.product_image
+                          : `http://localhost:5000/${item.product_image.replace(
                             /\\/g,
                             "/"
                           )}`
                         : "/default.png"
                     }
-                    alt={item.product_id.product_name}
+                    alt={item.product_name}
                     className="w-16 h-16 object-cover rounded-lg mr-4"
                   />
                   <div className="flex-1">
                     <h4 className="text-xl font-sans text-gray-900 mb-1">
-                      {item.product_id.product_name}
+                      {item.product_name}
                     </h4>
                     <div className="flex items-center space-x-4 mb-2">
-                      {item.variant_id.size && (
+                      {item.size && (
                         <div className="flex items-center">
                           <span className="text-xs text-gray-500 mr-1">
                             Size:
                           </span>
                           <span className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-md font-medium">
-                            {item.variant_id.size}
+                            {item.size}
                           </span>
                         </div>
                       )}
-                      {item.variant_id.color && (
+                      {item.color && (
                         <div className="flex items-center">
                           <span className="text-xs text-gray-500 mr-1">
                             Màu:
                           </span>
                           <div className="flex items-center">
-                            {renderColorIndicator(item.variant_id.color)}
+                            {renderColorIndicator(item.color)}
                             <span className="text-xs font-medium text-gray-700 capitalize">
-                              {item.variant_id.color}
+                              {item.color}
                             </span>
                           </div>
                         </div>
@@ -500,12 +500,14 @@ const OrderDetailPage = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tạm tính:</span>
                   <span className="font-medium">
-                    {formatCurrency(order.order.finalAmount)}
+                    {order.order.discount > 0
+                      ? formatCurrency(order.order.discount)
+                      : formatCurrency(order.order.total)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Phí vận chuyển:</span>
-                  <span className="font-medium text-green-600">Miễn phí</span>
+                  <span className="font-medium text-green-600">{order.order.shippingFee ? formatCurrency(order.order.shippingFee) : "Miễn phí"}</span>
                 </div>
                 <div className="border-t pt-3">
                   <div className="flex justify-between text-lg font-semibold">

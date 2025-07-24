@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 const cartShema = new mongoose.Schema(
   {
@@ -12,6 +11,8 @@ const cartShema = new mongoose.Schema(
       ref: "products",
       required: true,
     },
+    product_name: { type: String, required: true },
+    product_image: { type: String, required: true },
     variant_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "variants",
@@ -23,6 +24,8 @@ const cartShema = new mongoose.Schema(
       default: 1,
       min: [1, "Quantity must be at least 1"],
     },
+    size: { type: String, required: true },
+    color: { type: String, required: true },
     price: {
       type: Number,
       required: true,
@@ -37,4 +40,3 @@ const cartShema = new mongoose.Schema(
 cartShema.index({ user_id: 1, variant_id: 1 }, { unique: true });
 const Cart = mongoose.model("carts", cartShema);
 module.exports = Cart;
-

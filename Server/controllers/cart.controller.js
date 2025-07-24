@@ -8,8 +8,8 @@ exports.getAllCart = async (req, res) => {
     const userId = req.user.id;
 
     const result = await Cart.find({ user_id: userId })
-      .populate("product_id", "product_name imageUrls")
-      .populate("variant_id", "size color")
+      // .populate("product_id", "product_name imageUrls")
+      // .populate("variant_id", "size color")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -27,6 +27,7 @@ exports.getAllCart = async (req, res) => {
 
     // Tính tổng tiền toàn bộ giỏ hàng (tuỳ chọn)
     const totalAmount = carts.reduce((sum, item) => sum + item.totalPrice, 0);
+    console.log(result);
 
     res.status(200).json({
       message: "Lấy giỏ hàng thành công",
@@ -75,7 +76,7 @@ exports.addToCart = async (req, res) => {
       variant_id,
     });
 
-    // ✅ Kiểm tra tồn kho
+    //  Kiểm tra tồn kho
     if (exsitingCart) {
       const totalQuantity = exsitingCart.quantity + quantity;
       if (totalQuantity > exsitingVariant.stock) {
@@ -84,7 +85,7 @@ exports.addToCart = async (req, res) => {
         });
       }
 
-      // ✅ Update số lượng nếu hợp lệ
+      //  Update số lượng nếu hợp lệ
       const updated = await Cart.findOneAndUpdate(
         { user_id: userId, variant_id },
         { $inc: { quantity: quantity } },
@@ -104,10 +105,15 @@ exports.addToCart = async (req, res) => {
       const cart = await Cart.create({
         user_id: userId,
         product_id,
+        product_name: exsitingProduct.product_name,
+        product_image: exsitingProduct.imageUrls[0],
         variant_id,
+        size: exsitingVariant.size,
+        color: exsitingVariant.color,
         quantity,
         price: exsitingVariant.price,
       });
+      console.log(cart);
       return res.status(201).json({
         message: "Thêm sản phẩm vào giỏ hàng thành công",
         data: cart,

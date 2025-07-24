@@ -9,9 +9,25 @@ const createOrderSchema = Joi.object({
           "string.base": "product_id phải là chuỗi",
           "any.required": "product_id là bắt buộc",
         }),
+        product_name: Joi.string().required().messages({
+          "string.base": "product_name phải là chuỗi",
+          "any.required": "product_name là bắt buộc",
+        }),
+        product_image: Joi.string().required().messages({
+          "string.base": "product_image phải là chuỗi",
+          "any.required": "product_image là bắt buộc",
+        }),
         variant_id: Joi.string().required().messages({
           "string.base": "variant_id phải là chuỗi",
           "any.required": "variant_id là bắt buộc",
+        }),
+        size: Joi.string().required().messages({
+          "string.base": "size phải là chuỗi",
+          "any.required": "size là bắt buộc",
+        }),
+        color: Joi.string().required().messages({
+          "string.base": "color phải là chuỗi",
+          "any.required": "color là bắt buộc",
         }),
         quantity: Joi.number().min(1).required().messages({
           "number.base": "quantity phải là số",
@@ -32,10 +48,13 @@ const createOrderSchema = Joi.object({
       "array.base": "items phải là một mảng",
     }),
   voucher_id: Joi.string().allow("", null).optional(),
-  paymentMethod: Joi.string().valid("cod", "vnpay","momo").required().messages({
-    "any.only": 'paymentMethod phải là "cod" hoặc "vnpay","momo"',
-    "any.required": "paymentMethod là bắt buộc",
-  }),
+  paymentMethod: Joi.string()
+    .valid("cod", "vnpay", "momo")
+    .required()
+    .messages({
+      "any.only": 'paymentMethod phải là "cod" hoặc "vnpay","momo"',
+      "any.required": "paymentMethod là bắt buộc",
+    }),
   receiverName: Joi.string().required().messages({
     "string.base": "receiverName phải là chuỗi",
     "any.required": "receiverName là bắt buộc",
@@ -52,7 +71,13 @@ const createOrderSchema = Joi.object({
       "any.required": "phone là bắt buộc",
     }),
   note: Joi.string().allow("", null),
-  email: Joi.string().email().allow("", null).optional(),
+  email: Joi.string().email().allow("", null).optional().messages({
+    "string.email": "email không hợp lệ",
+  }),
+  shippingFee: Joi.number().min(0).default(0).messages({
+    "number.base": "shippingFee phải là số",
+    "number.min": "shippingFee không được âm",
+  }),
 });
 
 module.exports = { createOrderSchema };

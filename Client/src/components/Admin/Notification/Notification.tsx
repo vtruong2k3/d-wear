@@ -31,21 +31,21 @@ const NotificationDropdown = () => {
 
     useEffect(() => {
         socket.emit('joinRoom', 'admin');
-        socket.on('newOrder', (orders) => {
-            console.log(orders)
+        socket.on('newOrder', ({ orders: newOrder }) => {
             const newNotification: NotificationItem = {
-                id: orders.orders._id,
+                id: newOrder._id,
                 type: 'success',
                 title: '🛒 Đơn hàng mới',
-                message: `Đơn hàng #${orders.orders._id} vừa được tạo.`,
+                message: `Đơn hàng #${newOrder.order_code || newOrder._id} vừa được tạo.`,
                 time: dayjs().format('HH:mm:ss DD/MM/YYYY'),
                 read: false,
                 avatar: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
-                orderId: orders.orders._id,
+                orderId: newOrder._id,
             };
 
             setNotifications((prev) => [newNotification, ...prev]);
         });
+
 
         return () => {
             socket.off('newOrder');

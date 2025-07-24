@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema(
     total: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     finalAmount: { type: Number, required: true },
-
+    shippingFee: { type: Number, default: 0 },
     paymentMethod: {
       type: String,
       enum: ["cod", "momo"],

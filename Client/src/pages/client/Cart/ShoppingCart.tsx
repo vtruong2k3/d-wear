@@ -32,10 +32,10 @@ const ShoppingCart = () => {
   }, [cartItems, selectedItems]);
 
   const handleAddToCart = (cartItems: ICartItem) => {
-    console.log("Cart items:", cartItems.variant_id._id);
+
     dispatch(updateCartQuantityThunk({
-      product_id: cartItems.product_id._id,
-      variant_id: cartItems.variant_id._id,
+      product_id: cartItems.product_id,
+      variant_id: cartItems.variant_id,
       quantity: cartItems.quantity + 1
     }))
       .unwrap()
@@ -46,8 +46,8 @@ const ShoppingCart = () => {
 
   const handleReduceFormCart = (cartItems: ICartItem) => {
     dispatch(updateCartQuantityThunk({
-      product_id: cartItems.product_id._id,
-      variant_id: cartItems.variant_id._id,
+      product_id: cartItems.product_id,
+      variant_id: cartItems.variant_id,
       quantity: cartItems.quantity - 1
     }))
       .unwrap()
@@ -151,13 +151,13 @@ const ShoppingCart = () => {
                           <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
                             <img
                               src={
-                                cart.product_id.imageUrls && cart.product_id.imageUrls.length > 0
-                                  ? cart.product_id.imageUrls[0].startsWith("http")
-                                    ? cart.product_id.imageUrls[0]
-                                    : `http://localhost:5000/${cart.product_id.imageUrls[0].replace(/\\/g, "/")}`
+                                cart.product_image && cart.product_image.length > 0
+                                  ? cart.product_image.startsWith("http")
+                                    ? cart.product_image
+                                    : `http://localhost:5000/${cart.product_image.replace(/\\/g, "/")}`
                                   : "/default.png"
                               }
-                              alt={cart.product_id.product_name}
+                              alt={cart.product_name}
                               className="w-full h-full object-contain "
                             />
                           </div>
@@ -165,28 +165,28 @@ const ShoppingCart = () => {
 
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                            {cart.product_id.product_name}
+                            {cart.product_name}
                           </h3>
 
                           {/* Hiển thị size và màu */}
                           <div className="flex items-center space-x-4 mb-3">
-                            {cart.variant_id?.size && (
+                            {cart.size && (
                               <div className="flex items-center space-x-2">
                                 <span className="text-sm text-gray-500">Size:</span>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                  {cart.variant_id.size}
+                                  {cart.size}
                                 </span>
                               </div>
                             )}
-                            {cart.variant_id?.color && (
+                            {cart.color && (
                               <div className="flex items-center space-x-2">
                                 <span className="text-sm text-gray-500">Màu:</span>
                                 <div className="flex items-center space-x-1">
                                   <div
                                     className="w-4 h-4 rounded-full border border-gray-300"
-                                    style={{ backgroundColor: cart.variant_id.color }}
+                                    style={{ backgroundColor: cart.color }}
                                   ></div>
-                                  <span className="text-sm text-gray-700">{cart.variant_id.color}</span>
+                                  <span className="text-sm text-gray-700">{cart.color}</span>
                                 </div>
                               </div>
                             )}

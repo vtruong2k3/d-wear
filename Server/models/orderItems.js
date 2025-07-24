@@ -11,12 +11,17 @@ const orderItemSchema = new mongoose.Schema(
       ref: "products",
       required: true,
     },
+    product_name: { type: String, required: true },
+    product_image: { type: String, required: true },
     variant_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "variants",
       required: true,
     },
+
     quantity: { type: Number, required: true, default: 1 },
+    size: { type: String, required: true },
+    color: { type: String, required: true },
     price: { type: Number, required: true },
   },
   {

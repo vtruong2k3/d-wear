@@ -77,7 +77,7 @@ const cartSlice = createSlice({
           const newItem = action.payload;
 
           const existingIndex = state.cartItems.findIndex(
-            (item) => item.variant_id._id === newItem.variant_id._id
+            (item) => item.variant_id === newItem.variant_id
           );
 
           if (existingIndex !== -1) {

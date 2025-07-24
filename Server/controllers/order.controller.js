@@ -203,10 +203,7 @@ exports.getOrderById = async (req, res) => {
     }
 
     // Lấy chi tiết sản phẩm trong đơn
-    const orderItems = await OrderItem.find({ order_id: orderId })
-      .populate("product_id", "product_name imageUrls")
-      .populate("variant_id", "size color")
-      .lean();
+    const orderItems = await OrderItem.find({ order_id: orderId }).lean();
 
     return res.status(200).json({
       message: "Lấy chi tiết đơn hàng thành công",
@@ -233,10 +230,7 @@ exports.getOrderByIdAdmin = async (req, res) => {
     }
 
     // Lấy chi tiết sản phẩm trong đơn
-    const orderItems = await OrderItem.find({ order_id: orderId })
-      .populate("product_id", "product_name imageUrls")
-      .populate("variant_id", "size color")
-      .lean();
+    const orderItems = await OrderItem.find({ order_id: orderId }).lean();
 
     return res.status(200).json({
       message: "Lấy chi tiết đơn hàng thành công",
@@ -295,6 +289,7 @@ exports.createOrder = async (req, res) => {
       paymentMethod,
       receiverName,
       shippingAddress,
+      shippingFee,
       phone,
       note,
       email,
@@ -367,7 +362,7 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    const finalAmount = total - discount;
+    const finalAmount = total - discount + shippingFee;
 
     // Tạo đơn hàng
     const newOrder = await Order.create({
@@ -383,6 +378,7 @@ exports.createOrder = async (req, res) => {
       shippingAddress,
       phone,
       note,
+      shippingFee,
     });
 
     // Tạo các item
@@ -392,8 +388,12 @@ exports.createOrder = async (req, res) => {
         const orderItem = await OrderItem.create({
           order_id: newOrder._id,
           product_id: item.product_id,
+          product_name: item.product_name,
+          product_image: item.product_image,
           variant_id: item.variant_id,
           quantity: item.quantity,
+          size: item.size,
+          color: item.color,
           price: item.price,
         });
         orderItemIds.push(orderItem._id);
@@ -427,30 +427,28 @@ exports.createOrder = async (req, res) => {
 
     // Gửi email xác nhận đơn hàng
     try {
-      if (emailUser) {
+      if (emailUser && newOrder?.paymentMethod === "cod") {
         const orderItems = await OrderItem.find({
           order_id: newOrder._id,
-        }).populate({
-          path: "variant_id",
-          populate: { path: "product_id", select: "product_name" },
         });
 
         const populatedItems = orderItems.map((item) => {
-          const variant = item.variant_id;
-          const product = variant?.product_id;
-          const rawImage = Array.isArray(variant?.image)
-            ? variant.image[0]
-            : variant?.image;
-          const imagePath = rawImage?.replace(/\\/g, "/");
-          const fullImageUrl = imagePath
-            ? `https://a85ff2e29d03.ngrok-free.app/${imagePath}`
-            : "";
+          let fullImageUrl = "";
+
+          if (item.product_image?.startsWith("http")) {
+            // Trường hợp đã là full URL (ví dụ: http://localhost:5000/...)
+            fullImageUrl = item.product_image;
+          } else if (item.product_image) {
+            // Trường hợp là đường dẫn tương đối (ví dụ: uploads/products/...)
+            const imagePath = item.product_image.replace(/\\/g, "/");
+            fullImageUrl = `${process.env.BASE_URL}/${imagePath}`;
+          }
 
           return {
-            name: product?.product_name || "Sản phẩm",
+            name: item.product_name || "Sản phẩm",
             image: fullImageUrl,
-            color: variant?.color || "-",
-            size: variant?.size || "-",
+            color: item.color || "-",
+            size: item.size || "-",
             quantity: item.quantity,
             price: item.price,
           };

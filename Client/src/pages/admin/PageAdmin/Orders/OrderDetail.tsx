@@ -8,10 +8,7 @@ import {
   Typography,
   Row,
   Col,
-
   Button,
-
-
   Select,
   Modal,
 } from "antd";
@@ -51,23 +48,7 @@ const OrderDetail = () => {
 
     fetchData();
   }, [id, setLoading]);
-  // Màu sắc tương ứng với trạng thái
-  // const statusColor: Record<string, string> = {
-  //   pending: "default",
-  //   processing: "orange",
-  //   shipped: "blue",
-  //   delivered: "green",
-  //   cancelled: "red",
-  // };
 
-  // // Tiếng Việt cho trạng thái
-  // const statusLabel: Record<string, string> = {
-  //   pending: "Chờ xử lý",
-  //   processing: "Đang xử lý",
-  //   shipped: "Đang giao",
-  //   delivered: "Đã giao",
-  //   cancelled: "Đã huỷ",
-  // };
   const validTransitions: Record<IOrder["status"], IOrder["status"][]> = {
     pending: ["processing", "cancelled"],
     processing: ["shipped", "cancelled"],
@@ -135,9 +116,23 @@ const OrderDetail = () => {
       }
     });
 
+    socket.on('orderPaid', (data) => {
+      if (data?.orderId === id) {
+        setData((prev) => prev ? {
+          ...prev,
+          order: {
+            ...prev.order,
+            paymentStatus: data.paymentStatus,
+          }
+        } : prev);
+        toast.info(` Đơn hàng đã được thanh toán thành công.`);
+      }
+    });
+
     return () => {
-      socket.emit('leaveRoom', id); //  Rời room khi unmount
+      socket.emit('leaveRoom', id);
       socket.off('cancelOrder');
+      socket.off('orderPaid');
     };
   }, [id]);
   const getStatusLabel = (status: string) => {
@@ -197,15 +192,14 @@ const OrderDetail = () => {
   const columns = [
     {
       title: "Ảnh",
-      dataIndex: ["product_id", "imageUrls"],
+      dataIndex: ["product_image"],
       key: "image",
       render: (item: string) => {
-        const rawImagePath = item?.[0];
-
-        const imageUrl = rawImagePath
-          ? rawImagePath.startsWith("http")
-            ? rawImagePath
-            : `http://localhost:5000/${rawImagePath.replace(/^\/?/, "").replace(/\\/g, "/")}`
+        console.log("Image item:", item);
+        const imageUrl = item
+          ? item.startsWith("http")
+            ? item
+            : `http://localhost:5000/${item.replace(/^\/?/, "").replace(/\\/g, "/")}`
           : "/default.png";
 
         return (
@@ -225,17 +219,17 @@ const OrderDetail = () => {
     },
     {
       title: "Tên sản phẩm",
-      dataIndex: ["product_id", "product_name"],
+      dataIndex: ["product_name"],
       key: "product_name",
     },
     {
       title: "Size",
-      dataIndex: ["variant_id", "size"],
+      dataIndex: ["size"],
       key: "size",
     },
     {
       title: "Màu",
-      dataIndex: ["variant_id", "color"],
+      dataIndex: ["color"],
       key: "color",
     },
     {
@@ -327,9 +321,11 @@ const OrderDetail = () => {
                 </Select>
 
               </Descriptions.Item>
-              <Descriptions.Item label="Tổng tiền">{order.total.toLocaleString()}đ</Descriptions.Item>
-              <Descriptions.Item label="Giảm giá">{order.discount.toLocaleString()}đ</Descriptions.Item>
-              <Descriptions.Item label="Thành tiền">{order.finalAmount.toLocaleString()}đ</Descriptions.Item>
+              <Descriptions.Item label="Tổng tiền">{formatCurrency(order.total)}</Descriptions.Item>
+              <Descriptions.Item label="Giảm giá">{formatCurrency(order.discount)}</Descriptions.Item>
+              <Descriptions.Item label="Phí vận chuyển">{order.shippingFee ? formatCurrency(order.shippingFee) : "Miễn phí"}</Descriptions.Item>
+              <Descriptions.Item label="Thành tiền">{formatCurrency(order.finalAmount)}</Descriptions.Item>
+
               {order.status === "cancelled" && order.cancellationReason && (
                 <Descriptions.Item label="Lý do hủy">
                   <span style={{ color: "#ff4d4f" }}>{order.cancellationReason}</span>
