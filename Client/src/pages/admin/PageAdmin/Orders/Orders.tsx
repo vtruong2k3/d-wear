@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Table,
   Button,
@@ -131,7 +131,9 @@ const OrderList = () => {
     };
   }, [orders]);
 
-  const filterOrders = (data: IOrder[], hidden: string[]) => {
+
+
+  const filterOrders = useCallback((data: IOrder[], hidden: string[]) => {
     let filtered = [...data];
 
     filtered = showHidden
@@ -159,10 +161,11 @@ const OrderList = () => {
 
     setFilteredOrders(filtered);
     setCurrentPage(1);
-  };
+  }, [showHidden, statusFilter, dateFilter, sortTotal]);
+
   useEffect(() => {
     filterOrders(orders, hiddenOrders);
-  }, [orders, hiddenOrders, showHidden, statusFilter, dateFilter, sortTotal]);
+  }, [orders, hiddenOrders, filterOrders]);
 
   const handleHide = (id: string) => {
     if (hiddenOrders.includes(id)) {

@@ -51,12 +51,13 @@ export type VoucherPreview = Pick<
 
 const Checkout = () => {
   const location = useLocation();
-  const selectedItems: string[] = location.state?.selectedItems || [];
+  const [selectedItems] = useState<string[]>(() => location.state?.selectedItems || []);
+
   const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector(
     (state: RootState) => state.cartSlice.cartItems
   );
-  const { user, token } = useSelector((state: RootState) => state.authenSlice);
+  const { user } = useSelector((state: RootState) => state.authenSlice);
   const [paymentMethodValue, setPaymentMethod] = useState<string>("cod");
 
   const [selectedVoucher, setSelectedVoucher] = useState<VoucherPreview | null>(
@@ -361,7 +362,7 @@ const Checkout = () => {
         setIsLoading(false);
       }
     },
-    [rawTotal, token, user?._id]
+    [rawTotal, user?._id]
   );
 
   // Tính giảm giá

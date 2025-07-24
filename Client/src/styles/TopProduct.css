@@ -1,0 +1,12 @@
+.top-products-table .ant-table-tbody > tr:hover > td {
+  background-color: #f8faff !important;
+}
+.top-products-table .ant-table-tbody > tr:first-child {
+  background-color: #fffbf0;
+}
+.top-products-table .ant-table-tbody > tr:nth-child(2) {
+  background-color: #f6f6f6;
+}
+.top-products-table .ant-table-tbody > tr:nth-child(3) {
+  background-color: #fff7e6;
+}

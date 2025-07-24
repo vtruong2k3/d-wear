@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const productShema = new mongoose.Schema(
@@ -31,4 +30,3 @@ const productShema = new mongoose.Schema(
 );
 const Product = mongoose.model("products", productShema);
 module.exports = Product;
-
