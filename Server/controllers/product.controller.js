@@ -364,7 +364,7 @@ exports.createProductWithVariants = async (req, res) => {
     // Map đường dẫn ảnh
     const imageUrls = productImages.map((file) => file.path);
 
-    // ✅ Debug: kiểm tra file thực sự nhận được
+    //  Debug: kiểm tra file thực sự nhận được
     console.log("FILES:", req.files);
     console.log("imageUrls:", imageUrls);
 
@@ -395,7 +395,7 @@ exports.createProductWithVariants = async (req, res) => {
     // Gán imageUrls vào body để validate
     req.body.imageUrls = imageUrls;
 
-    // ✅ Validate sản phẩm
+    //  Validate sản phẩm
     const { error: productError } = productValidate.createProduct.validate(
       req.body,
       {
@@ -409,7 +409,7 @@ exports.createProductWithVariants = async (req, res) => {
         .json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
     }
 
-    // ✅ Validate từng biến thể
+    //  Validate từng biến thể
     for (const variant of variantsData) {
       // Thêm product_id tạm để pass validation
       variant.product_id = "temp";
@@ -488,7 +488,7 @@ exports.updateProductWithVariants = async (req, res) => {
     const fullImageUrls = [...existingImageUrls, ...newImages];
     req.body.imageUrls = fullImageUrls;
 
-    // ✅ 1. Validate sản phẩm
+    //  1. Validate sản phẩm
     const { error: productError } = productValidate.updateProduct.validate(
       req.body,
       {
@@ -502,7 +502,7 @@ exports.updateProductWithVariants = async (req, res) => {
         .json({ message: "Dữ liệu sản phẩm không hợp lệ", errors });
     }
 
-    // ✅ 2. Parse & validate biến thể
+    //  2. Parse & validate biến thể
     let variantsData = [];
     try {
       variantsData = JSON.parse(req.body.variants || "[]");
@@ -513,15 +513,13 @@ exports.updateProductWithVariants = async (req, res) => {
       });
     }
 
-    console.log("📦 Danh sách biến thể gửi lên:", variantsData);
-
     const variantImages = req.files?.imageVariant || [];
 
     // Validate từng biến thể
     for (let i = 0; i < variantsData.length; i++) {
       const variant = variantsData[i];
 
-      // ✅ Gán ảnh đúng
+      //  Gán ảnh đúng
       if (Array.isArray(variantImages) && variantImages[i]) {
         variant.image = [variantImages[i].path]; // ảnh mới
       } else if (Array.isArray(variant.image)) {
@@ -545,7 +543,7 @@ exports.updateProductWithVariants = async (req, res) => {
         });
       }
 
-      // ✅ Debug biến thể đang validate
+      //  Debug biến thể đang validate
       console.log(`🧩 Đang validate biến thể thứ ${i + 1}:`);
       console.log("▶️ Dữ liệu biến thể:", variant);
 
@@ -554,7 +552,7 @@ exports.updateProductWithVariants = async (req, res) => {
       });
 
       if (variantError) {
-        console.log("❌ Lỗi validate biến thể:", variantError.details);
+        console.log(" Lỗi validate biến thể:", variantError.details);
         const errors = variantError.details.map((err) => err.message);
         return res.status(400).json({
           message: `Dữ liệu biến thể thứ ${i + 1} không hợp lệ`,
@@ -563,7 +561,7 @@ exports.updateProductWithVariants = async (req, res) => {
       }
     }
 
-    // ✅ 3. Nếu hợp lệ → cập nhật DB
+    //  3. Nếu hợp lệ → cập nhật DB
 
     // 3.1 Update sản phẩm
     const {
