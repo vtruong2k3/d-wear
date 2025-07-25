@@ -80,7 +80,6 @@ const Checkout = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [shippingFee, setShippingFee] = useState<number>(0);
-
   const [note, setNote] = useState("");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
