@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -8,28 +8,28 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd';
+} from "antd";
 import {
   DeleteOutlined,
   SearchOutlined,
   PlusOutlined,
   EditOutlined,
-} from '@ant-design/icons';
-import type { IVariants } from '../../../../types/IVariants';
-import { toast } from 'react-toastify';
+} from "@ant-design/icons";
+import type { IVariants } from "../../../../types/IVariants";
+import { toast } from "react-toastify";
 import {
   deleteVariant,
   getAllVariants,
-} from '../../../../services/admin/variantServices';
-import type { ErrorType } from '../../../../types/error/IError';
-import { useLoading } from '../../../../contexts/LoadingContext';
-import { formatCurrency } from '../../../../utils/Format';
-
+  softDeleteVariant,
+} from "../../../../services/admin/variantServices";
+import type { ErrorType } from "../../../../types/error/IError";
+import { useLoading } from "../../../../contexts/LoadingContext";
+import { formatCurrency } from "../../../../utils/Format";
 const { Title } = Typography;
 
 const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const { setLoading } = useLoading();
 
   const fetchVariants = useCallback(async () => {
@@ -41,7 +41,7 @@ const Variants: React.FC = () => {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
-        'Đã xảy ra lỗi, vui lòng thử lại.';
+        "Đã xảy ra lỗi, vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -51,26 +51,42 @@ const Variants: React.FC = () => {
   useEffect(() => {
     fetchVariants();
   }, [fetchVariants]);
-
+  //xóa cứng
   const handleDelete = async (id: string) => {
     try {
       setLoading(true);
       await deleteVariant(id);
       setVariants((prev) => prev.filter((v) => v._id !== id));
-      toast.success('Xóa biến thể thành công!');
+      toast.success("Xóa biến thể thành công!");
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
-        'Đã xảy ra lỗi, vui lòng thử lại.';
+        "Đã xảy ra lỗi, vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-
+  //xoá mềm
+  const handleSoftDelete = async (id: string) => {
+    try {
+      setLoading(true);
+      await softDeleteVariant(id);
+      toast.success("Đã xoá mềm biến thể!");
+      fetchVariants();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Lỗi xoá mềm biến thể.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
   const filteredVariants = variants.filter((variant) => {
-    const name = variant.product_id?.product_name || '';
+    const name = variant.product_id?.product_name || "";
     return (
       name.toLowerCase().includes(searchText.toLowerCase()) ||
       variant.size.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -79,33 +95,33 @@ const Variants: React.FC = () => {
   });
 
   const columns = [
-    { title: 'ID', dataIndex: '_id', key: '_id', width: 80 },
+    { title: "ID", dataIndex: "_id", key: "_id", width: 80 },
     {
-      title: 'Tên sản phẩm',
-      key: 'product_name',
+      title: "Tên sản phẩm",
+      key: "product_name",
       render: (_: IVariants, record: IVariants) => {
-        return record.product_id?.product_name || (
-          <Tag color="red">Không có</Tag>
+        return (
+          record.product_id?.product_name || <Tag color="red">Không có</Tag>
         );
       },
     },
     {
-      title: 'Kích thước',
-      dataIndex: 'size',
-      key: 'size',
+      title: "Kích thước",
+      dataIndex: "size",
+      key: "size",
       render: (size: string) => <Tag color="blue">{size}</Tag>,
     },
     {
-      title: 'Màu sắc',
-      dataIndex: 'color',
-      key: 'color',
+      title: "Màu sắc",
+      dataIndex: "color",
+      key: "color",
       render: (color: string) => <Tag color="green">{color}</Tag>,
     },
-    { title: 'Số lượng', dataIndex: 'stock', key: 'stock' },
+    { title: "Số lượng", dataIndex: "stock", key: "stock" },
     {
-      title: 'Giá (VNĐ)',
-      dataIndex: 'price',
-      key: 'price',
+      title: "Giá (VNĐ)",
+      dataIndex: "price",
+      key: "price",
       render: (price: number) => (
         <span className="font-semibold text-blue-600">
           {formatCurrency(price)}
@@ -113,9 +129,9 @@ const Variants: React.FC = () => {
       ),
     },
     {
-      title: 'Hình ảnh',
-      dataIndex: 'image',
-      key: 'image',
+      title: "Hình ảnh",
+      dataIndex: "image",
+      key: "image",
       render: (images: string[] = []) => (
         <div className="flex gap-1">
           {images?.slice(0, 2).map((img, index) => (
@@ -124,9 +140,9 @@ const Variants: React.FC = () => {
               width={40}
               height={40}
               src={
-                img.startsWith('http')
+                img.startsWith("http")
                   ? img
-                  : `http://localhost:5000/${img.replace(/\\/g, '/')}`
+                  : `http://localhost:5000/${img.replace(/\\/g, "/")}`
               }
               className="rounded-md object-cover"
               preview={{ src: img }}
@@ -136,8 +152,8 @@ const Variants: React.FC = () => {
       ),
     },
     {
-      title: 'Thao tác',
-      key: 'actions',
+      title: "Thao tác",
+      key: "actions",
       render: (_: IVariants, record: IVariants) => (
         <>
           <Button style={{ marginRight: "20px" }} icon={<EditOutlined />} />
@@ -149,6 +165,18 @@ const Variants: React.FC = () => {
             okButtonProps={{ danger: true }}
           >
             <Button danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+
+          {/*  Thêm nút xoá mềm */}
+          <Popconfirm
+            title="Xác nhận xoá mềm biến thể?"
+            onConfirm={() => handleSoftDelete(record._id)}
+            okText="Xoá mềm"
+            cancelText="Huỷ"
+          >
+            <Button style={{ marginLeft: 10 }} type="default">
+              Xoá mềm
+            </Button>
           </Popconfirm>
         </>
       ),

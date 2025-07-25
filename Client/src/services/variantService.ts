@@ -5,14 +5,11 @@ export const fetchAllVariants = async (): Promise<IVariants[]> => {
   return Array.isArray(res.data) ? res.data : res.data.variants || [];
 };
 
-export const fetchCreateVariant = async (data:IVariants) => {
+export const fetchCreateVariant = async (data: IVariants) => {
   return axios.post("/api/variant", data);
 };
 
-export const updateVariantById = async (
-  id: string,
-  data: IVariants
-) => {
+export const updateVariantById = async (id: string, data: IVariants) => {
   return axios.put(`/api/variant/${id}`, data);
 };
 
