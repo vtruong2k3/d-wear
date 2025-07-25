@@ -4,3 +4,8 @@ import axios from "axios"; // hoặc import trực tiếp axios nếu cần
 export const getProvinces = () => {
   return axios.get("/api/ghn/provinces");
 };
+
+// Lấy danh sách quận/huyện theo tỉnh
+export const getDistricts = (provinceId: string) => {
+  return axios.get(`/api/ghn/districts/${provinceId}`);
+};
