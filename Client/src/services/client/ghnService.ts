@@ -13,3 +13,15 @@ export const getDistricts = (provinceId: string) => {
 export const getWards = (districtId: string) => {
   return axios.get(`/api/ghn/wards/${districtId}`);
 };
+// Tính phí ship
+export const calculateShippingFee = (data: {
+    to_district_id: number;
+    to_ward_code: string;
+    weight: number;
+    length: number;
+    width: number;
+    height: number;
+    service_type_id: number;
+  }) => {
+    return axios.post("/api/ghn/calculate-fee", data);
+  };
