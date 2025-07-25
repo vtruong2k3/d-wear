@@ -37,7 +37,8 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, title }) => {
             key: 'status',
             render: (status: string) => {
                 const statusConfig: Record<string, { color: string; text: string }> = {
-                    pending: { color: 'orange', text: 'Chờ xử lý' },
+                    pending: { color: 'gray', text: 'Chờ xử lý' },
+                    processing: { color: 'orange', text: 'Đang xử lý' },
                     shipped: { color: 'blue', text: 'Đang giao' },
                     delivered: { color: 'green', text: 'Đã giao' },
                     cancelled: { color: 'red', text: 'Đã hủy' }, // nếu có trạng thái này

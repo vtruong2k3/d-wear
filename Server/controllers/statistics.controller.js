@@ -25,7 +25,7 @@ exports.getSummary = async (req, res) => {
       totalRevenue,
       totalOrders: orders.length,
       totalCustomers: users.length,
-      shippingOrders: shippingCount, // ✅ thêm đơn đang giao
+      shippingOrders: shippingCount, //  thêm đơn đang giao
     });
   } catch (err) {
     res.status(500).json({
