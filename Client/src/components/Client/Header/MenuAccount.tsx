@@ -16,12 +16,11 @@ import type { RootState } from "../../../redux/store.ts";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBagIcon } from "lucide-react";
 
-
 export default function AccountMenu() {
   const user = useSelector((state: RootState) => state.authenSlice.user);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -31,9 +30,8 @@ export default function AccountMenu() {
   };
 
   const handleLogout = () => {
-    dispatch(doLogout())
-
-  }
+    dispatch(doLogout());
+  };
 
   return (
     <React.Fragment>
@@ -47,8 +45,12 @@ export default function AccountMenu() {
             aria-haspopup="true"
             aria-expanded={open ? "true" : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32 }} src={user?.avatar || undefined}>
-              {!user?.avatar && (user?.username?.slice(0, 1)?.toUpperCase() || "?")}
+            <Avatar
+              sx={{ width: 32, height: 32 }}
+              src={user?.avatar || undefined}
+            >
+              {!user?.avatar &&
+                (user?.username?.slice(0, 1)?.toUpperCase() || "?")}
             </Avatar>
           </IconButton>
         </Tooltip>
@@ -90,7 +92,12 @@ export default function AccountMenu() {
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
-        <MenuItem onClick={handleClose}>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            navigate("/profile"); // ← thay đổi tại đây
+          }}
+        >
           <Avatar /> Profile
         </MenuItem>
         <MenuItem onClick={handleClose}>
@@ -98,10 +105,12 @@ export default function AccountMenu() {
         </MenuItem>
         <Divider />
         {/* ✅ Thêm mục Đơn hàng ở đây */}
-        <MenuItem onClick={() => {
-          handleClose();
-          navigate("/orders"); // hoặc bất kỳ URL nào bạn định nghĩa
-        }}>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            navigate("/orders"); // hoặc bất kỳ URL nào bạn định nghĩa
+          }}
+        >
           <ListItemIcon>
             <ShoppingBagIcon fontSize="small" />
           </ListItemIcon>
