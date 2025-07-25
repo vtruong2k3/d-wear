@@ -14,3 +14,8 @@ export const addUserAddress = (data: any) => {
 export const updateUserAddress = (id: string, data: any) => {
   return axios.put(`/api/address/${id}`, data);
 };
+
+// Xoá địa chỉ
+export const deleteUserAddress = (id: string) => {
+  return axios.delete(`/api/address/${id}`);
+};
