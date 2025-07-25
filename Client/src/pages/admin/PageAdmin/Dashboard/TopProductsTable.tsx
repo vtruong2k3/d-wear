@@ -52,7 +52,7 @@ const TopProductsTable: React.FC<TopProductsTableProps> = ({ products }) => {
                             fallback="https://via.placeholder.com/48"
                         />
                         <div>
-                            <div className="font-medium text-gray-900">{text}</div>
+                            <div className="font-medium text-gray-900 ml-3">{text}</div>
                         </div>
                     </div>
                 );

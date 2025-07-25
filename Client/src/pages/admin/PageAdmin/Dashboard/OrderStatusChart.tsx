@@ -21,12 +21,15 @@ interface OrderStatusChartProps {
 }
 
 const OrderStatusChart: React.FC<OrderStatusChartProps> = ({ data, title = "Thống kê trạng thái đơn hàng" }) => {
+
+    const filteredData = data.filter(item => item.value > 0);
+
     return (
         <Card title={title} className="shadow-sm">
             <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                     <Pie
-                        data={data}
+                        data={filteredData}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
@@ -36,7 +39,7 @@ const OrderStatusChart: React.FC<OrderStatusChartProps> = ({ data, title = "Th�
                             percent !== undefined ? `${name}: ${(percent * 100).toFixed(0)}%` : name
                         }
                     >
-                        {data.map((entry, index) => (
+                        {filteredData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                     </Pie>
@@ -46,5 +49,6 @@ const OrderStatusChart: React.FC<OrderStatusChartProps> = ({ data, title = "Th�
         </Card>
     );
 };
+
 
 export default OrderStatusChart;
