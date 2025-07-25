@@ -4,7 +4,7 @@ import DetailProduct from "../../pages/client/ProductDetail/DetailProduct";
 import Login from "../../pages/client/Login/Login";
 import Register from "../../pages/client/Login/Register";
 import ListProduct from "../../pages/client/Product/ListProduct";
-import Profile from "../../pages/client/Profile";
+import Profile from "../../pages/client/Profile/Profile";
 import ShoppingCart from "../../pages/client/Cart/ShoppingCart";
 import Checkout from "../../pages/client/Order/Checkout";
 import PaymentResult from "../../pages/client/Order/PaymentResult";
