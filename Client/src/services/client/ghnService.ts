@@ -9,3 +9,7 @@ export const getProvinces = () => {
 export const getDistricts = (provinceId: string) => {
   return axios.get(`/api/ghn/districts/${provinceId}`);
 };
+// Lấy danh sách phường/xã theo quận
+export const getWards = (districtId: string) => {
+  return axios.get(`/api/ghn/wards/${districtId}`);
+};
