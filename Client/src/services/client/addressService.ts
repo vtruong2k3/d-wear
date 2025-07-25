@@ -7,5 +7,10 @@ export const getUserAddresses = () => {
 
 // Thêm địa chỉ mới
 export const addUserAddress = (data: any) => {
-    return axios.post("/api/address", data);
-  };
+  return axios.post("/api/address", data);
+};
+
+// Cập nhật địa chỉ
+export const updateUserAddress = (id: string, data: any) => {
+  return axios.put(`/api/address/${id}`, data);
+};
