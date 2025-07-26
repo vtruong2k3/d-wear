@@ -7,14 +7,14 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import PersonAdd from "@mui/icons-material/PersonAdd";
+
 import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
 import { doLogout } from "../../../redux/features/client/authenSlice.ts";
 import { type AppDispatch, type RootState } from "../../../redux/store.ts";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBagIcon } from "lucide-react";
+import { MapPin, ShoppingBagIcon } from "lucide-react";
 import { fetchUserProfile } from "../../../redux/features/client/thunks/authUserThunk.ts";
 
 export default function AccountMenu() {
@@ -143,12 +143,18 @@ export default function AccountMenu() {
           </ListItemIcon>
           Đơn hàng của tôi
         </MenuItem>
-        <MenuItem onClick={handleClose}>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            navigate("/address");
+          }}
+        >
           <ListItemIcon>
-            <PersonAdd fontSize="small" />
+            <MapPin fontSize="small" />
           </ListItemIcon>
-          Add another account
+          Địa chỉ
         </MenuItem>
+
         <MenuItem onClick={handleClose}>
           <ListItemIcon>
             <Settings fontSize="small" />
