@@ -6,13 +6,21 @@ import type { FilterByDateResponse } from '../../../../types/static/IStatic';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+
+type StatisticType = 'normal' | 'dateRange' | 'week' | 'year';
 interface FilterControlsProps {
-    statisticType: 'normal' | 'dateRange';
-    setStatisticType: (type: 'normal' | 'dateRange') => void;
+    statisticType: StatisticType;
+    setStatisticType: (type: StatisticType) => void;
     dateRange: [Dayjs, Dayjs] | null;
     setDateRange: (range: [Dayjs, Dayjs] | null) => void;
     filteredData: FilterByDateResponse | null;
     onApplyFilter: () => void;
+
+    // Mới thêm
+    selectedWeek: number | null;
+    setSelectedWeek: (week: number | null) => void;
+    selectedYear: number | null;
+    setSelectedYear: (year: number | null) => void;
 }
 const FilterControls: React.FC<FilterControlsProps> = ({
     statisticType,
@@ -20,7 +28,11 @@ const FilterControls: React.FC<FilterControlsProps> = ({
     dateRange,
     setDateRange,
     filteredData,
-    onApplyFilter
+    onApplyFilter,
+    selectedWeek,
+    setSelectedWeek,
+    selectedYear,
+    setSelectedYear,
 }) => {
     return (
         <Card className="mb-6 shadow-sm">
@@ -45,6 +57,8 @@ const FilterControls: React.FC<FilterControlsProps> = ({
                     >
                         <Option value="normal">Thống kê bình thường</Option>
                         <Option value="dateRange">Theo khoảng ngày</Option>
+                        <Option value="week">Theo tuần</Option>
+                        <Option value="year">Theo năm</Option>
                     </Select>
 
                     {statisticType === 'dateRange' && (
@@ -61,6 +75,48 @@ const FilterControls: React.FC<FilterControlsProps> = ({
                             value={dateRange}
                         />
 
+                    )}
+                    {statisticType === 'week' && (
+                        <>
+                            <Select
+                                placeholder="Chọn năm"
+                                style={{ width: 120 }}
+                                onChange={setSelectedYear}
+                                value={selectedYear}
+                            >
+                                {Array.from({ length: 5 }, (_, i) => {
+                                    const y = new Date().getFullYear() - i;
+                                    return <Option key={y} value={y}>{y}</Option>;
+                                })}
+                            </Select>
+
+                            <Select
+                                placeholder="Chọn tuần"
+                                style={{ width: 120 }}
+                                onChange={setSelectedWeek}
+                                value={selectedWeek}
+                            >
+                                {Array.from({ length: 53 }, (_, i) => (
+                                    <Option key={i + 1} value={i + 1}>
+                                        Tuần {i + 1}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </>
+                    )}
+
+                    {statisticType === 'year' && (
+                        <Select
+                            placeholder="Chọn năm"
+                            style={{ width: 120 }}
+                            onChange={setSelectedYear}
+                            value={selectedYear}
+                        >
+                            {Array.from({ length: 5 }, (_, i) => {
+                                const y = new Date().getFullYear() - i;
+                                return <Option key={y} value={y}>{y}</Option>;
+                            })}
+                        </Select>
                     )}
 
                     <Button type="primary" onClick={onApplyFilter}>

@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {
   DailyDataResponse,
+  FilterByDateResponse,
   LatestOrdersResponse,
   OrderStatusResponse,
   SummaryResponse,
@@ -75,4 +76,26 @@ export const filterByDate = async (startDate: string, endDate: string) => {
     console.error("Lỗi khi gọi filterByDate:", error);
     throw error;
   }
+};
+
+export const filterByWeek = async (
+  year: number,
+  week: number
+): Promise<FilterByDateResponse> => {
+  const response = await axios.post(`/api/statistics/by-week/${year}/${week}`);
+  return response.data;
+};
+
+export const summaryByYear = async (
+  year: number
+): Promise<
+  {
+    month: number;
+    revenue: number;
+    orders: number;
+    customers: number;
+  }[]
+> => {
+  const response = await axios.get(`/api/statistics/by-year/${year}`);
+  return response.data;
 };
