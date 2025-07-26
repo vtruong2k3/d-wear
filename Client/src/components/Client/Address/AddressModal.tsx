@@ -226,50 +226,68 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
             </Form.Item>
           </Col>
           {/*  Huyện */}
-<Col span={8}>
-<Form.Item
-  name="newDistrict"
-  rules={[{ required: true, message: "Vui lòng chọn quận/huyện" }]}
->
-  <Select
-    placeholder="Chọn Quận/Huyện"
-    disabled={!form.getFieldValue("newProvince")}
-    onChange={async (value) => {
-      form.setFieldsValue({
-        newDistrict: value,
-        newWard: undefined,
-      });
+          <Col span={8}>
+            <Form.Item
+              name="newDistrict"
+              rules={[{ required: true, message: "Vui lòng chọn quận/huyện" }]}
+            >
+              <Select
+                placeholder="Chọn Quận/Huyện"
+                disabled={!form.getFieldValue("newProvince")}
+                onChange={async (value) => {
+                  form.setFieldsValue({
+                    newDistrict: value,
+                    newWard: undefined,
+                  });
 
-      try {
-        const res = await getWards(value); // ✅ gọi API xã/phường
-        console.log("API Wards:", res.data);
+                  try {
+                    const res = await getWards(value); // ✅ gọi API xã/phường
+                    console.log("API Wards:", res.data);
 
-        // GHN trả về dạng { wards: [...] } hoặc { data: [...] } -> tuỳ BE
-        const wardData = Array.isArray(res.data)
-          ? res.data
-          : res.data.wards || res.data.data || [];
+                    // GHN trả về dạng { wards: [...] } hoặc { data: [...] } -> tuỳ BE
+                    const wardData = Array.isArray(res.data)
+                      ? res.data
+                      : res.data.wards || res.data.data || [];
 
-        setWards(wardData);
-      } catch (error) {
-        console.error("Lỗi lấy phường/xã:", error);
-        setWards([]);
-      }
-    }}
-  >
-    {districts
-      .filter((d) => d.DistrictID) // ✅ lọc bỏ ID null hoặc undefined
-      .map((district) => (
-        <Option
-          key={district.DistrictID}
-          value={district.DistrictID.toString()}
-        >
-          {district.DistrictName}
-        </Option>
-      ))}
-  </Select>
-</Form.Item>
-</Col>
+                    setWards(wardData);
+                  } catch (error) {
+                    console.error("Lỗi lấy phường/xã:", error);
+                    setWards([]);
+                  }
+                }}
+              >
+                {districts
+                  .filter((d) => d.DistrictID) // ✅ lọc bỏ ID null hoặc undefined
+                  .map((district) => (
+                    <Option
+                      key={district.DistrictID}
+                      value={district.DistrictID.toString()}
+                    >
+                      {district.DistrictName}
+                    </Option>
+                  ))}
+              </Select>
+            </Form.Item>
+          </Col>
 
+          {/*  Xã */}
+          <Col span={8}>
+            <Form.Item
+              name="newWard"
+              rules={[{ required: true, message: "Vui lòng chọn phường/xã" }]}
+            >
+              <Select
+                placeholder="Chọn Phường/Xã"
+                disabled={!form.getFieldValue("newDistrict")}
+              >
+                {wards.map((ward) => (
+                  <Option key={ward.WardCode} value={ward.WardCode}>
+                    {ward.WardName}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
         </Row>
 
         <Form.Item
