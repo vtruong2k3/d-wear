@@ -70,7 +70,73 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
   const [wards, setWards] = useState<Ward[]>([]);
 
   // ✅ Chọn tỉnh => gọi API quận huyện
- 
+  const handleProvinceChange = async (provinceId: string) => {
+    form.setFieldsValue({
+      newProvince: provinceId,
+      newDistrict: undefined,
+      newWard: undefined,
+    });
+
+    try {
+      const res = await getDistricts(provinceId);
+      setDistricts(res.data || []);
+    } catch (err) {
+      console.error("Lỗi lấy quận/huyện:", err);
+      setDistricts([]);
+    }
+  };
+
+  const handleAddNewAddress = async () => {
+    try {
+      const values = await form.validateFields();
+
+      const province = provinces.find(
+        (p) => p.ProvinceID.toString() === values.newProvince
+      );
+      const district = districts.find(
+        (d) => d.DistrictID.toString() === values.newDistrict
+      );
+      const ward = wards.find((w) => w.WardCode === values.newWard);
+
+      if (!province || !district || !ward) {
+        toast.error("Vui lòng chọn đầy đủ thông tin địa chỉ");
+        return;
+      }
+
+      const fullAddress = `${values.newDetailAddress}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+
+      const newAddress: SavedAddress = {
+        id: Date.now().toString(),
+        _id: Date.now().toString(),
+        name: values.newName,
+        phone: values.newPhone,
+        provinceId: values.newProvince,
+        provinceName: province.ProvinceName,
+        districtId: values.newDistrict,
+        districtName: district.DistrictName,
+        wardId: values.newWard,
+        wardName: ward.WardName,
+        detailAddress: values.newDetailAddress,
+        fullAddress,
+        isDefault: values.setAsDefault || false,
+      };
+
+      // ✅ GỌI API LƯU VÀO MONGO
+      const res = await addUserAddress(newAddress);
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Thêm địa chỉ thành công!");
+        onAddAddress(newAddress); // cập nhật state frontend nếu cần
+        form.resetFields();
+        onCancel();
+      } else {
+        toast.error("Không thể lưu địa chỉ, vui lòng thử lại!");
+      }
+    } catch (error) {
+      console.error("Validation failed or API error:", error);
+      toast.error("Lỗi lưu địa chỉ!");
+    }
+  };
 
   return (
     <Modal
