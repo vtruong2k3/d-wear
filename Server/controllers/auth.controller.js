@@ -154,3 +154,24 @@ exports.loginWithGoogle = async (req, res) => {
     return res.status(500).json({ message: "Lỗi đăng nhập Google", error });
   }
 };
+
+exports.getUserInfo = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Chưa xác thực" });
+    }
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error("Lỗi lấy user:", error);
+    return res.status(500).json({ message: "Lỗi server", error });
+  }
+};

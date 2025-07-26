@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Card,
   Avatar,
@@ -29,32 +29,45 @@ import {
   GoogleOutlined,
   ShoppingOutlined,
   HeartOutlined,
-  SettingOutlined,
+
   EnvironmentOutlined
 } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '../../../redux/store';
+import { fetchUserProfile } from '../../../redux/features/client/thunks/authUserThunk';
+import type { ErrorType } from '../../../types/error/IError';
+import toast from 'react-hot-toast';
+import type { User } from '../../../types/auth/IAuth';
+import { fetchUpdateUserProfile } from '../../../services/client/userApi';
+import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const UserProfile = () => {
-  const [userData, setUserData] = useState({
-    username: 'Nguyễn Văn An',
-    email: 'nguyenvanan@email.com',
-    phone: '0123456789',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    isGoogleAccount: false,
-    role: 'user',
-    isActive: true,
-    createdAt: '2024-01-15T10:30:00Z'
-  });
+  const dispatch = useDispatch<AppDispatch>()
+  const user = useSelector((state: RootState) => state.authAdminSlice.user)
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [userData, setUserData] = useState<User | null>(user);
+
+  useEffect(() => {
+    if (user) {
+      setUserData(user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchUserProfile());
+  }, [dispatch]);
+
 
   const handleEdit = () => {
     setIsEditing(true);
-    form.setFieldsValue(userData);
+    form.setFieldsValue(user);
+    setUserData(user);
   };
 
   const handleSave = async () => {
@@ -62,22 +75,31 @@ const UserProfile = () => {
       const values = await form.validateFields();
       setLoading(true);
 
-      // Only update allowed fields: username, phone, avatar
-      const allowedUpdates = {
-        username: values.username,
-        phone: values.phone,
-        avatar: userData.avatar // Keep current avatar (can be updated via upload)
-      };
+      const formData = new FormData();
+      formData.append("username", values.username);
+      formData.append("phone", values.phone);
 
-      // Simulate API call
-      setTimeout(() => {
-        setUserData({ ...userData, ...allowedUpdates });
-        setIsEditing(false);
-        setLoading(false);
-        message.success('Cập nhật thông tin thành công!');
-      }, 1000);
+
+
+      if (userData?.avatar && typeof userData.avatar !== "string" && userData.avatar instanceof File) {
+        formData.append("avatar", userData.avatar);
+      }
+
+
+
+
+
+      const result = await fetchUpdateUserProfile(formData);
+      dispatch(fetchUserProfile());
+      toast.success(result.message || 'Cập nhật thành công!');
+      setUserData(result.user);
+      setIsEditing(false);
     } catch (error) {
-      message.error('Vui lòng kiểm tra lại thông tin!');
+      const err = error as ErrorType;
+      const errorMessage = err.response?.data?.message || err.message || 'Lỗi khi cập nhật';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,55 +108,57 @@ const UserProfile = () => {
     form.resetFields();
   };
 
-  const handleAvatarChange = (info) => {
-    if (info.file.status === 'uploading') {
-      setLoading(true);
-      return;
-    }
-    if (info.file.status === 'done') {
-      // Simulate successful upload - in real app, get URL from response
-      const reader = new FileReader();
-      reader.addEventListener('load', () => {
-        setUserData(prev => ({
-          ...prev,
-          avatar: reader.result
-        }));
-        setLoading(false);
-        message.success('Cập nhật avatar thành công!');
-      });
-      reader.readAsDataURL(info.file.originFileObj);
-    } else if (info.file.status === 'error') {
-      setLoading(false);
-      message.error('Tải ảnh thất bại!');
-    }
-  };
 
   const uploadProps = {
     name: 'avatar',
-    action: '/api/upload',
     showUploadList: false,
-    accept: 'image/*',
-    beforeUpload: (file) => {
-      const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-      if (!isJpgOrPng) {
-        message.error('Chỉ có thể tải lên file JPG/PNG!');
-        return false;
+    beforeUpload: (file: File) => {
+      const isImage = file.type.startsWith('image/');
+      const isLt5M = file.size / 1024 / 1024 < 5;
+
+      if (!isImage) {
+        message.error('Chỉ hỗ trợ tệp ảnh');
+        return Upload.LIST_IGNORE;
       }
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        message.error('Ảnh phải nhỏ hơn 2MB!');
-        return false;
+      if (!isLt5M) {
+        message.error('Ảnh phải nhỏ hơn 5MB');
+        return Upload.LIST_IGNORE;
       }
-      return false; // Prevent auto upload, handle manually
-    },
-    onChange: handleAvatarChange,
-    customRequest: ({ file, onSuccess }) => {
-      // Simulate upload success immediately for demo
-      setTimeout(() => {
-        onSuccess("ok");
-      }, 100);
+
+      // Lưu file vào state
+      setUserData((prev) => ({ ...prev!, avatar: file }));
+      return false; // Ngăn AntD upload tự động
     }
   };
+
+
+
+
+  const avatarSrc = useMemo(() => {
+    const avatar = userData?.avatar;
+
+    if (!avatar) return undefined;
+
+    if (avatar instanceof File) {
+      return URL.createObjectURL(avatar);
+    }
+
+    if (typeof avatar === 'string') {
+      if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+        return avatar;
+      }
+
+      const normalizedPath = avatar.startsWith("/")
+        ? avatar
+        : `/${avatar}`;
+      return `http://localhost:5000${normalizedPath.replace(/\\/g, "/")}`;
+    }
+
+    return undefined;
+  }, [userData?.avatar]);
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
@@ -148,10 +172,13 @@ const UserProfile = () => {
               <div className="relative">
                 <Avatar
                   size={120}
-                  src={userData.avatar}
-                  icon={<UserOutlined />}
-                  className="border-4 border-white/30"
-                />
+                  src={avatarSrc}
+                  className="mr-3 ring-2 ring-white shadow-xl transition-all duration-300 group-hover:ring-blue-400"
+                >
+                  {!avatarSrc && (userData?.username?.charAt(0)?.toUpperCase() || '?')}
+                </Avatar>
+
+
                 {isEditing && (
                   <Upload {...uploadProps}>
                     <Button
@@ -168,26 +195,26 @@ const UserProfile = () => {
 
             <div className="text-center md:text-left flex-1">
               <Title level={2} className="text-white mb-2">
-                {userData.username}
+                {user?.username}
               </Title>
               <Space direction="vertical" size="small">
                 <Text className="text-blue-100 flex items-center gap-2">
-                  <MailOutlined /> {userData.email}
+                  <MailOutlined /> {user?.email}
                 </Text>
 
                 <Space>
                   <Badge
-                    status={userData.isActive ? "success" : "error"}
-                    text={userData.isActive ? "Hoạt động" : "Không hoạt động"}
+                    status={user?.isActive ? "success" : "error"}
+                    text={user?.isActive ? "Hoạt động" : "Không hoạt động"}
                     className="text-blue-100"
                   />
-                  {userData.isGoogleAccount && (
+                  {user?.isGoogleAccount && (
                     <Tag icon={<GoogleOutlined />} color="blue">
                       Google Account
                     </Tag>
                   )}
-                  <Tag color={userData.role === 'admin' ? 'gold' : 'green'}>
-                    {userData.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
+                  <Tag color={user?.role === 'admin' ? 'gold' : 'green'}>
+                    {user?.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
                   </Tag>
                 </Space>
               </Space>
@@ -242,18 +269,18 @@ const UserProfile = () => {
               className="shadow-lg border-0 bg-white/80 backdrop-blur-sm"
             >
               {!isEditing ? (
-                <Descriptions column={1} size="large">
+                <Descriptions column={1} size="default">
                   <Descriptions.Item label="Tên người dùng">
-                    <Text strong>{userData.username}</Text>
+                    <Text strong>{user?.username}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Email">
-                    <Text copyable>{userData.email}</Text>
+                    <Text copyable>{user?.email}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Số điện thoại">
-                    <Text>{userData.phone}</Text>
+                    <Text>{user?.phone || "N/A"}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Loại tài khoản">
-                    {userData.isGoogleAccount ? (
+                    {user?.isGoogleAccount ? (
                       <Tag icon={<GoogleOutlined />} color="blue">
                         Tài khoản Google
                       </Tag>
@@ -262,25 +289,26 @@ const UserProfile = () => {
                     )}
                   </Descriptions.Item>
                   <Descriptions.Item label="Vai trò">
-                    <Tag color={userData.role === 'admin' ? 'gold' : 'green'}>
-                      {userData.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
+                    <Tag color={user?.role === 'admin' ? 'gold' : 'green'}>
+                      {user?.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
                     </Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="Trạng thái">
                     <Badge
-                      status={userData.isActive ? "success" : "error"}
-                      text={userData.isActive ? "Đang hoạt động" : "Không hoạt động"}
+                      status={user?.isActive ? "success" : "error"}
+                      text={user?.isActive ? "Đang hoạt động" : "Không hoạt động"}
                     />
                   </Descriptions.Item>
                   <Descriptions.Item label="Ngày tham gia">
-                    {new Date(userData.createdAt).toLocaleDateString('vi-VN')}
+                    {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString('vi-VN') : "Chưa cập nhật"}
+
                   </Descriptions.Item>
                 </Descriptions>
               ) : (
                 <Form
                   form={form}
                   layout="vertical"
-                  initialValues={userData}
+                  initialValues={userData ?? undefined}
                   className="space-y-4"
                 >
                   <Form.Item
@@ -301,7 +329,7 @@ const UserProfile = () => {
                   >
                     <Input
                       prefix={<MailOutlined />}
-                      value={userData.email}
+                      value={user?.email}
                       size="large"
                       disabled
                       className="bg-gray-50"
@@ -332,7 +360,7 @@ const UserProfile = () => {
 
                   <Form.Item name="isActive" label="Trạng thái hoạt động">
                     <Switch
-                      checked={userData.isActive}
+                      checked={user?.isActive}
                       checkedChildren="Hoạt động"
                       unCheckedChildren="Tạm khóa"
                       disabled
@@ -351,15 +379,18 @@ const UserProfile = () => {
                 className="shadow-lg border-0 bg-white/80 backdrop-blur-sm"
               >
                 <Space direction="vertical" size="middle" className="w-full">
-                  <Button
-                    type="primary"
-                    icon={<ShoppingOutlined />}
-                    block
-                    size="large"
-                    className="bg-indigo-600 hover:bg-indigo-700 border-0"
-                  >
-                    Lịch sử đơn hàng
-                  </Button>
+                  <Link to={'/orders'}>
+                    <Button
+                      type="primary"
+                      icon={<ShoppingOutlined />}
+
+                      block
+                      size="large"
+                      className="bg-indigo-600 hover:bg-indigo-700 border-0"
+                    >
+                      Lịch sử đơn hàng
+                    </Button>
+                  </Link>
                   <Button
                     type="default"
                     icon={<HeartOutlined />}

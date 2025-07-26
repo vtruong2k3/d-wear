@@ -101,6 +101,7 @@ export interface FilteredStatistics {
     totalRevenue: number;
     totalOrders: number;
     totalCustomers: number;
+    shippingOrders: number;
     dailyData: DailyStat[];
     orders: OrderStat[];
 }

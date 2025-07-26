@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 const variantSchema = new mongoose.Schema(
   {
@@ -30,6 +29,7 @@ const variantSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
+    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -40,4 +40,3 @@ const variantSchema = new mongoose.Schema(
 variantSchema.index({ product_id: 1, size: 1, color: 1 }, { unique: true });
 const Variant = mongoose.model("variants", variantSchema);
 module.exports = Variant;
-

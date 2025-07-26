@@ -22,6 +22,7 @@ const productShema = new mongoose.Schema(
       default: "unisex",
     },
     material: { type: String, required: true },
+    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

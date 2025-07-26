@@ -27,7 +27,6 @@ exports.getAllCart = async (req, res) => {
 
     // Tính tổng tiền toàn bộ giỏ hàng (tuỳ chọn)
     const totalAmount = carts.reduce((sum, item) => sum + item.totalPrice, 0);
-    console.log(result);
 
     res.status(200).json({
       message: "Lấy giỏ hàng thành công",
