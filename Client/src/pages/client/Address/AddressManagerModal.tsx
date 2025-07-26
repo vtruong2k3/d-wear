@@ -235,18 +235,13 @@ const AddressManagement = () => {
 
         <div className="p-6 pb-32">
           <Button
-            type="primary"
-            size="large"
             icon={<PlusOutlined />}
+            className="w-full "
             onClick={() => setIsAddAddressModalVisible(true)}
-            className="w-full h-16 text-lg font-semibold bg-gradient-to-r from-orange-500 to-orange-600 border-none hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl"
-            style={{
-              background: "linear-gradient(to right, #f97316, #ea580c)",
-              borderRadius: "12px",
-            }}
           >
-            Thêm địa chỉ mới
+            Thêm địa chỉ
           </Button>
+ 
         </div>
       </div>
 
