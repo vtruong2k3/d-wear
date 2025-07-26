@@ -142,7 +142,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
     <Modal
       title="Thêm địa chỉ giao hàng mới"
       open={visible}
-    //   onOk={handleAddNewAddress}
+      //   onOk={handleAddNewAddress}
       onCancel={() => {
         form.resetFields();
         onCancel();
@@ -181,51 +181,95 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
         <Text strong>Chọn địa chỉ:</Text>
         <Row gutter={[8, 8]} style={{ marginTop: 8, marginBottom: 16 }}>
-            {/*  Tỉnh */}
+          {/*  Tỉnh */}
+          <Col span={8}>
+            <Form.Item
+              name="newProvince"
+              rules={[{ required: true, message: "Vui lòng chọn tỉnh" }]}
+            >
+              <Select
+                placeholder="Chọn Tỉnh/Thành phố"
+                onChange={async (value) => {
+                  console.log("Selected Province ID:", value);
+
+                  form.setFieldsValue({
+                    newProvince: value,
+                    newDistrict: undefined,
+                    newWard: undefined,
+                  });
+
+                  try {
+                    const res = await getDistricts(value);
+                    console.log("API Districts:", res.data);
+
+                    // FIX QUAN TRỌNG
+                    const districtData = Array.isArray(res.data)
+                      ? res.data
+                      : res.data.districts || [];
+
+                    setDistricts(districtData);
+                  } catch (error) {
+                    console.error("Lỗi lấy quận/huyện:", error);
+                    setDistricts([]);
+                  }
+                }}
+              >
+                {provinces.map((province) => (
+                  <Option
+                    key={province.ProvinceID}
+                    value={province.ProvinceID.toString()}
+                  >
+                    {province.ProvinceName}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          {/*  Huyện */}
 <Col span={8}>
 <Form.Item
-  name="newProvince"
-  rules={[{ required: true, message: "Vui lòng chọn tỉnh" }]}
+  name="newDistrict"
+  rules={[{ required: true, message: "Vui lòng chọn quận/huyện" }]}
 >
   <Select
-    placeholder="Chọn Tỉnh/Thành phố"
+    placeholder="Chọn Quận/Huyện"
+    disabled={!form.getFieldValue("newProvince")}
     onChange={async (value) => {
-      console.log("Selected Province ID:", value);
-
       form.setFieldsValue({
-        newProvince: value,
-        newDistrict: undefined,
+        newDistrict: value,
         newWard: undefined,
       });
 
       try {
-        const res = await getDistricts(value);
-        console.log("API Districts:", res.data);
+        const res = await getWards(value); // ✅ gọi API xã/phường
+        console.log("API Wards:", res.data);
 
-        // FIX QUAN TRỌNG
-        const districtData = Array.isArray(res.data)
+        // GHN trả về dạng { wards: [...] } hoặc { data: [...] } -> tuỳ BE
+        const wardData = Array.isArray(res.data)
           ? res.data
-          : res.data.districts || [];
+          : res.data.wards || res.data.data || [];
 
-        setDistricts(districtData);
+        setWards(wardData);
       } catch (error) {
-        console.error("Lỗi lấy quận/huyện:", error);
-        setDistricts([]);
+        console.error("Lỗi lấy phường/xã:", error);
+        setWards([]);
       }
     }}
   >
-    {provinces.map((province) => (
-      <Option
-        key={province.ProvinceID}
-        value={province.ProvinceID.toString()}
-      >
-        {province.ProvinceName}
-      </Option>
-    ))}
+    {districts
+      .filter((d) => d.DistrictID) // ✅ lọc bỏ ID null hoặc undefined
+      .map((district) => (
+        <Option
+          key={district.DistrictID}
+          value={district.DistrictID.toString()}
+        >
+          {district.DistrictName}
+        </Option>
+      ))}
   </Select>
 </Form.Item>
 </Col>
-          
+
         </Row>
 
         <Form.Item
