@@ -216,34 +216,70 @@ const Checkout = () => {
   };
 
   // Xử lý khi chọn địa chỉ từ dropdown
-  const handleAddressSelect = (addressId: string) => {
+  // const handleAddressSelect = (addressId: string) => {
+  //   setSelectedAddressId(addressId);
+  //   const selectedAddress = savedAddresses.find(
+  //     (addr) => addr._id === addressId || addr.id === addressId
+  //   );
+
+  //   if (selectedAddress) {
+  //     form.setFieldsValue({
+  //       name: selectedAddress.name,
+  //       phone: selectedAddress.phone,
+  //       address: selectedAddress.fullAddress,
+  //     });
+
+  //     const province = provinces.find(
+  //       (p) => p.id === selectedAddress.provinceId
+  //     );
+
+  //     if (province) {
+  //       setShippingFee(province.shippingFee || 25000); // fallback nếu thiếu
+  //     } else {
+  //       console.warn(
+  //         "❌ Không tìm thấy tỉnh tương ứng với ID:",
+  //         selectedAddress.provinceId
+  //       );
+  //       setShippingFee(25000); // fallback mặc định
+  //     }
+  //   } else {
+  //     console.warn("⚠️ Không tìm thấy địa chỉ phù hợp");
+  //   }
+  // };
+  const handleAddressSelect = async (addressId: string) => {
     setSelectedAddressId(addressId);
     const selectedAddress = savedAddresses.find(
       (addr) => addr._id === addressId || addr.id === addressId
     );
-
-    if (selectedAddress) {
-      form.setFieldsValue({
-        name: selectedAddress.name,
-        phone: selectedAddress.phone,
-        address: selectedAddress.fullAddress,
-      });
-
-      const province = provinces.find(
-        (p) => p.id === selectedAddress.provinceId
-      );
-
-      if (province) {
-        setShippingFee(province.shippingFee || 25000); // fallback nếu thiếu
-      } else {
-        console.warn(
-          "❌ Không tìm thấy tỉnh tương ứng với ID:",
-          selectedAddress.provinceId
-        );
-        setShippingFee(25000); // fallback mặc định
-      }
-    } else {
+  
+    if (!selectedAddress) {
       console.warn("⚠️ Không tìm thấy địa chỉ phù hợp");
+      return;
+    }
+  
+    form.setFieldsValue({
+      name: selectedAddress.name,
+      phone: selectedAddress.phone,
+      address: selectedAddress.fullAddress,
+    });
+  
+    try {
+      // ✅ Gọi API GHN tính phí ship
+      const res = await calculateShippingFee({
+        to_district_id: Number(selectedAddress.districtId),
+        to_ward_code: selectedAddress.wardId, // wardId chính là WardCode
+        weight: 1000, // 👉 Tạm set cứng 500g, có thể tính động theo sản phẩm
+        length: 20,
+        width: 15,
+        height: 10,
+        service_type_id: 1, // 2 = dịch vụ tiêu chuẩn GHN
+      });
+  
+      const fee = res.data?.data?.total || 5000; // fallback nếu lỗi
+      setShippingFee(fee);
+    } catch (error) {
+      console.error("❌ Lỗi tính phí ship:", error);
+      setShippingFee(5000);
     }
   };
 

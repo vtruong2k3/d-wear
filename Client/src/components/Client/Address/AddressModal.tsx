@@ -142,7 +142,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
     <Modal
       title="Thêm địa chỉ giao hàng mới"
       open={visible}
-        onOk={handleAddNewAddress}
+      onOk={handleAddNewAddress}
       onCancel={() => {
         form.resetFields();
         onCancel();
