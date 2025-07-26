@@ -1,14 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "../../../../redux/store";
-import {
-  fetchUsers,
-  selectUser,
-} from "../../../../redux/features/admin/userSlice";
-import { Table, Tag, Button, Spin, Typography } from "antd";
+import { fetchUsers, restoreUser, selectUser, softDeleteUser, type UserType } from "../../../../redux/features/admin/userSlice";
+import { EyeOutlined, DeleteOutlined, UndoOutlined } from "@ant-design/icons";
+import { fetchUserAddresses } from "../../../../redux/features/admin/userSlice";
+import { Button, message, Modal, Space, Spin, Switch, Table, Tag } from "antd";
+import Title from "antd/es/skeleton/Title";
 import UserDetailModal from "./UserDetailModal";
-
-const { Title } = Typography;
+import type { RootState } from "../../../../redux/store";
 
 const UsersList = () => {
   const dispatch = useDispatch();
@@ -16,9 +14,32 @@ const UsersList = () => {
     (state: RootState) => state.userAdminSlice
   );
 
+  const [showDeleted, setShowDeleted] = useState(false);
+
   useEffect(() => {
-    dispatch(fetchUsers() as any); // gọi mock data
+    dispatch(fetchUsers() as any);
   }, [dispatch]);
+
+  // Lọc user theo trạng thái
+  const filteredUsers = users.filter(user => 
+    showDeleted ? user.isDeleted : !user.isDeleted
+  );
+
+  const handleSoftDelete = (userId: string) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa người dùng này?',
+      onOk: () => {
+        dispatch(softDeleteUser(userId) as any);
+        message.success("Đã xóa người dùng thành công!");
+      },
+    });
+  };
+
+  const handleRestore = (userId: string) => {
+    dispatch(restoreUser(userId) as any);
+    message.success("Đã khôi phục người dùng thành công!");
+  };
 
   const columns = [
     { title: "Tên", dataIndex: "name" },
@@ -38,31 +59,85 @@ const UsersList = () => {
       ),
     },
     {
+      title: "Tình trạng",
+      dataIndex: "isDeleted",
+      render: (isDeleted: boolean) => (
+        <Tag color={isDeleted ? "red" : "green"}>
+          {isDeleted ? "Đã xóa" : "Hoạt động"}
+        </Tag>
+      ),
+    },
+    {
       title: "Ngày tạo",
       dataIndex: "createdAt",
-      render: (date: string) => new Date(date).toLocaleString(),
+      render: (date: string) => new Date(date).toLocaleString("vi-VN"),
     },
     {
       title: "Hành động",
-      render: (_: any, record: any) => (
-        <Button type="link" onClick={() => dispatch(selectUser(record))}>
-          Xem chi tiết
-        </Button>
+      render: (_: any, record: UserType) => (
+        <Space>
+          <Button 
+            type="link" 
+            icon={<EyeOutlined />}
+            onClick={() => dispatch(selectUser(record))}
+          >
+            Xem chi tiết
+          </Button>
+          {!showDeleted ? (
+            <Button 
+              type="link" 
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleSoftDelete(record._id)}
+            >
+              Xóa
+            </Button>
+          ) : (
+            <Button 
+              type="link" 
+              icon={<UndoOutlined />}
+              onClick={() => handleRestore(record._id)}
+            >
+              Khôi phục
+            </Button>
+          )}
+        </Space>
       ),
     },
   ];
 
   return (
     <div style={{ padding: 24 }}>
-      <Title level={3}>Quản lý tài khoản người dùng</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={3}>
+          {showDeleted ? "Người dùng đã xóa" : "Quản lý tài khoản người dùng"}
+        </Title>
+        <Space>
+          <span>Hiển thị người dùng đã xóa:</span>
+          <Switch 
+            checked={showDeleted}
+            onChange={setShowDeleted}
+            checkedChildren="Đã xóa"
+            unCheckedChildren="Hoạt động"
+          />
+        </Space>
+      </div>
+
       {loading ? (
-        <Spin />
+        <div style={{ textAlign: 'center', padding: 50 }}>
+          <Spin size="large" />
+        </div>
       ) : (
         <Table
-          dataSource={users}
+          dataSource={filteredUsers}
           columns={columns}
           rowKey="_id"
-          pagination={{ pageSize: 5 }}
+          pagination={{ 
+            pageSize: 5,
+            showSizeChanger: true,
+            showTotal: (total, range) => 
+              `${range[0]}-${range[1]} của ${total} người dùng`
+          }}
         />
       )}
       <UserDetailModal user={selectedUser} />
@@ -70,4 +145,4 @@ const UsersList = () => {
   );
 };
 
-export default UsersList;
+export default UsersList

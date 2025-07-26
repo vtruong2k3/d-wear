@@ -27,7 +27,7 @@ import { toast } from 'react-toastify';
 import type { Dayjs } from 'dayjs';
 import type { DailyStatItem, FilterByDateResponse, OrderItem, StatCardProps, SummaryResponse, TopProduct } from '../../../../types/static/IStatic';
 import { useLoading } from '../../../../contexts/LoadingContext';
-type OrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled';
+type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 const DailyStatistics = () => {
   const [statisticType, setStatisticType] = useState<'normal' | 'dateRange'>('normal');
 
@@ -129,6 +129,7 @@ const DailyStatistics = () => {
   const orderStatusData = useMemo(() => {
     const statusCount: Record<OrderStatus, number> = {
       pending: 0,
+      processing: 0,
       shipped: 0,
       delivered: 0,
       cancelled: 0,
@@ -142,7 +143,8 @@ const DailyStatistics = () => {
     });
 
     return [
-      { name: 'Chờ xử lý', value: statusCount.pending, color: '#ff9500' },
+      { name: 'Chờ xử lý', value: statusCount.pending, color: '#faad14' },
+      { name: 'Đang xử lý', value: statusCount.processing, color: '#ff9500' },
       { name: 'Đang giao', value: statusCount.shipped, color: '#1890ff' },
       { name: 'Đã giao', value: statusCount.delivered, color: '#52c41a' },
       { name: 'Đã hủy', value: statusCount.cancelled, color: '#f5222d' },
