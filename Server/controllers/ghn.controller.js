@@ -81,6 +81,7 @@ exports.calculateFee = async (req, res) => {
         height: 10,
         insurance_value: 0,
       },
+      
       {
         headers: {
           "Content-Type": "application/json",
@@ -89,7 +90,6 @@ exports.calculateFee = async (req, res) => {
         },
       }
     );
-
     res.json({ fee: response.data.data });
   } catch (error) {
     console.error("Lỗi tính phí:", error?.response?.data || error.message);
