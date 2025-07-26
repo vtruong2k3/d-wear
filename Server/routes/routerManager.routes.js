@@ -15,6 +15,7 @@ const momoRouter = require("./momo.routes");
 const ghnRouter = require("./ghn.routes");
 const addressRouter = require("./address.routes");
 const statisticRouter = require("./statistics.routes");
+const userRouter = require("./user.routes");
 const routerManager = express.Router();
 
 routerManager.use("/api", brandRouter);
@@ -32,4 +33,5 @@ routerManager.use("/api", momoRouter);
 routerManager.use("/api", ghnRouter);
 routerManager.use("/api", addressRouter);
 routerManager.use("/api", statisticRouter);
+routerManager.use("/api", userRouter);
 module.exports = routerManager;

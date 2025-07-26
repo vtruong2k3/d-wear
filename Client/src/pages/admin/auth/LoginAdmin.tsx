@@ -15,7 +15,7 @@ import type { LoginFormValues } from "../../../types/auth/IAuth";
 import "../../../styles/adminLogin.css";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../redux/store";
-import { doLoginAdmin } from "../../../redux/features/admin/thunks/authAdminThunk";
+import { doLoginAdmin, fetchUserProfile } from "../../../redux/features/admin/thunks/authAdminThunk";
 
 
 // Schema xác thực với yup
@@ -26,11 +26,13 @@ const schema = yup.object().shape({
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const { isLogin, user } = useSelector((state: RootState) => state.authAdminSlice)
+
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
+  const { isLogin, user } = useSelector((state: RootState) => state.authAdminSlice)
+
   const {
     register,
     handleSubmit,
@@ -43,7 +45,8 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       // 
-      dispatch(doLoginAdmin(data)).unwrap();
+      await dispatch(doLoginAdmin(data)).unwrap();
+      await dispatch(fetchUserProfile()).unwrap();
 
     } catch (error) {
       const errorMessage =
