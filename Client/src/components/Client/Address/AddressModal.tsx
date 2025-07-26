@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Form,
@@ -10,31 +10,29 @@ import {
   Typography,
 } from "antd";
 import toast from "react-hot-toast";
+import { getDistricts, getWards } from "../../../services/client/ghnService";
+import { addUserAddress } from "../../../services/client/addressService"; // ✅ gọi API
 
 const { TextArea } = Input;
 const { Option } = Select;
 const { Text } = Typography;
 
-// Interfaces
 interface Province {
-  id: string;
-  name: string;
-  shippingFee: number;
+  ProvinceID: number;
+  ProvinceName: string;
 }
 
 interface District {
-  id: string;
-  name: string;
-  provinceId: string;
-  ProvinceID: string;
-  DistrictID: string;
+  DistrictID: number;
   DistrictName: string;
+  ProvinceID: number;
 }
-
 interface Ward {
-  id: string;
-  name: string;
-  districtId: string;
+  wardId: string;
+  WardCode: string;
+  wardName: string;
+  WardName: string;
+  DistrictID: number;
 }
 
 interface SavedAddress {
@@ -58,9 +56,7 @@ interface AddAddressModalProps {
   onCancel: () => void;
   onAddAddress: (newAddress: SavedAddress) => void;
   provinces: Province[];
-  districts: District[];
   wards: Ward[];
-  savedAddresses: SavedAddress[];
 }
 
 const AddAddressModal: React.FC<AddAddressModalProps> = ({
@@ -68,68 +64,23 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
   onCancel,
   onAddAddress,
   provinces,
-  districts,
-  wards,
-  savedAddresses,
 }) => {
   const [form] = Form.useForm();
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
 
-  const handleAddNewAddress = async () => {
-    try {
-      const values = await form.validateFields();
-
-      // Tạo địa chỉ đầy đủ
-      const province = provinces.find((p) => p.id === values.newProvince);
-      const district = districts.find((d) => d.id === values.newDistrict);
-      const ward = wards.find((w) => w.id === values.newWard);
-
-      if (!province || !district || !ward) {
-        toast.error("Vui lòng chọn đầy đủ thông tin địa chỉ");
-        return;
-      }
-
-      const fullAddress = `${values.newDetailAddress}, ${ward.name}, ${district.name}, ${province.name}`;
-
-      const newAddress: SavedAddress = {
-        id: Date.now().toString(),
-        _id: Date.now().toString(),
-        name: values.newName,
-        phone: values.newPhone,
-        provinceId: values.newProvince,
-        provinceName: province.name,
-        districtId: values.newDistrict,
-        districtName: district.name,
-        wardId: values.newWard,
-        wardName: ward.name,
-        detailAddress: values.newDetailAddress,
-        fullAddress: fullAddress,
-        isDefault: values.setAsDefault || false,
-      };
-
-      // Gọi callback để thêm địa chỉ
-      onAddAddress(newAddress);
-
-      // Reset form và đóng modal
-      form.resetFields();
-      onCancel();
-
-      toast.success("Thêm địa chỉ thành công!");
-    } catch (error) {
-      console.error("Validation failed:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    form.resetFields();
-    onCancel();
-  };
+  // ✅ Chọn tỉnh => gọi API quận huyện
+ 
 
   return (
     <Modal
       title="Thêm địa chỉ giao hàng mới"
       open={visible}
-      onOk={handleAddNewAddress}
-      onCancel={handleCancel}
+    //   onOk={handleAddNewAddress}
+      onCancel={() => {
+        form.resetFields();
+        onCancel();
+      }}
       okText="Thêm địa chỉ"
       cancelText="Hủy"
       width={600}
@@ -164,75 +115,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
         <Text strong>Chọn địa chỉ:</Text>
         <Row gutter={[8, 8]} style={{ marginTop: 8, marginBottom: 16 }}>
-          <Col span={8}>
-            <Form.Item
-              name="newProvince"
-              rules={[
-                { required: true, message: "Vui lòng chọn tỉnh/thành phố" },
-              ]}
-            >
-              <Select
-                placeholder="Chọn Tỉnh/Thành phố"
-                onChange={(value) => {
-                  form.setFieldsValue({
-                    newDistrict: undefined,
-                    newWard: undefined,
-                  });
-                }}
-              >
-                {provinces.map((province) => (
-                  <Option key={province.id} value={province.id}>
-                    {province.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="newDistrict"
-              rules={[{ required: true, message: "Vui lòng chọn quận/huyện" }]}
-            >
-              <Select
-                placeholder="Chọn Quận/Huyện"
-                disabled={!form.getFieldValue("newProvince")}
-                onChange={(value) => {
-                  form.setFieldsValue({ newWard: undefined });
-                }}
-              >
-                {districts
-                  .filter(
-                    (d) => d.provinceId === form.getFieldValue("newProvince")
-                  )
-                  .map((district) => (
-                    <Option key={district.id} value={district.id}>
-                      {district.name}
-                    </Option>
-                  ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="newWard"
-              rules={[{ required: true, message: "Vui lòng chọn phường/xã" }]}
-            >
-              <Select
-                placeholder="Chọn Phường/Xã"
-                disabled={!form.getFieldValue("newDistrict")}
-              >
-                {wards
-                  .filter(
-                    (w) => w.districtId === form.getFieldValue("newDistrict")
-                  )
-                  .map((ward) => (
-                    <Option key={ward.id} value={ward.id}>
-                      {ward.name}
-                    </Option>
-                  ))}
-              </Select>
-            </Form.Item>
-          </Col>
+          
         </Row>
 
         <Form.Item
