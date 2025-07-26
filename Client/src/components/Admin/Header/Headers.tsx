@@ -14,7 +14,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../redux/features/admin/adminSlice';
-import type { RootState } from '../../../redux/store';
+import type { AppDispatch, RootState } from '../../../redux/store';
+import { useEffect, useMemo } from 'react';
+import { fetchUserProfile } from '../../../redux/features/admin/thunks/authAdminThunk';
 // import { useDispatch } from 'react-redux';
 // import { AppDispatch } from '../../../redux/store';
 
@@ -46,14 +48,16 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
             danger: true,
         },
     ];
-    const dispatch = useDispatch()
+    const dispatch = useDispatch<AppDispatch>()
     const user = useSelector((state: RootState) => state.authAdminSlice.user)
-
+    useEffect(() => {
+        dispatch(fetchUserProfile());
+    }, [dispatch]);
     const navigate = useNavigate();
 
     const handleLogout = () => {
         dispatch(logout())
-        // ⏳ Đợi 300ms rồi mới navigate
+
         setTimeout(() => {
             navigate("/admin/login");
         }, 300);
@@ -64,7 +68,25 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
             handleLogout();
         }
     };
+    const avatarSrc = useMemo(() => {
+        const avatar = user?.avatar;
 
+        if (!avatar) return undefined;
+
+        if (avatar instanceof File) {
+            return URL.createObjectURL(avatar);
+        }
+
+        if (typeof avatar === "string") {
+            if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+                return avatar;
+            }
+            const normalized = avatar.startsWith("/") ? avatar : `/${avatar}`;
+            return `http://localhost:5000${normalized.replace(/\\/g, "/")}`;
+        }
+
+        return undefined;
+    }, [user?.avatar]);
     return (
         <div className="h-16 bg-gradient-to-r from-white to-gray-50 backdrop-blur-sm shadow-lg border-b border-gray-100 px-6 flex items-center justify-between relative overflow-hidden">
             {/* Background decoration */}
@@ -116,11 +138,12 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ collapsed, onCollapse }) => {
                         <div className="relative">
                             <Avatar
                                 size={36}
+                                src={avatarSrc}
                                 className="mr-3 ring-2 ring-white shadow-lg transition-all duration-300 group-hover:ring-blue-200"
                                 style={{
                                     background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
                                 }}
-                            >{!user?.avatar && (user?.username?.slice(0, 1)?.toUpperCase() || "?")}</Avatar>
+                            >{!avatarSrc && (user?.username?.charAt(0)?.toUpperCase() || "?")}</Avatar>
                             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
                         </div>
                         {/* <div className="block">

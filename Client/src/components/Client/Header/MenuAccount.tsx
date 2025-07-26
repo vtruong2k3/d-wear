@@ -12,16 +12,42 @@ import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
 import { doLogout } from "../../../redux/features/client/authenSlice.ts";
-import type { RootState } from "../../../redux/store.ts";
+import { type AppDispatch, type RootState } from "../../../redux/store.ts";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBagIcon } from "lucide-react";
+import { fetchUserProfile } from "../../../redux/features/client/thunks/authUserThunk.ts";
 
 export default function AccountMenu() {
+
   const user = useSelector((state: RootState) => state.authenSlice.user);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const open = Boolean(anchorEl);
+
+
+  const avatarSrc = React.useMemo(() => {
+    const avatar = user?.avatar;
+    if (!avatar) return undefined;
+
+    if (avatar instanceof File) {
+      return URL.createObjectURL(avatar);
+    }
+
+    if (typeof avatar === "string") {
+      if (avatar.startsWith("http")) {
+        return avatar;
+      }
+      // Nếu là đường dẫn tương đối từ backend
+      const normalized = avatar.startsWith("/")
+        ? avatar
+        : `/${avatar}`;
+      return `http://localhost:5000${normalized.replace(/\\/g, "/")}`;
+    }
+
+    return undefined;
+  }, [user?.avatar]);
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -32,7 +58,9 @@ export default function AccountMenu() {
   const handleLogout = () => {
     dispatch(doLogout());
   };
-
+  React.useEffect(() => {
+    dispatch(fetchUserProfile());
+  }, [dispatch]);
   return (
     <React.Fragment>
       <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>
@@ -47,10 +75,9 @@ export default function AccountMenu() {
           >
             <Avatar
               sx={{ width: 32, height: 32 }}
-              src={user?.avatar || undefined}
+              src={avatarSrc}
             >
-              {!user?.avatar &&
-                (user?.username?.slice(0, 1)?.toUpperCase() || "?")}
+              {!avatarSrc && (user?.username?.[0]?.toUpperCase() || "?")}
             </Avatar>
           </IconButton>
         </Tooltip>

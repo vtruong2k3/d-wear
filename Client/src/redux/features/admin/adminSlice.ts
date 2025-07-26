@@ -1,19 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { AuthState } from "../../../types/auth/IAuth";
+import type { AuthStateAdmin } from "../../../types/auth/IAuth";
+import { doLoginAdmin, fetchUserProfile } from "./thunks/authAdminThunk";
+import toast from "react-hot-toast";
 
-import { doLoginAdmin } from "./thunks/authAdminThunk";
-import { toast } from "react-toastify";
-
-// Lấy từ localStorage
-const savedUser = localStorage.getItem("user");
+// Lấy token từ localStorage
 const savedToken = localStorage.getItem("token");
 
-const initialState: AuthState = {
-  user: savedUser ? JSON.parse(savedUser) : null,
+const initialState: AuthStateAdmin = {
+  user: null,
   token: savedToken || null,
-  isLogin: !!savedUser && !!savedToken,
+  isLogin: !!savedToken,
   loading: false,
   error: null,
+  isInitialized: false, // 👈 NEW
 };
 
 const authAdminSlice = createSlice({
@@ -21,38 +20,55 @@ const authAdminSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-      localStorage.removeItem("user");
       localStorage.removeItem("token");
-
       state.user = null;
       state.token = null;
       state.isLogin = false;
       state.error = null;
       state.loading = false;
-
-      toast.success("Đăng suất thành công");
+      state.isInitialized = true; // 👈 Đánh dấu đã xử lý
+      toast.success("Đăng xuất thành công");
     },
   },
   extraReducers: (builder) => {
     builder
+      // Đăng nhập
       .addCase(doLoginAdmin.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(doLoginAdmin.fulfilled, (state, action) => {
-        if (action.payload) {
-          state.user = action.payload.user;
-          state.token = action.payload.token;
-          state.isLogin = true;
-          state.loading = false;
-        }
+        const token = action.payload.token;
+        localStorage.setItem("token", token);
+        state.token = token;
+        state.isLogin = true;
+        state.loading = false;
       })
       .addCase(doLoginAdmin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.isLogin = false;
-        state.user = null;
         state.token = null;
+        state.user = null;
+        state.isLogin = false;
+      });
+
+    // Lấy thông tin user
+    builder
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isLogin = true;
+        state.loading = false;
+        state.isInitialized = true; // ✅ đánh dấu đã init
+      })
+      .addCase(fetchUserProfile.rejected, (state) => {
+        state.user = null;
+        state.isLogin = false;
+        state.loading = false;
+        state.isInitialized = true; // ✅ đánh dấu đã init (dù fail)
+        // KHÔNG xoá token để tránh logout sớm
       });
   },
 });
