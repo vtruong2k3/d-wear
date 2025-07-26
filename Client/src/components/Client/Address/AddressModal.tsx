@@ -181,6 +181,50 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
         <Text strong>Chọn địa chỉ:</Text>
         <Row gutter={[8, 8]} style={{ marginTop: 8, marginBottom: 16 }}>
+            {/*  Tỉnh */}
+<Col span={8}>
+<Form.Item
+  name="newProvince"
+  rules={[{ required: true, message: "Vui lòng chọn tỉnh" }]}
+>
+  <Select
+    placeholder="Chọn Tỉnh/Thành phố"
+    onChange={async (value) => {
+      console.log("Selected Province ID:", value);
+
+      form.setFieldsValue({
+        newProvince: value,
+        newDistrict: undefined,
+        newWard: undefined,
+      });
+
+      try {
+        const res = await getDistricts(value);
+        console.log("API Districts:", res.data);
+
+        // FIX QUAN TRỌNG
+        const districtData = Array.isArray(res.data)
+          ? res.data
+          : res.data.districts || [];
+
+        setDistricts(districtData);
+      } catch (error) {
+        console.error("Lỗi lấy quận/huyện:", error);
+        setDistricts([]);
+      }
+    }}
+  >
+    {provinces.map((province) => (
+      <Option
+        key={province.ProvinceID}
+        value={province.ProvinceID.toString()}
+      >
+        {province.ProvinceName}
+      </Option>
+    ))}
+  </Select>
+</Form.Item>
+</Col>
           
         </Row>
 
