@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2, MapPin, MoreVertical } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { ArrowLeft, Plus, Edit, Trash2, MapPin } from 'lucide-react';
 
 const AddressManagement = () => {
   // Mock data cho các dropdown
@@ -30,6 +31,16 @@ const AddressManagement = () => {
       { id: "HC", name: "Quận Hải Châu" },
       { id: "TK", name: "Quận Thanh Khê" },
       { id: "ST", name: "Quận Sơn Trà" }
+    ],
+    HP: [
+      { id: "HP1", name: "Quận Hồng Bàng" },
+      { id: "HP2", name: "Quận Lê Chân" },
+      { id: "HP3", name: "Quận Ngô Quyền" }
+    ],
+    CT: [
+      { id: "CT1", name: "Quận Ninh Kiều" },
+      { id: "CT2", name: "Quận Bình Thủy" },
+      { id: "CT3", name: "Quận Cái Răng" }
     ]
   };
 
@@ -48,6 +59,11 @@ const AddressManagement = () => {
       { id: "HB", name: "Phường Hàng Bạc" },
       { id: "TT", name: "Phường Tràng Tiền" },
       { id: "LT", name: "Phường Lý Thái Tổ" }
+    ],
+    BD: [
+      { id: "CC", name: "Phường Cống Vị" },
+      { id: "QT", name: "Phường Quán Thánh" },
+      { id: "TP", name: "Phường Trúc Bạch" }
     ]
   };
 
@@ -55,37 +71,37 @@ const AddressManagement = () => {
   const [addresses, setAddresses] = useState([
     {
       id: "1",
-      name: "Nguyễn Huy Thuận",
-      phone: "(+84) 354 114 885",
+      name: "Nguyễn Văn A",
+      phone: "0909123456",
       provinceId: "HN",
       provinceName: "Hà Nội",
-      districtId: "HK",
-      districtName: "Quận Hoàn Kiếm",
-      wardId: "HB",
-      wardName: "Phường Hàng Bạc",
-      detailAddress: "Trai Trung-Hoàng Diệu-Chương Mỹ",
-      fullAddress: "Trai Trung-Hoàng Diệu-Chương Mỹ-Hà Nội, Xã Hoàng Diệu, Huyện Chương Mỹ, Hà Nội",
+      districtId: "BD",
+      districtName: "Ba Đình",
+      wardId: "CC",
+      wardName: "Phúc Xá",
+      detailAddress: "123 Đường ABC, Phúc Xá, Ba Đình, Hà Nội",
+      fullAddress: "123 Đường ABC, Phúc Xá, Ba Đình, Hà Nội",
       isDefault: true,
       label: "Mặc định"
     },
     {
       id: "2", 
-      name: "Huy Thuận",
-      phone: "(+84) 354 114 885",
+      name: "Nguyễn Văn A (Công ty)",
+      phone: "0909123456",
       provinceId: "HN",
       provinceName: "Hà Nội",
-      districtId: "BD",
-      districtName: "Quận Ba Đình",
+      districtId: "HK",
+      districtName: "Hoàn Kiếm",
       wardId: "HB",
-      wardName: "Phường Hàng Bạc",
-      detailAddress: "Trâm Y Tế Xã Minh Khai",
-      fullAddress: "Trâm Y Tế Xã Minh Khai, Phường Minh Khai, Quận Bắc Từ Liêm, Hà Nội",
+      wardName: "Tràng Tiền",
+      detailAddress: "456 Phố Tràng Tiền, Tràng Tiền, Hoàn Kiếm, Hà Nội",
+      fullAddress: "456 Phố Tràng Tiền, Tràng Tiền, Hoàn Kiếm, Hà Nội",
       isDefault: false,
       label: ""
     }
   ]);
 
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(true);
   const [modalMode, setModalMode] = useState('view'); // view, add, edit
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [formData, setFormData] = useState({
@@ -242,30 +258,41 @@ const AddressManagement = () => {
     });
   };
 
+  // Tạo địa chỉ đầy đủ từ các trường đã chọn
+  const getFullAddressPreview = () => {
+    if (!formData.provinceId || !formData.districtId || !formData.wardId) {
+      return '';
+    }
+    
+    const province = provinces.find(p => p.id === formData.provinceId);
+    const district = districts[formData.provinceId]?.find(d => d.id === formData.districtId);
+    const ward = wards[formData.districtId]?.find(w => w.id === formData.wardId);
+    
+    return `${ward?.name}, ${district?.name}, ${province?.name}`;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <button className="p-1">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Content */}
+      <div className="w-full mx-auto bg-white min-h-screen shadow-xl">
+        {/* Page header */}
+        <div className="flex items-center gap-3 p-6 bg-white border-b border-gray-100 shadow-sm">
+          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
-          <h1 className="text-lg font-medium text-gray-900">Địa Chỉ Của Tôi</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Địa Chỉ Của Tôi</h1>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-md mx-auto bg-white min-h-screen">
-        {/* Thông báo */}
-        <div className="bg-orange-50 border border-orange-200 m-4 p-3 rounded-lg">
-          <div className="flex gap-2">
-            <MapPin size={16} className="text-orange-500 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <div className="font-medium text-orange-700 mb-1">Dán và nhập nhanh</div>
-              <div className="text-orange-600 text-xs leading-relaxed">
+        {/* Thông báo hướng dẫn */}
+        <div className="m-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl shadow-sm">
+          <div className="flex gap-3">
+            <MapPin size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-orange-700 mb-2 text-sm">Dán và nhập nhanh</div>
+              <div className="text-xs text-orange-600 leading-relaxed mb-1">
                 Dán hoặc nhập thông tin, chúng tôi đọng diện để nhận tự tài, số điện thoại và địa chỉ.
               </div>
-              <div className="text-orange-500 text-xs mt-2 leading-relaxed">
+              <div className="text-xs text-orange-500 leading-relaxed">
                 Chúng tôi sẽ ghi nhận thông tin nhân, chính xác nhất gặp nhập tên, số điện thoại và địa chỉ chỉ.
               </div>
             </div>
@@ -273,141 +300,142 @@ const AddressManagement = () => {
         </div>
 
         {/* Danh sách địa chỉ */}
-        <div className="px-4 space-y-3">
-          {addresses.map((address) => (
-            <div key={address.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="p-4">
+        <div className="px-6 space-y-4">
+          {addresses.map((address, index) => (
+            <div key={address.id} className={`border-2 rounded-2xl overflow-hidden transition-all duration-200 shadow-md hover:shadow-lg ${
+              address.isDefault 
+                ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50 shadow-green-100' 
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}>
+              <div className="p-5">
+                {/* Header với tên và nút update */}
                 <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-orange-500 rounded-full flex-shrink-0 mt-0.5">
-                      {address.isDefault && <span className="w-2 h-2 bg-orange-500 rounded-full block m-0.5"></span>}
-                    </span>
-                    <div>
-                      <div className="font-medium text-gray-900">{address.name}</div>
-                      <div className="text-sm text-gray-600">{address.phone}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-gray-900 text-base">{address.name}</span>
                     {address.isDefault && (
-                      <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded border border-orange-300">
-                        Mặc định
+                      <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs px-3 py-1 rounded-full shadow-sm">
+                        Địa chỉ mặc định
                       </span>
                     )}
-                    <button
-                      onClick={() => handleViewAddress(address)}
-                      className="text-blue-500 text-sm hover:underline"
-                    >
-                      Cập nhật
-                    </button>
                   </div>
-                </div>
-                
-                <div className="text-sm text-gray-700 mb-3 leading-relaxed">
-                  {address.fullAddress}
-                </div>
-
-                {/* Mini map placeholder */}
-                <div className="h-24 bg-gray-100 rounded-lg mb-3 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100 opacity-50"></div>
-                  <div className="absolute top-2 left-2 w-2 h-2 bg-red-500 rounded-full"></div>
-                  <div className="absolute bottom-2 right-2 bg-white text-xs px-1 py-0.5 rounded shadow text-gray-600">
-                    Google
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <MapPin size={20} className="text-red-500" />
-                  </div>
-                </div>
-
-                {!address.isDefault && (
                   <button
-                    onClick={() => handleSetDefault(address.id)}
-                    className="text-blue-500 text-sm hover:underline"
+                    onClick={() => handleViewAddress(address)}
+                    className="text-blue-600 text-sm hover:text-blue-700 font-semibold px-3 py-1 rounded-lg hover:bg-blue-50 transition-colors"
                   >
-                    Đặt làm địa chỉ mặc định
+                    Cập nhật
                   </button>
-                )}
+                </div>
+
+                {/* Số điện thoại */}
+                <div className="text-sm text-gray-600 mb-3 font-medium">
+                  📞 {address.phone}
+                </div>
+
+                {/* Địa chỉ */}
+                <div className="text-sm text-gray-700 mb-4 leading-relaxed bg-gray-50 p-3 rounded-xl">
+                  📍 {address.fullAddress}
+                </div>
+
+                {/* Thông tin phân cấp hành chính */}
+                <div className="grid grid-cols-3 gap-4 text-xs text-gray-500 mb-3 bg-white p-3 rounded-xl border border-gray-100">
+                  <div>
+                    <div className="font-semibold text-gray-600 mb-1">Tỉnh/TP:</div>
+                    <div className="text-gray-700">{address.provinceName}</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-600 mb-1">Quận/Huyện:</div>
+                    <div className="text-gray-700">{address.districtName}</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-600 mb-1">Phường/Xã:</div>
+                    <div className="text-gray-700">{address.wardName}</div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                  <div className="text-xs text-gray-400">
+                    Địa chỉ #{index + 1} • Tạo lúc: 26/7/2025
+                  </div>
+                  {!address.isDefault && (
+                    <button
+                      onClick={() => handleSetDefault(address.id)}
+                      className="text-blue-600 text-xs hover:text-blue-700 font-medium px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                    >
+                      Đặt làm địa chỉ mặc định
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Nút thêm địa chỉ */}
-        <div className="p-4 mt-6">
+        {/* Bottom section */}
+        <div className="p-6 pb-32">
           <button
             onClick={handleAddAddress}
-            className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors"
+            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >
             <Plus size={20} />
             Thêm Địa Chỉ Mới
           </button>
         </div>
-
-        {/* Bottom buttons */}
-        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4">
-          <div className="flex gap-3">
-            <button className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-              Xóa địa chỉ
-            </button>
-            <button className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-              HOÀN THÀNH
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900">
                 {modalMode === 'view' && 'Chi tiết địa chỉ'}
                 {modalMode === 'add' && 'Thêm địa chỉ mới'}  
                 {modalMode === 'edit' && 'Chỉnh sửa địa chỉ'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-2 text-gray-400 hover:text-gray-600 text-xl hover:bg-gray-200 rounded-full transition-colors"
               >
-                ✕
+                ×
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-4">
+            <div className="p-6">
               {modalMode === 'view' && selectedAddress ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Tên người nhận</label>
-                    <p className="mt-1 text-gray-900">{selectedAddress.name}</p>
+                <div className="space-y-5">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Tên người nhận</label>
+                    <p className="text-gray-900 font-medium">{selectedAddress.name}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Số điện thoại</label>
-                    <p className="mt-1 text-gray-900">{selectedAddress.phone}</p>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Số điện thoại</label>
+                    <p className="text-gray-900 font-medium">{selectedAddress.phone}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Địa chỉ</label>
-                    <p className="mt-1 text-gray-900 leading-relaxed">{selectedAddress.fullAddress}</p>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Địa chỉ</label>
+                    <p className="text-gray-900 leading-relaxed">{selectedAddress.fullAddress}</p>
                   </div>
                   {selectedAddress.isDefault && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <span className="text-green-700 text-sm font-medium">✓ Địa chỉ mặc định</span>
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4">
+                      <span className="text-green-700 text-sm font-semibold">✓ Địa chỉ mặc định</span>
                     </div>
                   )}
                   
                   {/* Action buttons cho view mode */}
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex gap-3 pt-6">
                     <button
                       onClick={() => handleEditAddress(selectedAddress)}
-                      className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
                     >
                       <Edit size={16} />
                       Chỉnh sửa
                     </button>
                     <button
                       onClick={() => handleDeleteAddress(selectedAddress.id)}
-                      className="flex-1 bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
                     >
                       <Trash2 size={16} />
                       Xóa
@@ -415,51 +443,40 @@ const AddressManagement = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Form inputs */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên người nhận *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Họ và tên *</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="Nhập tên người nhận"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                      placeholder="Nhập họ và tên"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại *</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                       placeholder="Nhập số điện thoại"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết *</label>
-                    <input
-                      type="text"
-                      value={formData.detailAddress}
-                      onChange={(e) => setFormData({...formData, detailAddress: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="Nhập địa chỉ chi tiết"
-                    />
-                  </div>
-
                   {/* Select dropdowns */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/TP *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Tỉnh/Thành phố *</label>
                       <select
                         value={formData.provinceId}
                         onChange={(e) => handleProvinceChange(e.target.value)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition-all"
                       >
-                        <option value="">Chọn tỉnh/TP</option>
+                        <option value="">Chọn Tỉnh/Thành phố</option>
                         {provinces.map(province => (
                           <option key={province.id} value={province.id}>{province.name}</option>
                         ))}
@@ -467,14 +484,14 @@ const AddressManagement = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Quận/Huyện *</label>
                       <select
                         value={formData.districtId}
                         onChange={(e) => handleDistrictChange(e.target.value)}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition-all disabled:bg-gray-100"
                         disabled={!formData.provinceId}
                       >
-                        <option value="">Chọn quận/huyện</option>
+                        <option value="">Chọn Quận/Huyện</option>
                         {districts[formData.provinceId]?.map(district => (
                           <option key={district.id} value={district.id}>{district.name}</option>
                         ))}
@@ -482,14 +499,14 @@ const AddressManagement = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Phường/Xã *</label>
                       <select
                         value={formData.wardId}
                         onChange={(e) => setFormData({...formData, wardId: e.target.value})}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition-all disabled:bg-gray-100"
                         disabled={!formData.districtId}
                       >
-                        <option value="">Chọn phường/xã</option>
+                        <option value="">Chọn Phường/Xã</option>
                         {wards[formData.districtId]?.map(ward => (
                           <option key={ward.id} value={ward.id}>{ward.name}</option>
                         ))}
@@ -497,41 +514,50 @@ const AddressManagement = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {/* Preview địa chỉ đầy đủ */}
+                  {getFullAddressPreview() && (
+                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-4">
+                      <div className="text-sm text-blue-700">
+                        <strong>Địa chỉ sẽ được tạo:</strong> {getFullAddressPreview()}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ cụ thể *</label>
+                    <textarea
+                      value={formData.detailAddress}
+                      onChange={(e) => setFormData({...formData, detailAddress: e.target.value})}
+                      rows={3}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all"
+                      placeholder="Nhập số nhà, tên đường, tòa nhà..."
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl">
                     <input
                       type="checkbox"
                       id="isDefault"
                       checked={formData.isDefault}
                       onChange={(e) => setFormData({...formData, isDefault: e.target.checked})}
-                      className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                      className="w-5 h-5 text-orange-500 border-2 border-gray-300 rounded focus:ring-orange-500"
                     />
-                    <label htmlFor="isDefault" className="text-sm text-gray-700">
+                    <label htmlFor="isDefault" className="text-sm font-medium text-gray-700">
                       Đặt làm địa chỉ mặc định
                     </label>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nhãn địa chỉ</label>
-                    <input
-                      type="text"
-                      value={formData.label}
-                      onChange={(e) => setFormData({...formData, label: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="Ví dụ: Nhà riêng, Văn phòng"
-                    />
-                  </div>
-
                   {/* Action buttons */}
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex gap-3 pt-6">
                     <button
                       onClick={() => setShowModal(false)}
-                      className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                      className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       Hủy
                     </button>
                     <button
                       onClick={handleSaveAddress}
-                      className="flex-1 bg-orange-500 text-white py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
                     >
                       {modalMode === 'add' ? 'Thêm' : 'Cập nhật'}
                     </button>
