@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Form,
@@ -10,13 +10,16 @@ import {
   Typography,
 } from "antd";
 import toast from "react-hot-toast";
-import { getDistricts, getWards } from "../../../services/client/ghnService";
+import {
+  getDistricts,
+  getWards,
+  calculateShippingFee,
+} from "../../../services/client/ghnService";
 import { addUserAddress } from "../../../services/client/addressService"; // ✅ gọi API
 
 const { TextArea } = Input;
 const { Option } = Select;
 const { Text } = Typography;
-
 
 interface Province {
   ProvinceID: number;
@@ -69,6 +72,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
   const [form] = Form.useForm();
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
+  const [shippingFee, setShippingFee] = useState<number | null>(null);
 
   // ✅ Chọn tỉnh => gọi API quận huyện
   const handleProvinceChange = async (provinceId: string) => {
@@ -235,6 +239,27 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
               <Select
                 placeholder="Chọn Quận/Huyện"
                 disabled={!form.getFieldValue("newProvince")}
+                // onChange={async (value) => {
+                //   form.setFieldsValue({
+                //     newDistrict: value,
+                //     newWard: undefined,
+                //   });
+
+                //   try {
+                //     const res = await getWards(value); // ✅ gọi API xã/phường
+                //     console.log("API Wards:", res.data);
+
+                //     // GHN trả về dạng { wards: [...] } hoặc { data: [...] } -> tuỳ BE
+                //     const wardData = Array.isArray(res.data)
+                //       ? res.data
+                //       : res.data.wards || res.data.data || [];
+
+                //     setWards(wardData);
+                //   } catch (error) {
+                //     console.error("Lỗi lấy phường/xã:", error);
+                //     setWards([]);
+                //   }
+                // }}
                 onChange={async (value) => {
                   form.setFieldsValue({
                     newDistrict: value,
@@ -242,10 +267,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
                   });
 
                   try {
-                    const res = await getWards(value); // ✅ gọi API xã/phường
-                    console.log("API Wards:", res.data);
-
-                    // GHN trả về dạng { wards: [...] } hoặc { data: [...] } -> tuỳ BE
+                    const res = await getWards(value);
                     const wardData = Array.isArray(res.data)
                       ? res.data
                       : res.data.wards || res.data.data || [];
@@ -280,6 +302,53 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
               <Select
                 placeholder="Chọn Phường/Xã"
                 disabled={!form.getFieldValue("newDistrict")}
+                onChange={async (wardCode) => {
+                  form.setFieldsValue({ newWard: wardCode });
+
+                  const districtIdStr = form.getFieldValue("newDistrict");
+                  const districtId = parseInt(districtIdStr);
+
+                  if (!wardCode || !districtId) {
+                    toast.error("Thiếu thông tin quận/huyện hoặc phường/xã");
+                    return;
+                  }
+
+                  try {
+                    console.log("Call phí ship với:", {
+                      to_district_id: districtId,
+                      to_ward_code: wardCode,
+                      weight: 500,
+                      length: 20,
+                      width: 15,
+                      height: 10,
+                      service_type_id: 2,
+                    });
+
+                    const res = await calculateShippingFee({
+                      to_district_id: districtId,
+                      to_ward_code: wardCode,
+                      weight: 500,
+                      length: 20,
+                      width: 15,
+                      height: 10,
+                      service_type_id: 2,
+                    });
+                    console.log("FULL response calculateShippingFee:", res.data)
+                    
+                    const fee = res?.data?.fee?.total || 0; // ✅ đúng tầng dữ liệu
+                    
+
+                    console.log("Kết quả tính phí ship:", res.data);
+                    setShippingFee(fee);
+                    toast.success(
+                      `Phí ship tạm tính: ${fee.toLocaleString()}đ`
+                    );
+                  } catch (error) {
+                    console.error("Lỗi tính phí ship:", error);
+                    setShippingFee(null);
+                    toast.error("Không tính được phí ship");
+                  }
+                }}
               >
                 {wards.map((ward) => (
                   <Option key={ward.WardCode} value={ward.WardCode}>
@@ -289,6 +358,12 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
               </Select>
             </Form.Item>
           </Col>
+          {shippingFee !== null && (
+          <div style={{ marginTop: 8 }}>
+            <Text strong>Phí ship tạm tính: </Text>
+            <Text type="secondary">{shippingFee.toLocaleString()}đ</Text>
+          </div>
+        )}
         </Row>
 
         <Form.Item
@@ -300,10 +375,10 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
         >
           <TextArea rows={2} placeholder="Nhập số nhà, tên đường" />
         </Form.Item>
-
         <Form.Item name="setAsDefault" valuePropName="checked">
           <Checkbox>Đặt làm địa chỉ mặc định</Checkbox>
         </Form.Item>
+        
       </Form>
     </Modal>
   );

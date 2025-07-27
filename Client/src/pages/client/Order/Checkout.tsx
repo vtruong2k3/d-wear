@@ -103,6 +103,74 @@ const Checkout = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Load dữ liệu địa điểm khi component mount
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       // Lấy danh sách tỉnh và chuẩn hóa ID
+  //       const provinceRes = await getProvinces();
+  //       const rawProvinces = provinceRes.data?.provinces ?? [];
+  //       const normalizedProvinces = rawProvinces.map((item) => ({
+  //         id: String(item.ProvinceID ?? item.id), // Ép kiểu id về string
+  //         name: item.ProvinceName ?? item.name,
+  //         shippingFee: item.shippingFee || 25000,
+  //         ...item,
+  //       }));
+
+  //       setProvinces(normalizedProvinces);
+
+  //       // Lấy danh sách địa chỉ người dùng
+  //       const addressRes = await getUserAddresses();
+  //       const addresses = addressRes.data.address ?? [];
+
+  //       if (!Array.isArray(addresses)) {
+  //         console.error("❌ Dữ liệu address không phải mảng:", addressRes.data);
+  //         return;
+  //       }
+
+  //       setSavedAddresses(addresses);
+
+  //       // Tìm địa chỉ mặc định
+  //       const defaultAddress = addresses.find((addr) => addr.isDefault);
+
+  //       if (defaultAddress) {
+  //         setSelectedAddressId(defaultAddress._id);
+  //         form.setFieldsValue({
+  //           name: defaultAddress.name,
+  //           phone: defaultAddress.phone,
+  //           address: defaultAddress.fullAddress,
+  //         });
+
+  //         // Load quận và phường tương ứng
+  //         const districtRes = await getDistricts(defaultAddress.provinceId);
+  //         setDistricts(districtRes.data?.districts || []);
+
+  //         const wardRes = await getWards(defaultAddress.districtId);
+  //         setWards(wardRes.data?.wards || []);
+
+  //         // Tính phí ship dựa trên tỉnh đã normalize
+  //         const province = normalizedProvinces.find(
+  //           (p) => p.id === String(defaultAddress.provinceId)
+  //         );
+
+  //         if (province) {
+  //           setShippingFee(province.shippingFee || 1000);
+  //         } else {
+  //           console.warn(
+  //             "❌ Không tìm thấy tỉnh tương ứng với ID:",
+  //             defaultAddress.provinceId
+  //           );
+  //           setShippingFee(25000); // fallback
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("❌ Lỗi khi tải dữ liệu:", error);
+  //     }
+  //   };
+
+  //   if (user?._id) {
+  //     fetchData();
+  //   }
+  // }, [form, user]);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -110,28 +178,28 @@ const Checkout = () => {
         const provinceRes = await getProvinces();
         const rawProvinces = provinceRes.data?.provinces ?? [];
         const normalizedProvinces = rawProvinces.map((item) => ({
-          id: String(item.ProvinceID ?? item.id), // Ép kiểu id về string
+          id: String(item.ProvinceID ?? item.id),
           name: item.ProvinceName ?? item.name,
           shippingFee: item.shippingFee || 25000,
           ...item,
         }));
-
+  
         setProvinces(normalizedProvinces);
-
+  
         // Lấy danh sách địa chỉ người dùng
         const addressRes = await getUserAddresses();
         const addresses = addressRes.data.address ?? [];
-
+  
         if (!Array.isArray(addresses)) {
           console.error("❌ Dữ liệu address không phải mảng:", addressRes.data);
           return;
         }
-
+  
         setSavedAddresses(addresses);
-
+  
         // Tìm địa chỉ mặc định
         const defaultAddress = addresses.find((addr) => addr.isDefault);
-
+  
         if (defaultAddress) {
           setSelectedAddressId(defaultAddress._id);
           form.setFieldsValue({
@@ -139,38 +207,49 @@ const Checkout = () => {
             phone: defaultAddress.phone,
             address: defaultAddress.fullAddress,
           });
-
+  
           // Load quận và phường tương ứng
           const districtRes = await getDistricts(defaultAddress.provinceId);
           setDistricts(districtRes.data?.districts || []);
-
+  
           const wardRes = await getWards(defaultAddress.districtId);
           setWards(wardRes.data?.wards || []);
-
-          // Tính phí ship dựa trên tỉnh đã normalize
-          const province = normalizedProvinces.find(
-            (p) => p.id === String(defaultAddress.provinceId)
-          );
-
-          if (province) {
-            setShippingFee(province.shippingFee || 1000);
-          } else {
-            console.warn(
-              "❌ Không tìm thấy tỉnh tương ứng với ID:",
-              defaultAddress.provinceId
-            );
-            setShippingFee(25000); // fallback
+  
+          // ✅ Gọi API tính phí ship theo địa chỉ mặc định
+          const payload = {
+            to_district_id: Number(defaultAddress.districtId),
+            to_ward_code: defaultAddress.wardId,
+            weight: 1000,
+            length: 20,
+            width: 15,
+            height: 10,
+            service_type_id: 1,
+          };
+  
+          try {
+            const res = await calculateShippingFee(payload);
+            const totalFee = res?.data?.fee?.total;
+  
+            if (typeof totalFee === "number" && totalFee > 0) {
+              setShippingFee(totalFee);
+            } else {
+              setShippingFee(25000);
+            }
+          } catch (err) {
+            console.error("❌ Lỗi khi tính phí ship mặc định:", err);
+            setShippingFee(25000);
           }
         }
       } catch (error) {
         console.error("❌ Lỗi khi tải dữ liệu:", error);
       }
     };
-
+  
     if (user?._id) {
       fetchData();
     }
   }, [form, user]);
+  
 
   // Memo lấy các sản phẩm được chọn
   const itemsToCheckout = useMemo(() => {
@@ -216,36 +295,6 @@ const Checkout = () => {
   };
 
   // Xử lý khi chọn địa chỉ từ dropdown
-  // const handleAddressSelect = (addressId: string) => {
-  //   setSelectedAddressId(addressId);
-  //   const selectedAddress = savedAddresses.find(
-  //     (addr) => addr._id === addressId || addr.id === addressId
-  //   );
-
-  //   if (selectedAddress) {
-  //     form.setFieldsValue({
-  //       name: selectedAddress.name,
-  //       phone: selectedAddress.phone,
-  //       address: selectedAddress.fullAddress,
-  //     });
-
-  //     const province = provinces.find(
-  //       (p) => p.id === selectedAddress.provinceId
-  //     );
-
-  //     if (province) {
-  //       setShippingFee(province.shippingFee || 25000); // fallback nếu thiếu
-  //     } else {
-  //       console.warn(
-  //         "❌ Không tìm thấy tỉnh tương ứng với ID:",
-  //         selectedAddress.provinceId
-  //       );
-  //       setShippingFee(25000); // fallback mặc định
-  //     }
-  //   } else {
-  //     console.warn("⚠️ Không tìm thấy địa chỉ phù hợp");
-  //   }
-  // };
   const handleAddressSelect = async (addressId: string) => {
     setSelectedAddressId(addressId);
   
@@ -402,7 +451,37 @@ const Checkout = () => {
   };
 
   // Xử lý thêm địa chỉ mới
-  const handleAddNewAddress = (newAddress: SavedAddress) => {
+  // const handleAddNewAddress = (newAddress: SavedAddress) => {
+  //   // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
+  //   let updatedAddresses = [...savedAddresses];
+  //   if (newAddress.isDefault) {
+  //     updatedAddresses = updatedAddresses.map((addr) => ({
+  //       ...addr,
+  //       isDefault: false,
+  //     }));
+  //   }
+  //   updatedAddresses.push(newAddress);
+
+  //   setSavedAddresses(updatedAddresses);
+
+  //   // Tự động chọn địa chỉ vừa thêm
+  //   setSelectedAddressId(newAddress.id);
+  //   form.setFieldsValue({
+  //     name: newAddress.name,
+  //     phone: newAddress.phone,
+  //     address: newAddress.fullAddress,
+  //   });
+
+  //   // Tính phí ship
+  //   const province = provinces.find((p) => p.id === newAddress.provinceId);
+  //   if (province) {
+  //     setShippingFee(province.shippingFee);
+  //   }
+
+  //   // Đóng modal
+  //   setIsAddAddressModalVisible(false);
+  // };
+  const handleAddNewAddress = async (newAddress: SavedAddress) => {
     // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
     let updatedAddresses = [...savedAddresses];
     if (newAddress.isDefault) {
@@ -412,26 +491,46 @@ const Checkout = () => {
       }));
     }
     updatedAddresses.push(newAddress);
-
+  
     setSavedAddresses(updatedAddresses);
-
+  
     // Tự động chọn địa chỉ vừa thêm
-    setSelectedAddressId(newAddress.id);
+    setSelectedAddressId(newAddress.id || newAddress._id);
     form.setFieldsValue({
       name: newAddress.name,
       phone: newAddress.phone,
       address: newAddress.fullAddress,
     });
-
-    // Tính phí ship
-    const province = provinces.find((p) => p.id === newAddress.provinceId);
-    if (province) {
-      setShippingFee(province.shippingFee);
+  
+    // ✅ Gọi API GHN để tính phí ship
+    const payload = {
+      to_district_id: Number(newAddress.districtId),
+      to_ward_code: newAddress.wardId,
+      weight: 1000,
+      length: 20,
+      width: 15,
+      height: 10,
+      service_type_id: 1,
+    };
+  
+    try {
+      const res = await calculateShippingFee(payload);
+      const totalFee = res?.data?.fee?.total;
+  
+      if (typeof totalFee === "number" && totalFee > 0) {
+        setShippingFee(totalFee);
+      } else {
+        setShippingFee(25000); // fallback nếu API trả về phí không hợp lệ
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi tính phí ship cho địa chỉ mới:", error);
+      setShippingFee(25000); // fallback
     }
-
+  
     // Đóng modal
     setIsAddAddressModalVisible(false);
   };
+  
 
   //  Hàm kiểm tra voucher
   const checkVoucher = useCallback(
