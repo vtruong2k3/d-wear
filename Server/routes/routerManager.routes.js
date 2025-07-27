@@ -9,13 +9,13 @@ const cartRouter = require("./cart.routes");
 const authAmdinRouter = require("./authAdmin.routes");
 const sizeRouter = require("./size.routes");
 const colorRouter = require("./color.routes");
-
 const orderRouter = require("./order.routes");
 const momoRouter = require("./momo.routes");
 const ghnRouter = require("./ghn.routes");
 const addressRouter = require("./address.routes");
 const statisticRouter = require("./statistics.routes");
 const userRouter = require("./user.routes");
+
 const routerManager = express.Router();
 
 routerManager.use("/api", brandRouter);
@@ -34,4 +34,5 @@ routerManager.use("/api", ghnRouter);
 routerManager.use("/api", addressRouter);
 routerManager.use("/api", statisticRouter);
 routerManager.use("/api", userRouter);
+
 module.exports = routerManager;
