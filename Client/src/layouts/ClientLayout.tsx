@@ -6,7 +6,7 @@ import Foorter from "../components/Client/Footers/Footer";
 import '../styles/style.css'
 import { LoadingProvider } from '../contexts/LoadingContext';
 import GlobalLoading from '../components/Loading/GlobalLoading';
-import FashionChatbot from '../components/Client/Chatbot/Chatbot';
+
 import { useDispatch } from "react-redux";
 import useAuth from "../hooks/Client/useAuth";
 import { useEffect, useRef } from "react";
@@ -37,7 +37,7 @@ const Layout = () => {
         <main style={{ background: "#f6f6f6" }}>
 
           <Outlet />
-          <FashionChatbot />
+
         </main>
         <Foorter />
       </div>

@@ -16,51 +16,24 @@ import {
   calculateShippingFee,
 } from "../../../services/client/ghnService";
 import { addUserAddress } from "../../../services/client/addressService"; // ✅ gọi API
+import type { District, Province, RawDistrict, RawWard, SavedAddress, Ward } from "../../../types/address/IAddress";
 
 const { TextArea } = Input;
 const { Option } = Select;
 const { Text } = Typography;
 
-interface Province {
-  ProvinceID: number;
-  ProvinceName: string;
-}
 
-interface District {
-  DistrictID: number;
-  DistrictName: string;
-  ProvinceID: number;
-}
-interface Ward {
-  wardId: string;
-  WardCode: string;
-  wardName: string;
-  WardName: string;
-  DistrictID: number;
-}
 
-interface SavedAddress {
-  id: string;
-  _id: string;
-  name: string;
-  phone: string;
-  provinceId: string;
-  provinceName: string;
-  districtId: string;
-  districtName: string;
-  wardId: string;
-  wardName: string;
-  detailAddress: string;
-  fullAddress: string;
-  isDefault?: boolean;
-}
+
 
 interface AddAddressModalProps {
   visible: boolean;
   onCancel: () => void;
   onAddAddress: (newAddress: SavedAddress) => void;
   provinces: Province[];
+  districts: District[];
   wards: Ward[];
+  savedAddresses: SavedAddress[]; // 👉 thêm dòng này
 }
 
 const AddAddressModal: React.FC<AddAddressModalProps> = ({
@@ -70,26 +43,10 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
   provinces,
 }) => {
   const [form] = Form.useForm();
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [wards, setWards] = useState<Ward[]>([]);
+  const [districts, setDistricts] = useState<RawDistrict[]>([]);
+  const [wards, setWards] = useState<RawWard[]>([]);
   const [shippingFee, setShippingFee] = useState<number | null>(null);
 
-  // ✅ Chọn tỉnh => gọi API quận huyện
-  const handleProvinceChange = async (provinceId: string) => {
-    form.setFieldsValue({
-      newProvince: provinceId,
-      newDistrict: undefined,
-      newWard: undefined,
-    });
-
-    try {
-      const res = await getDistricts(provinceId);
-      setDistricts(res.data || []);
-    } catch (err) {
-      console.error("Lỗi lấy quận/huyện:", err);
-      setDistricts([]);
-    }
-  };
 
   const handleAddNewAddress = async () => {
     try {
@@ -239,27 +196,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
               <Select
                 placeholder="Chọn Quận/Huyện"
                 disabled={!form.getFieldValue("newProvince")}
-                // onChange={async (value) => {
-                //   form.setFieldsValue({
-                //     newDistrict: value,
-                //     newWard: undefined,
-                //   });
 
-                //   try {
-                //     const res = await getWards(value); // ✅ gọi API xã/phường
-                //     console.log("API Wards:", res.data);
-
-                //     // GHN trả về dạng { wards: [...] } hoặc { data: [...] } -> tuỳ BE
-                //     const wardData = Array.isArray(res.data)
-                //       ? res.data
-                //       : res.data.wards || res.data.data || [];
-
-                //     setWards(wardData);
-                //   } catch (error) {
-                //     console.error("Lỗi lấy phường/xã:", error);
-                //     setWards([]);
-                //   }
-                // }}
                 onChange={async (value) => {
                   form.setFieldsValue({
                     newDistrict: value,
@@ -334,9 +271,9 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
                       service_type_id: 2,
                     });
                     console.log("FULL response calculateShippingFee:", res.data)
-                    
+
                     const fee = res?.data?.fee?.total || 0; // ✅ đúng tầng dữ liệu
-                    
+
 
                     console.log("Kết quả tính phí ship:", res.data);
                     setShippingFee(fee);
@@ -359,11 +296,11 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
             </Form.Item>
           </Col>
           {shippingFee !== null && (
-          <div style={{ marginTop: 8 }}>
-            <Text strong>Phí ship tạm tính: </Text>
-            <Text type="secondary">{shippingFee.toLocaleString()}đ</Text>
-          </div>
-        )}
+            <div style={{ marginTop: 8 }}>
+              <Text strong>Phí ship tạm tính: </Text>
+              <Text type="secondary">{shippingFee.toLocaleString()}đ</Text>
+            </div>
+          )}
         </Row>
 
         <Form.Item
@@ -378,7 +315,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
         <Form.Item name="setAsDefault" valuePropName="checked">
           <Checkbox>Đặt làm địa chỉ mặc định</Checkbox>
         </Form.Item>
-        
+
       </Form>
     </Modal>
   );
