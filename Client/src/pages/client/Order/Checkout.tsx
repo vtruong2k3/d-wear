@@ -248,6 +248,7 @@ const Checkout = () => {
   // };
   const handleAddressSelect = async (addressId: string) => {
     setSelectedAddressId(addressId);
+  
     const selectedAddress = savedAddresses.find(
       (addr) => addr._id === addressId || addr.id === addressId
     );
@@ -264,24 +265,38 @@ const Checkout = () => {
     });
   
     try {
-      // ✅ Gọi API GHN tính phí ship
-      const res = await calculateShippingFee({
+      const payload = {
         to_district_id: Number(selectedAddress.districtId),
-        to_ward_code: selectedAddress.wardId, // wardId chính là WardCode
-        weight: 1000, // 👉 Tạm set cứng 500g, có thể tính động theo sản phẩm
+        to_ward_code: selectedAddress.wardId,
+        weight: 1000,
         length: 20,
         width: 15,
         height: 10,
-        service_type_id: 1, // 2 = dịch vụ tiêu chuẩn GHN
-      });
+        service_type_id: 1,
+      };
   
-      const fee = res.data?.data?.total || 5000; // fallback nếu lỗi
-      setShippingFee(fee);
+      console.log("📤 Payload gửi GHN:", payload);
+      const res = await calculateShippingFee(payload);
+      console.log("📥 Phí ship GHN trả về:", res.data);
+  
+      // 🔧 Sửa đường dẫn dữ liệu đúng
+      const totalFee = res?.data?.fee?.total;
+  
+      if (typeof totalFee === "number" && totalFee > 0) {
+        setShippingFee(totalFee);
+        console.log("✅ Phí ship GHN set:", totalFee);
+      } else {
+        console.warn("⚠️ Phí ship không hợp lệ, dùng fallback");
+        setShippingFee(25000);
+      }
+  
     } catch (error) {
       console.error("❌ Lỗi tính phí ship:", error);
-      setShippingFee(5000);
+      setShippingFee(25000);
     }
   };
+  
+  
 
   // Xử lý khi chọn tỉnh/thành phố (cho địa chỉ nhập tay)
   const handleProvinceChange = async (provinceId: string) => {
@@ -909,19 +924,18 @@ const Checkout = () => {
 
               {/* Checkbox để lưu địa chỉ khi nhập tay */}
               {addressType === "manual" && (
-  <Form.Item name="saveAddress" valuePropName="checked">
-    <Checkbox
-      onChange={(e) => {
-        if (e.target.checked) {
-          handleSaveManualAddress();
-        }
-      }}
-    >
-      Lưu địa chỉ này để sử dụng cho lần sau
-    </Checkbox>
-  </Form.Item>
-)}
-
+                <Form.Item name="saveAddress" valuePropName="checked">
+                  <Checkbox
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleSaveManualAddress();
+                      }
+                    }}
+                  >
+                    Lưu địa chỉ này để sử dụng cho lần sau
+                  </Checkbox>
+                </Form.Item>
+              )}
             </Form>
           </Card>
 
