@@ -252,23 +252,27 @@ const Checkout = () => {
         service_type_id: 1,
       };
 
-      console.log("📤 Payload gửi GHN:", payload);
-      const res = await calculateShippingFee(payload);
-      console.log("📥 Phí ship GHN trả về:", res.data);
 
-      // 🔧 Sửa đường dẫn dữ liệu đúng
+      const res = await calculateShippingFee(payload);
+
+
+      //  Sửa đường dẫn dữ liệu đúng
       const totalFee = res?.data?.fee?.total;
 
       if (typeof totalFee === "number" && totalFee > 0) {
         setShippingFee(totalFee);
-        console.log("✅ Phí ship GHN set:", totalFee);
+        console.log(" Phí ship GHN set:", totalFee);
       } else {
-        console.warn("⚠️ Phí ship không hợp lệ, dùng fallback");
+        console.warn(" Phí ship không hợp lệ, dùng fallback");
         setShippingFee(25000);
       }
 
     } catch (error) {
-      console.error("❌ Lỗi tính phí ship:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
       setShippingFee(25000);
     }
   };
@@ -307,7 +311,7 @@ const Checkout = () => {
 
       if (!Array.isArray(res.data.wards)) {
         console.warn(
-          "⚠️ Wards không phải mảng! res.data.wards =",
+          " Wards không phải mảng! res.data.wards =",
           res.data.wards
         );
       }
@@ -320,9 +324,12 @@ const Checkout = () => {
         })) || [];
 
       setWards(formattedWards);
-    } catch (err) {
-      toast.error("Lỗi tải phường/xã");
-      console.error("Lỗi khi gọi getWards:", err);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
@@ -346,9 +353,12 @@ const Checkout = () => {
         });
 
         setShippingFee(feeRes.data.fee.total);
-      } catch (err) {
-        console.error(err);
-        toast.error("Không tính được phí vận chuyển");
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
         setShippingFee(0);
       }
     }
@@ -404,7 +414,7 @@ const Checkout = () => {
       address: newAddress.fullAddress,
     });
 
-    // ✅ Gọi API GHN để tính phí ship
+    //  Gọi API GHN để tính phí ship
     const payload = {
       to_district_id: Number(newAddress.districtId),
       to_ward_code: newAddress.wardId,
@@ -425,7 +435,11 @@ const Checkout = () => {
         setShippingFee(25000); // fallback nếu API trả về phí không hợp lệ
       }
     } catch (error) {
-      console.error("❌ Lỗi khi tính phí ship cho địa chỉ mới:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
       setShippingFee(25000); // fallback
     }
 
@@ -633,10 +647,13 @@ const Checkout = () => {
       console.log("Data gửi lên server:", addressData);
 
       await addUserAddress(addressData);
-      message.success("Đã lưu địa chỉ thành công.");
-    } catch (err) {
-      console.error(err);
-      message.error("Lưu địa chỉ thất bại.");
+      toast.success("Đã lưu địa chỉ thành công.");
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 

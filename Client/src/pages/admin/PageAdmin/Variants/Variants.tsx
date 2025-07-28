@@ -35,6 +35,9 @@ const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState("");
   const [showHidden, setShowHidden] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
   const { setLoading } = useLoading();
 
   const getHiddenIds = () => {
@@ -66,8 +69,9 @@ const Variants: React.FC = () => {
   const fetchVariants = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getAllVariants();
+      const { data, total } = await getAllVariants(currentPage, pageSize, searchText);
       setVariants(data);
+      setTotalItems(total);
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -77,7 +81,7 @@ const Variants: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, currentPage, pageSize, searchText]);
 
   useEffect(() => {
     fetchVariants();
@@ -87,7 +91,7 @@ const Variants: React.FC = () => {
     try {
       setLoading(true);
       await deleteVariant(id);
-      setVariants((prev) => prev.filter((v) => v._id !== id));
+      fetchVariants();
       toast.success("Xóa biến thể thành công!");
     } catch (error) {
       const errorMessage =
@@ -103,14 +107,8 @@ const Variants: React.FC = () => {
   const hiddenIds = getHiddenIds();
 
   const filteredVariants = variants.filter((variant) => {
-    const match =
-      variant.product_id?.product_name
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase()) ||
-      variant.size.toLowerCase().includes(searchText.toLowerCase()) ||
-      variant.color.toLowerCase().includes(searchText.toLowerCase());
     const isHidden = hiddenIds.includes(variant._id);
-    return showHidden ? isHidden && match : !isHidden && match;
+    return showHidden ? isHidden : !isHidden;
   });
 
   const columns = [
@@ -206,15 +204,8 @@ const Variants: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <Title level={2} className="mb-6">
+      <div className="flex justify-between items-center mb-6">
+        <Title level={2}>
           {showHidden ? "Biến Thể Đã Ẩn" : "Quản Lý Biến Thể Sản Phẩm"}
         </Title>
         <Space>
@@ -236,7 +227,10 @@ const Variants: React.FC = () => {
               placeholder="Tìm kiếm..."
               prefix={<SearchOutlined />}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-64"
             />
             <Button type="primary" icon={<PlusOutlined />}>
@@ -249,7 +243,21 @@ const Variants: React.FC = () => {
           columns={columns}
           dataSource={filteredVariants}
           rowKey="_id"
-          pagination={{ pageSize: 8 }}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalItems,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            pageSizeOptions: ["10", "20", "30", "50", "100"],
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} biến thể`,
+            onChange: (page, pageSize) => {
+              setCurrentPage(page);
+              setPageSize(pageSize);
+            },
+            style: { marginTop: 16 },
+          }}
           scroll={{ x: 1000 }}
         />
       </Card>

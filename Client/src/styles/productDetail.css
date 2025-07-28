@@ -19,3 +19,42 @@
   );
   pointer-events: none;
 }
+
+div[style*="overflowY: auto"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+div[style*="overflowY: auto"]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+div[style*="overflowY: auto"]::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+div[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #5a6fd8 0%, #6a4190 100%);
+  transform: scale(1.1);
+}
+
+/* Custom scrollbar cho comment dài */
+.text-gray-700[style*="overflowY: auto"]::-webkit-scrollbar {
+  width: 4px;
+}
+
+.text-gray-700[style*="overflowY: auto"]::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.text-gray-700[style*="overflowY: auto"]::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.text-gray-700[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}

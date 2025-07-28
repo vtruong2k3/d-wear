@@ -5,6 +5,7 @@ import type { AxiosRequestConfig } from "axios";
 
 interface UseFetchListResult<T> {
   data: T[];
+  total: number; // ✅ thêm dòng này
   loading: boolean;
   error: unknown;
   refetch: () => Promise<void>;
@@ -14,6 +15,7 @@ interface BaseListResponse<T> {
   message?: string;
   page?: number;
   totalPages?: number;
+  total?: number;
   products: T[];
 }
 
@@ -32,7 +34,7 @@ export const useFetchList = <
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<unknown>(null);
-
+  const [total, setTotal] = useState<number>(0);
   const fetchApi = async () => {
     setLoading(true);
     try {
@@ -49,6 +51,7 @@ export const useFetchList = <
       );
 
       setData(res.data.products || []);
+      setTotal(res.data.total || 0);
     } catch (err) {
       setError(err);
     } finally {
@@ -60,7 +63,7 @@ export const useFetchList = <
     fetchApi();
   }, [path, JSON.stringify(query), JSON.stringify(config)]);
 
-  return { data, loading, error, refetch: fetchApi };
+  return { data, total, loading, error, refetch: fetchApi };
 };
 
 export default useFetchList;

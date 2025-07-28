@@ -29,7 +29,7 @@ export default function AdminLayout() {
     setCollapsed(!collapsed);
   };
 
-  // ❌ Chưa xác thực → Hiển thị loading
+  //  Chưa xác thực → Hiển thị loading
   if (!isInitialized) {
     return (
       <div className="flex justify-center items-center h-screen text-lg font-semibold">
@@ -38,7 +38,7 @@ export default function AdminLayout() {
     );
   }
 
-  // ❌ Đã xác thực nhưng không có quyền admin
+  //  Đã xác thực nhưng không có quyền admin
   const isInvalid = !token || user?.role !== "admin";
 
   if (isInvalid) {

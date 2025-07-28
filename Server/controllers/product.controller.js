@@ -288,11 +288,14 @@ exports.getAllProductWithVariants = async (req, res) => {
     const order = req.query.order === "asc" ? 1 : -1;
     const keyword = req.query.q || "";
 
-    const query = keyword
-      ? {
-          product_name: { $regex: keyword, $options: "i" }, // tìm không phân biệt hoa thường
-        }
-      : {};
+    // Bổ sung điều kiện không lấy sản phẩm bị xóa mềm
+    const query = {
+      isDelete: { $ne: true },
+    };
+
+    if (keyword) {
+      query.product_name = { $regex: keyword, $options: "i" };
+    }
 
     const totalProducts = await Product.countDocuments(query);
 
@@ -343,7 +346,10 @@ exports.getProductWithVariantsById = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
 
-    const variants = await Variant.find({ product_id: id });
+    const variants = await Variant.find({
+      product_id: id,
+      isDelete: { $ne: true },
+    });
 
     return res.status(200).json({ product, variants });
   } catch (error) {
@@ -353,7 +359,6 @@ exports.getProductWithVariantsById = async (req, res) => {
   }
 };
 
-// Tạo sản phẩm cùng với các biến thể
 // Tạo sản phẩm cùng với các biến thể
 exports.createProductWithVariants = async (req, res) => {
   try {
@@ -668,5 +673,91 @@ exports.getAllProdutsItem = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: "Server Error", error });
+  }
+};
+
+exports.softDeleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { isDelete: true },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    }
+
+    // Xoá mềm tất cả biến thể của sản phẩm
+    await Variant.updateMany({ product_id: id }, { isDelete: true });
+
+    return res.status(200).json({
+      message: "Xoá mềm sản phẩm và các biến thể thành công",
+      product,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Lỗi server khi xoá sản phẩm",
+      error: error.message,
+    });
+  }
+};
+exports.getAllDeletedProductWithVariants = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const sortBy = req.query.sortBy || "createdAt";
+    const order = req.query.order === "asc" ? 1 : -1;
+    const keyword = req.query.q || "";
+
+    // 👉 Chỉ lấy sản phẩm đã bị xóa mềm
+    const query = {
+      isDelete: true,
+    };
+
+    if (keyword) {
+      query.product_name = { $regex: keyword, $options: "i" };
+    }
+
+    const totalProducts = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
+      .populate("brand_id", "brand_name")
+      .populate("category_id", "category_name")
+      .sort({ [sortBy]: order })
+      .skip(skip)
+      .limit(limit);
+
+    const productIds = products.map((p) => p._id);
+    const variants = await Variant.find({ product_id: { $in: productIds } });
+
+    const productList = products.map((product) => {
+      const productVariants = variants.filter(
+        (v) => v.product_id.toString() === product._id.toString()
+      );
+
+      return {
+        ...product.toObject(),
+        variants: productVariants,
+      };
+    });
+
+    return res.status(200).json({
+      message: "Lấy danh sách sản phẩm đã xoá mềm thành công",
+      total: totalProducts,
+      page,
+      limit,
+      totalPages: Math.ceil(totalProducts / limit),
+      products: productList,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Lỗi server khi lấy danh sách sản phẩm đã xoá mềm",
+      error: error.message,
+    });
   }
 };

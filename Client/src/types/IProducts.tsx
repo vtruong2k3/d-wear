@@ -20,6 +20,7 @@ export interface IProducts {
   gender: string;
   material: string;
   variants?: Variant[];
+
 }
 export interface IProductDetail {
   _id: string;

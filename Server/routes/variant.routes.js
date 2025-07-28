@@ -32,5 +32,11 @@ variantRouter.delete(
   "/variant/product/:id",
   variantControlller.deleteIdProductVariant
 );
-
+// xoá mềm
+variantRouter.put(
+  "/variant/:id/soft-delete",
+  variantControlller.softDeleteVariant
+);
+// hiển thị xoá mềm
+variantRouter.get("/variant/deleted", variantControlller.getDeletedProducts);
 module.exports = variantRouter;

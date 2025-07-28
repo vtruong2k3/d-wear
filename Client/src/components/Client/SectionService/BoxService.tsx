@@ -1,6 +1,10 @@
 
+interface Item {
+  title: string;
+  url: string;
+}
+const BoxService = ({ data }: { data: Item }) => {
 
-const BoxService = ({ data }) => {
   return (
     <li className="flex items-center lg:justify-center lg:flex-1 gap-[15px]">
       <img src={data.url} alt="" />

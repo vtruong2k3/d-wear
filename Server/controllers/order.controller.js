@@ -171,20 +171,48 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.getAllOrder = async (req, res) => {
   try {
-    const result = await Order.find().sort({ createdAt: -1 }).lean();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const keyword = req.query.q?.trim() || "";
+
+    // Tạo điều kiện tìm kiếm nếu có keyword
+    const filter = keyword
+      ? {
+          $or: [
+            { orderCode: { $regex: keyword, $options: "i" } },
+            { "shippingAddress.fullName": { $regex: keyword, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // Tổng số đơn hàng thỏa điều kiện
+    const total = await Order.countDocuments(filter);
+
+    // Lấy danh sách đơn hàng có phân trang và sắp xếp
+    const orders = await Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     return res.status(200).json({
-      message: "Lấy tất cả đơn hàng thành công",
-      orders: result,
+      message: "Lấy danh sách đơn hàng thành công",
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      orders,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi lấy tất cả đơn hàng:", error.message);
+    console.error(" Lỗi khi lấy tất cả đơn hàng:", error.message);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
     });
   }
 };
+
 exports.getOrderById = async (req, res) => {
   try {
     const orderId = req.params.id;

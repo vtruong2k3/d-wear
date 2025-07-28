@@ -28,6 +28,8 @@ import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
+import { useLoading } from "../../../../contexts/LoadingContext";
+import { useEffect } from "react";
 
 
 const { Title } = Typography;
@@ -35,10 +37,10 @@ const { Title } = Typography;
 const Products: React.FC = () => {
 
   const navigate = useNavigate();
-
+  const { setLoading } = useLoading()
   const [query, updateQuery] = useQuery({
     page: 1,
-    limit: 30,
+    limit: 10,
     sortBy: "createdAt",
     order: "desc",
     q: "",
@@ -65,10 +67,14 @@ const Products: React.FC = () => {
 
   const {
     data: rawProducts,
-    loading,
+    total,
     refetch,
   } = useFetchList<IProduct>("product", query, {});
-
+  useEffect(() => {
+    if (rawProducts) {
+      setLoading(false); //  Tắt loading khi dữ liệu đã load xong
+    }
+  }, [rawProducts]);
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
       const rawPath = item.imageUrls?.[0] ?? "";
@@ -296,26 +302,35 @@ const Products: React.FC = () => {
 
 
         <Table
-          loading={loading}
+
           dataSource={products}
-
           rowKey={(record) => record.id || record._id || record.title}
-
           columns={columns}
           pagination={{
-            pageSize: 10,
+            current: query.page,
+            pageSize: query.limit,
+            total: total || 0,
             showSizeChanger: true,
             showQuickJumper: true,
+            pageSizeOptions: ["10", "20", "30", "50", "100"],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} của ${total} sản phẩm`,
-
+            onChange: (page, pageSize) => {
+              setLoading(true); //  Bắt đầu loading
+              updateQuery({ page, limit: pageSize });
+            },
+            onShowSizeChange: (_current, size) => {
+              setLoading(true); //  Bắt đầu loading khi đổi pageSize
+              updateQuery({ page: 1, limit: size });
+            },
             style: { marginTop: 16 },
           }}
+
           style={{ background: "white", borderRadius: 8 }}
           scroll={{ x: 800 }}
-
           size="middle"
         />
+
       </Card>
     </div>
   );

@@ -14,12 +14,12 @@ import {
 } from "../../../../services/client/authService";
 import type { AppThunkAPI } from "../../../store";
 
-// ✅ AsyncThunk: login với Google bằng access_token
+//  AsyncThunk: login với Google bằng access_token
 export const doLoginWithGoogle = createAsyncThunk<
   { user: User; token: string },
   { accessToken: string }, // argument type (accessToken)
   {
-    extra: AppThunkAPI["extra"]; //  khai báo kiểu extra
+    extra: AppThunkAPI["extra"];
     rejectValue: string;
   }
 >("auth/googleLogin", async ({ accessToken }, { rejectWithValue, extra }) => {
@@ -50,8 +50,8 @@ export const doLoginWithGoogle = createAsyncThunk<
 
 //  Async đăng ký
 export const doRegister = createAsyncThunk<
-  { user: User }, // return
-  RegisterFormData, // input
+  { user: User },
+  RegisterFormData,
   { rejectValue: string }
 >("auth/register", async (formData, { rejectWithValue }) => {
   try {

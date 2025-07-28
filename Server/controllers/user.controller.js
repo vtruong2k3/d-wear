@@ -1,4 +1,6 @@
+const Address = require("../models/address");
 const User = require("../models/users");
+
 const profileUpdateSchema = require("../validate/profileValidate");
 
 exports.updateUserProfile = async (req, res) => {
@@ -46,6 +48,53 @@ exports.updateUserProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi cập nhật profile:", error);
-    res.status(500).json({ message: "Lỗi máy chủ" });
+    res.status(500).json({ message: "Lỗi máy chủ" }, error.message);
+  }
+};
+
+// Controller: userController.js
+exports.getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { isDelete: { $ne: true } }; // Không lấy user có isDelete = true
+
+    const [users, total] = await Promise.all([
+      User.find(query).skip(skip).limit(limit),
+      User.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalUsers: total,
+      users,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách user:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
+exports.getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+
+    const addresses = await Address.find({ user_id: userId });
+
+    res.status(200).json({
+      user: existingUser,
+      addresses,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy thông tin người dùng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
 };

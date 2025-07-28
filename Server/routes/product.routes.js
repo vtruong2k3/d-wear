@@ -31,5 +31,14 @@ productRouter.get("/product", productControler.getAllProductWithVariants);
 productRouter.get("/product/:id", productControler.getProductWithVariantsById);
 
 productRouter.get("/product/items", productControler.getAllProdutsItem);
-
+//xoá mềm
+productRouter.put(
+  "/product/:id/soft-delete",
+  productControler.softDeleteProduct
+);
+// hiển thị xoá mềm
+productRouter.get(
+  "product/deleted",
+  productControler.getAllDeletedProductWithVariants
+);
 module.exports = productRouter;

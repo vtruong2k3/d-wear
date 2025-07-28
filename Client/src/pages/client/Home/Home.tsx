@@ -26,9 +26,9 @@ const Home = () => {
       <BannerTop />
       <SectionService />
       <SectionOurCategories type={1} />
-      <SectionAllProduct products={products} />
-      <SectionOurCategories type={2} />
       <SectionNewArrivals products={products} />
+      <SectionOurCategories type={2} />
+      <SectionAllProduct products={products} />
     </>
   );
 };

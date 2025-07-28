@@ -49,7 +49,7 @@ const OrderList = () => {
   const [sortTotal, setSortTotal] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const { setLoading } = useLoading()
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
   const fetchData = async () => {
     try {
       setLoading(true)
@@ -212,24 +212,7 @@ const OrderList = () => {
     }
   };
 
-  //   // Hàm xử lý thay đổi trạng thái thanh toán
-  //   const handleOrderStatusChange = async (orderId: string, newStatus: string) => {
-  //   try {
-  //     // Gọi API backend để cập nhật
-  //     await updateOrderStatus(orderId, newStatus);
 
-  //     // Cập nhật state local
-  //     const updatedOrders = orders.map(order =>
-  //       order._id === orderId ? { ...order, status: newStatus } : order
-  //     );
-  //     setOrders(updatedOrders);
-
-  //     message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
-  //   } catch (error) {
-  //     message.error("Lỗi khi cập nhật trạng thái đơn hàng");
-  //     console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
-  //   }
-  // };
 
   // Hàm lấy label cho trạng thái đơn hàng
   const getStatusLabel = (status: string) => {
@@ -252,13 +235,7 @@ const OrderList = () => {
     return paymentLabels[paymentStatus] || paymentStatus;
   };
 
-  // const statusColor: Record<string, string> = {
-  //   pending: "default",
-  //   processing: "orange",
-  //   shipped: "green",
-  //   delivered: "blue",
-  //   cancelled: "red",
-  // };
+
 
   const paymentColor: Record<string, string> = {
     unpaid: "volcano",
@@ -424,7 +401,7 @@ const OrderList = () => {
         >
           <Option value="pending">Chờ xử lý</Option>
           <Option value="processing">Đang xử lý</Option>
-          <Option value="shipped">Đã giao hàng</Option>
+          <Option value="shipped">Đang giao hàng</Option>
           <Option value="delivered">Đã giao</Option>
           <Option value="cancelled">Đã hủy</Option>
         </Select>
@@ -471,8 +448,20 @@ const OrderList = () => {
           current={currentPage}
           pageSize={pageSize}
           total={filteredOrders.length}
-          onChange={(page) => setCurrentPage(page)}
+          onChange={(page, pageSize) => {
+            setLoading(true); //  Bắt đầu loading
+            setCurrentPage(page);
+            setPageSize(pageSize);
+
+
+            setTimeout(() => {
+              setLoading(false); //  Kết thúc loading
+            }, 300);
+          }}
+          showSizeChanger
+          pageSizeOptions={['5', '10', '20', '50']}
         />
+
       </div>
     </div>
   );
