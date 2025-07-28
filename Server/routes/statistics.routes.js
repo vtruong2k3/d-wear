@@ -40,4 +40,10 @@ statisticRouter.post(
   "/statistics/by-week/:year/:week",
   statisticController.summaryByWeek
 );
+
+statisticRouter.post(
+  "/statistics/top-products-by-date",
+
+  statisticController.getTopProductsByDate
+);
 module.exports = statisticRouter;

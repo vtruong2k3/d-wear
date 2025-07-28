@@ -171,14 +171,12 @@ const ProductAdd = () => {
   // Submit form để tạo sản phẩm mới
   const onFinish = async (values: IProducts) => {
     try {
-      // ✅ Kiểm tra lỗi từng dòng variant và hiển thị trên form
       if (!validateVariants()) {
         toast.error("Vui lòng nhập đầy đủ thông tin cho các biến thể!");
         return;
       }
 
       setLoading(true);
-
       const formData = new FormData();
 
       // Thêm thông tin sản phẩm
@@ -216,11 +214,8 @@ const ProductAdd = () => {
         });
       });
 
-      // Debug log
-      console.log("==== CHECKING FORMDATA ====");
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
+
+
 
       // Gửi request
       const data = await createProduct(formData)
@@ -237,6 +232,7 @@ const ProductAdd = () => {
       setLoading(false);
     }
   };
+
 
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
