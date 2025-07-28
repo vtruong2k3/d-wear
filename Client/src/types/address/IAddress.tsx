@@ -4,7 +4,7 @@ export interface SavedAddress {
   _id: string;            // ID thực từ Mongo
   name: string;
   phone: string;
-  provinceId: number;
+  provinceId: any;
   provinceName: string;
   districtId: number;
   districtName: string;
