@@ -1,9 +1,9 @@
 import React from 'react';
 import BoxProduct from '../BoxProduct/BoxProduct';
-import type { IProductDetail } from '../../../types/IProducts'; // Hoặc type phù hợp cho BoxProduct
+import type { IProducts } from '../../../types/IProducts'; // Hoặc type phù hợp cho BoxProduct
 
 interface Props {
-    products: IProductDetail[];
+    products: IProducts[];
 }
 
 const RelatedProducts: React.FC<Props> = ({ products }) => {

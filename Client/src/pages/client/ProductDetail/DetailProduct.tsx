@@ -191,7 +191,7 @@ const DetailProduct = () => {
             productId={dataDetail._id}
           />
 
-          <RelatedProducts products={relatedProducts as IProductDetail[]} />
+          <RelatedProducts products={relatedProducts} />
 
         </div>
       ) : (
