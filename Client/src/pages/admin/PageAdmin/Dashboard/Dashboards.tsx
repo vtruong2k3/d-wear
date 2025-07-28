@@ -14,6 +14,7 @@ import {
   filterByDate,
   filterByWeek,
   summaryByYear,
+  getTopProductsByDate,
 
 } from '../../../../services/admin/staticService';
 
@@ -30,6 +31,12 @@ import { toast } from 'react-toastify';
 import type { Dayjs } from 'dayjs';
 import type { DailyStatItem, FilterByDateResponse, OrderItem, StatCardProps, SummaryResponse, TopProduct } from '../../../../types/static/IStatic';
 import { useLoading } from '../../../../contexts/LoadingContext';
+import dayjs from "dayjs";
+import weekOfYear from "dayjs/plugin/weekOfYear";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(weekOfYear);
+dayjs.extend(utc);
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 const DailyStatistics = () => {
   const [statisticType, setStatisticType] = useState<'normal' | 'dateRange' | 'week' | 'year'>('normal');
@@ -208,8 +215,15 @@ const DailyStatistics = () => {
       try {
         const startDate = dateRange[0].format('YYYY-MM-DD');
         const endDate = dateRange[1].format('YYYY-MM-DD');
-        const filtered = await filterByDate(startDate, endDate);
+
+        const [filtered, top] = await Promise.all([
+          filterByDate(startDate, endDate),
+          getTopProductsByDate(startDate, endDate),
+        ]);
+
         setFilteredData(filtered);
+        setTopProducts(top);
+
         message.success(`Đã lọc từ ${dateRange[0].format('DD/MM')} đến ${dateRange[1].format('DD/MM')}`);
       } catch (error) {
         const errorMessage =
@@ -226,8 +240,17 @@ const DailyStatistics = () => {
       }
 
       try {
-        const filtered = await filterByWeek(selectedYear, selectedWeek);
+        const [filtered, top] = await Promise.all([
+          filterByWeek(selectedYear, selectedWeek),
+          getTopProductsByDate(
+            // Tuần bắt đầu từ thứ 2
+            dayjs().year(selectedYear).week(selectedWeek).startOf('week').add(1, 'day').format('YYYY-MM-DD'),
+            dayjs().year(selectedYear).week(selectedWeek).endOf('week').add(1, 'day').format('YYYY-MM-DD')
+          )
+        ]);
+
         setFilteredData(filtered);
+        setTopProducts(top);
         message.success(`Đã lọc tuần ${selectedWeek}, năm ${selectedYear}`);
       } catch (error) {
         const errorMessage =
@@ -245,8 +268,11 @@ const DailyStatistics = () => {
 
       try {
         const result = await summaryByYear(selectedYear);
+        const startDate = `${selectedYear}-01-01`;
+        const endDate = `${selectedYear}-12-31`;
 
-        // Map lại dữ liệu để tương thích với dailyData
+        const top = await getTopProductsByDate(startDate, endDate);
+
         const mappedData: DailyStatItem[] = result.map((item) => ({
           date: `${selectedYear}-${String(item.month).padStart(2, '0')}`,
           displayDate: `Tháng ${item.month}`,
@@ -261,9 +287,10 @@ const DailyStatistics = () => {
           totalCustomers: result.reduce((s, i) => s + i.customers, 0),
           shippingOrders: 0,
           dailyData: mappedData,
-          orders: [], // Có thể bỏ nếu không cần
+          orders: [],
         });
 
+        setTopProducts(top);
         message.success(`Đã lọc theo năm ${selectedYear}`);
       } catch (error) {
         const errorMessage =
@@ -272,9 +299,20 @@ const DailyStatistics = () => {
           "Đã xảy ra lỗi, vui lòng thử lại.";
         toast.error(errorMessage);
       }
-
     } else {
       setFilteredData(null);
+
+      try {
+        const top = await getTopProducts(); // gọi lại top mặc định
+        setTopProducts(top);
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+      }
+
       message.success('Đã chuyển về thống kê bình thường');
     }
   };

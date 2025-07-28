@@ -99,3 +99,14 @@ export const summaryByYear = async (
   const response = await axios.get(`/api/statistics/by-year/${year}`);
   return response.data;
 };
+
+export const getTopProductsByDate = async (
+  startDate: string,
+  endDate: string
+) => {
+  const res = await axios.post("/api/statistics/top-products-by-date", {
+    startDate,
+    endDate,
+  });
+  return res.data;
+};

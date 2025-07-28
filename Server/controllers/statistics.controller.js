@@ -21,10 +21,12 @@ exports.getSummary = async (req, res) => {
       }),
     ]);
 
-    const totalRevenue = orders.reduce(
-      (sum, order) => sum + order.finalAmount,
-      0
-    );
+    const totalRevenue = orders.reduce((sum, order) => {
+      if (order.status === "delivered") {
+        return sum + order.finalAmount;
+      }
+      return sum;
+    }, 0);
 
     res.json({
       totalRevenue,
@@ -58,7 +60,9 @@ exports.getDailyData = async (req, res) => {
       const orders = await Order.find({
         createdAt: { $gte: startDate, $lt: endDate },
       });
-      const revenue = orders.reduce((sum, order) => sum + order.finalAmount, 0);
+      const revenue = orders
+        .filter((o) => o.status === "delivered")
+        .reduce((sum, o) => sum + o.finalAmount, 0);
       const customers = await User.countDocuments({
         createdAt: { $gte: startDate, $lt: endDate },
       });
@@ -142,6 +146,25 @@ exports.getOrderStatus = async (req, res) => {
 exports.getTopProducts = async (req, res) => {
   try {
     const items = await OrderItem.aggregate([
+      // Nối với bảng Order để lấy status
+      {
+        $lookup: {
+          from: "orders", // tên collection trong MongoDB (viết thường, số nhiều)
+          localField: "order_id",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      {
+        $unwind: "$order", // giải phẳng order
+      },
+      // Lọc chỉ lấy đơn đã giao
+      {
+        $match: {
+          "order.status": "delivered",
+        },
+      },
+      // Gom nhóm theo sản phẩm
       {
         $group: {
           _id: {
@@ -184,7 +207,9 @@ exports.filterByDate = async (req, res) => {
     const to = new Date(endDate + "T23:59:59Z");
 
     const orders = await Order.find({ createdAt: { $gte: from, $lte: to } });
-    const revenue = orders.reduce((sum, o) => sum + o.finalAmount, 0);
+    const revenue = orders
+      .filter((o) => o.status === "delivered")
+      .reduce((sum, o) => sum + o.finalAmount, 0);
     const customers = await User.countDocuments({
       createdAt: { $gte: from, $lte: to },
     });
@@ -207,7 +232,10 @@ exports.filterByDate = async (req, res) => {
       result.push({
         date: dayStr,
         displayDate: d.format("DD/MM"),
-        revenue: ordersInDay.reduce((s, o) => s + o.finalAmount, 0),
+        revenue: ordersInDay
+          .filter((o) => o.status === "delivered")
+          .reduce((sum, o) => sum + o.finalAmount, 0),
+
         orders: ordersInDay.length,
         customers: await User.countDocuments({
           createdAt: { $gte: dayStart, $lte: dayEnd },
@@ -222,7 +250,8 @@ exports.filterByDate = async (req, res) => {
       shippingOrders,
       dailyData: result,
       orders: orders.map((order) => ({
-        orderId: order.order_code,
+        orderId: order._id,
+        order_code: order.order_code,
         customer: order.receiverName,
         amount: order.finalAmount,
         status: order.status,
@@ -253,7 +282,9 @@ exports.summaryByWeek = async (req, res) => {
     const users = await User.find({
       createdAt: { $gte: firstDay, $lte: lastDay },
     });
-    const revenue = orders.reduce((sum, o) => sum + o.finalAmount, 0);
+    const revenue = orders
+      .filter((o) => o.status === "delivered")
+      .reduce((sum, o) => sum + o.finalAmount, 0);
     const shippingOrders = orders.filter((o) => o.status === "shipped").length;
 
     const dailyData = [...Array(7)].map((_, i) => {
@@ -268,7 +299,10 @@ exports.summaryByWeek = async (req, res) => {
       return {
         date: day.format("YYYY-MM-DD"),
         displayDate: day.format("DD/MM"),
-        revenue: ordersInDay.reduce((s, o) => s + o.finalAmount, 0),
+        revenue: ordersInDay
+          .filter((o) => o.status === "delivered")
+          .reduce((s, o) => s + o.finalAmount, 0),
+
         orders: ordersInDay.length,
         customers: customersInDay.length,
       };
@@ -281,7 +315,8 @@ exports.summaryByWeek = async (req, res) => {
       shippingOrders,
       dailyData,
       orders: orders.map((order) => ({
-        orderId: order.order_code,
+        orderId: order._id,
+        order_code: order.order_code,
         customer: order.receiverName,
         amount: order.finalAmount,
         status: order.status,
@@ -310,7 +345,10 @@ exports.summaryByYear = async (req, res) => {
 
       result.push({
         month: month + 1,
-        revenue: orders.reduce((sum, o) => sum + o.finalAmount, 0),
+        revenue: orders
+          .filter((o) => o.status === "delivered")
+          .reduce((sum, o) => sum + o.finalAmount, 0),
+
         orders: orders.length,
         customers: users.length,
       });
@@ -321,5 +359,59 @@ exports.summaryByYear = async (req, res) => {
     res
       .status(500)
       .json({ message: "Lỗi thống kê theo năm", error: err.message });
+  }
+};
+
+exports.getTopProductsByDate = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+    if (!startDate || !endDate)
+      return res.status(400).json({ message: "Thiếu khoảng ngày" });
+
+    const from = new Date(`${startDate}T00:00:00Z`);
+    const to = new Date(`${endDate}T23:59:59Z`);
+
+    const orders = await Order.find({
+      createdAt: { $gte: from, $lte: to },
+      status: "delivered",
+    });
+
+    const orderIds = orders.map((o) => o._id);
+
+    const items = await OrderItem.aggregate([
+      {
+        $match: {
+          order_id: { $in: orderIds },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            product_id: "$product_id",
+            product_name: "$product_name",
+            product_image: "$product_image",
+          },
+          sold: { $sum: "$quantity" },
+          revenue: { $sum: { $multiply: ["$quantity", "$price"] } },
+        },
+      },
+      { $sort: { sold: -1 } },
+      { $limit: 6 },
+    ]);
+
+    const result = items.map((item) => ({
+      name: item._id.product_name,
+      image: item._id.product_image,
+      sold: item.sold,
+      revenue: item.revenue,
+      growth: (Math.random() * 30).toFixed(1),
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      message: "Lỗi lọc top sản phẩm theo ngày",
+      error: err.message,
+    });
   }
 };

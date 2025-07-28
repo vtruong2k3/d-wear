@@ -239,16 +239,16 @@ const ProductAdd = () => {
   // };
   const onFinish = async (values: IProducts) => {
     try {
-      // ⚠️ Kiểm tra biến thể
+
       if (!validateVariants()) {
         toast.error("Vui lòng nhập đầy đủ thông tin cho các biến thể!");
         return;
       }
-  
+
       setLoading(true);
-  
+
       const formData = new FormData();
-  
+
       // ✔️ Thông tin sản phẩm
       formData.append("product_name", values.product_name);
       formData.append("description", values.description);
@@ -257,14 +257,14 @@ const ProductAdd = () => {
       formData.append("category_id", values.category_id);
       formData.append("gender", values.gender);
       formData.append("material", values.material);
-  
+
       // ✔️ Ảnh sản phẩm
       imageList.forEach((file) => {
         if (file.originFileObj) {
           formData.append("productImage", file.originFileObj);
         }
       });
-  
+
       // ✔️ Biến thể JSON (KHÔNG có ảnh)
       const plainVariants = variants.map((variant) => ({
         size: variant.size,
@@ -273,7 +273,7 @@ const ProductAdd = () => {
         price: variant.price,
       }));
       formData.append("variants", JSON.stringify(plainVariants));
-  
+
       // ✔️ Ảnh biến thể — KÈM INDEX để backend biết ảnh nào của biến thể nào
       variants.forEach((variant, idx) => {
         variant.image.forEach((imgFile) => {
@@ -283,16 +283,15 @@ const ProductAdd = () => {
           }
         });
       });
-  
-      // Debug FormData
-      console.log("==== CHECKING FORMDATA ====");
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-  
-      // ✔️ Gửi API
-      const data = await createProduct(formData);
-  
+
+
+
+
+
+      // Gửi request
+      const data = await createProduct(formData)
+
+
       toast.success(data.message);
       navigate("/admin/products");
     } catch (error) {
@@ -305,8 +304,9 @@ const ProductAdd = () => {
       setLoading(false);
     }
   };
-  
-  
+
+
+
 
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {

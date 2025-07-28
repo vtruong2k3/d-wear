@@ -73,8 +73,12 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
         const matchingVariant = variants.find(v => v.size === size && v.color === selectedColor);
         if (matchingVariant) {
             setSelectedVariant(matchingVariant);
+            onSelectImage(matchingVariant.image?.[0] || product.imageUrls[0] || null); // ✅ Thêm dòng này
+        } else {
+            onSelectImage(product.imageUrls[0] || null); // ❗️Thêm dòng fallback nếu không tìm thấy
         }
     };
+
 
     const handleQuantityChange = (type: 'increase' | 'decrease') => {
         const maxStock = selectedVariant?.stock || 0;
