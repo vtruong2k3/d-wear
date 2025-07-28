@@ -31,9 +31,9 @@ interface AddAddressModalProps {
   onCancel: () => void;
   onAddAddress: (newAddress: SavedAddress) => void;
   provinces: Province[];
-  districts: District[];
-  wards: Ward[];
-  savedAddresses: SavedAddress[]; // 👉 thêm dòng này
+  districts?: District[] ;
+  wards ?: Ward[];
+  savedAddresses: SavedAddress[]; 
 }
 
 const AddAddressModal: React.FC<AddAddressModalProps> = ({
@@ -41,6 +41,7 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
   onCancel,
   onAddAddress,
   provinces,
+  savedAddresses,
 }) => {
   const [form] = Form.useForm();
   const [districts, setDistricts] = useState<RawDistrict[]>([]);

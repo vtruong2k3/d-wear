@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, MapPin, Plus, Phone } from "lucide-react";
 import AddAddressModal from "../../../components/Client/Address/AddressModal";
 import UpdateAddressModal from "../../../components/Client/Address/UpdateAddressModal";
-
+import { Popconfirm } from "antd";
 import {
   getUserAddresses,
   addUserAddress,
   updateUserAddress,
+  deleteUserAddress,
 } from "../../../services/client/addressService";
 
 import type {
@@ -37,10 +38,15 @@ const AddressManagement = () => {
   const [districtsUpdate, setDistrictsUpdate] = useState<RawDistrict[]>([]);
   const [wardsUpdate, setWardsUpdate] = useState<RawWard[]>([]);
 
-  const [selectedProvince, setSelectedProvince] = useState<number | null>(null); //  Thêm state
-  const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null); //  Thêm state
+  const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
 
-  //  Fetch danh sách địa chỉ và Tỉnh/TP lúc đầu
+  // Log mở modal
+  useEffect(() => {
+    console.log("🟢 Add Modal visible:", isAddAddressModalVisible);
+    console.log("🟢 Edit Modal visible:", isEditModalVisible);
+  }, [isAddAddressModalVisible, isEditModalVisible]);
+
   useEffect(() => {
     fetchAddresses();
     fetchProvinces();
@@ -50,29 +56,30 @@ const AddressManagement = () => {
     try {
       const res = await getUserAddresses();
       const fetched = res?.data?.address;
+      console.log("📦 Fetched addresses:", fetched);
       setAddresses(Array.isArray(fetched) ? fetched : []);
     } catch (error) {
-      console.error(" Lỗi khi lấy danh sách địa chỉ:", error);
+      console.error("❌ Lỗi khi lấy danh sách địa chỉ:", error);
     }
   };
 
   const fetchProvinces = async () => {
     try {
       const res = await getProvinces();
-      console.log("Provinces API response:", res.data);
+      console.log("🌐 Provinces API response:", res.data);
       if (res.status === 200 && Array.isArray(res.data.provinces)) {
         setProvinces(res.data.provinces);
       } else {
-        console.error(" Sai cấu trúc provinces:", res.data);
+        console.error("⚠️ Sai cấu trúc provinces:", res.data);
       }
     } catch (error) {
-      console.error(" Lỗi khi lấy Tỉnh/TP:", error);
+      console.error("❌ Lỗi khi lấy Tỉnh/TP:", error);
     }
   };
 
-  //  Fetch quận huyện khi chọn Tỉnh
   useEffect(() => {
     if (selectedProvince) {
+      console.log("📌 Province selected:", selectedProvince);
       fetchDistricts(selectedProvince);
     } else {
       setDistricts([]);
@@ -83,8 +90,7 @@ const AddressManagement = () => {
   const fetchDistricts = async (provinceId: any) => {
     try {
       const res = await getDistricts(provinceId);
-      console.log("Districts API:", res.data);
-
+      console.log("🌐 Districts API:", res.data);
       if (res.status === 200 && Array.isArray(res.data)) {
         const mapped: District[] = res.data.map((raw: RawDistrict) => ({
           id: raw.DistrictID.toString(),
@@ -93,17 +99,17 @@ const AddressManagement = () => {
           DistrictName: raw.DistrictName,
           ProvinceID: raw.ProvinceID.toString(),
         }));
+        console.log("✅ Mapped Districts:", mapped);
         setDistricts(mapped);
       }
     } catch (error) {
-      console.error(" Lỗi khi lấy Quận/Huyện:", error);
+      console.error("❌ Lỗi khi lấy Quận/Huyện:", error);
     }
   };
-  
 
-  //  Fetch xã phường khi chọn Quận
   useEffect(() => {
     if (selectedDistrict) {
+      console.log("📌 District selected:", selectedDistrict);
       fetchWards(selectedDistrict);
     } else {
       setWards([]);
@@ -113,39 +119,46 @@ const AddressManagement = () => {
   const fetchWards = async (districtId: number) => {
     try {
       const res = await getWards(districtId);
-      console.log("Wards API:", res.data);
+      console.log("🌐 Wards API:", res.data);
       if (res.status === 200 && Array.isArray(res.data)) {
+        console.log("✅ Wards:", res.data);
         setWards(res.data);
       }
     } catch (error) {
-      console.error(" Lỗi khi lấy Phường/Xã:", error);
+      console.error("❌ Lỗi khi lấy Phường/Xã:", error);
     }
   };
 
-  const handleAddNewAddress = async (newAddress: any) => {
-    try {
-      const res = await addUserAddress(newAddress);
-      if (res.status === 200 || res.status === 201) {
-        fetchAddresses();
-        setIsAddAddressModalVisible(false);
-      }
-    } catch (error) {
-      console.error(" Thêm địa chỉ thất bại:", error);
-    }
+  const handleAddNewAddress = async (_: any) => {
+    fetchAddresses(); // chỉ refetch thôi
+    setIsAddAddressModalVisible(false);
   };
+
 
   const handleSetDefault = async (addressId: any) => {
+    console.log("➡️ Đặt mặc định cho:", addressId);
     try {
       await updateUserAddress(addressId, { isDefault: true });
       fetchAddresses();
     } catch (error) {
-      console.error(" Lỗi khi đặt mặc định:", error);
+      console.error("❌ Lỗi khi đặt mặc định:", error);
     }
   };
 
   const handleEditClick = (address: any) => {
+    console.log("✏️ Edit Click:", address);
     setAddressToEdit(address);
     setIsEditModalVisible(true);
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    console.log("🗑️ Xoá địa chỉ:", addressId);
+    try {
+      await deleteUserAddress(addressId);
+      fetchAddresses();
+    } catch (error) {
+      console.error("❌ Lỗi khi xoá địa chỉ:", error);
+    }
   };
 
   return (
@@ -241,6 +254,16 @@ const AddressManagement = () => {
                   >
                     Cập nhật
                   </button>
+                  <Popconfirm
+                    title="Bạn có chắc chắn muốn xoá địa chỉ này không?"
+                    okText="Xoá"
+                    cancelText="Huỷ"
+                    onConfirm={() => handleDeleteAddress(address._id)}
+                  >
+                    <button className="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                      Xoá
+                    </button>
+                  </Popconfirm>
                 </div>
               </div>
             </div>
@@ -259,22 +282,20 @@ const AddressManagement = () => {
       </div>
 
       <AddAddressModal
-        key={provinces.length}
         visible={isAddAddressModalVisible}
         onCancel={() => setIsAddAddressModalVisible(false)}
         onAddAddress={handleAddNewAddress}
         provinces={provinces}
-        districts={districts}
-        wards={wards}
         savedAddresses={addresses}
       />
+
       <UpdateAddressModal
         visible={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         addressToUpdate={addressToEdit}
         provinces={provinces}
         districts={districtsUpdate}
-        wards={wardsUpdate} //  chuẩn RawWard[]
+        wards={wardsUpdate}
         onProvinceChange={(provinceId: string) =>
           setSelectedProvince(Number(provinceId))
         }
@@ -286,8 +307,6 @@ const AddressManagement = () => {
           setIsEditModalVisible(false);
         }}
       />
-
-      
     </div>
   );
 };
