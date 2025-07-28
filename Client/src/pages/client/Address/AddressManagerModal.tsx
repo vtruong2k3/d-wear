@@ -268,6 +268,24 @@ const AddressManagement = () => {
         wards={wards}
         savedAddresses={addresses}
       />
+      <UpdateAddressModal
+        visible={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        addressToUpdate={addressToEdit}
+        provinces={provinces}
+        districts={districtsUpdate}
+        wards={wardsUpdate} //  chuẩn RawWard[]
+        onProvinceChange={(provinceId: string) =>
+          setSelectedProvince(Number(provinceId))
+        }
+        onDistrictChange={(districtId: string) =>
+          setSelectedDistrict(Number(districtId))
+        }
+        onSuccess={() => {
+          fetchAddresses();
+          setIsEditModalVisible(false);
+        }}
+      />
 
       
     </div>
