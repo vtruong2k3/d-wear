@@ -7,13 +7,14 @@ import apiServiceProduct from "../../../services/client/apiServiceProduct";
 import SectionAllProduct from "../../../components/Client/SectionAllProduct/SectionAllProduct";
 import SectionNewArrivals from "../../../components/Client/SectionNewArrivals/SectionNewArrivals";
 import SectionOurCategories from "../../../components/Client/SectionOurCategories/SectionOurCategories";
+import type { IProducts } from "../../../types/IProducts";
 
 
 const Home = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<IProducts[]>([]);
   const fetchDataGetAllProduct = async () => {
     const res = await apiServiceProduct.getAllProducts({});
-    console.log(res, "resresres");
+    console.log(res.data.products, "resresres");
     if (res.status === 200) {
       setProducts(res.data.products);
     }

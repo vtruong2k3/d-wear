@@ -9,7 +9,7 @@ export interface IVariants {
   color: string;
   stock: number;
   price: number;
-  image: string[]; // ✅ đúng key ảnh
+  image: string[];
   isDeleted?: boolean;
 }
 

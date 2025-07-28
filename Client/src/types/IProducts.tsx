@@ -1,3 +1,7 @@
+import type { IBrand } from "./brand/IBrand";
+import type { ICategory } from "./category/ICategory";
+import type { IVariants } from "./IVariants";
+
 // get products
 export interface IProduct {
   id: string;
@@ -8,18 +12,21 @@ export interface IProduct {
   category: string;
   brand?: string;
 }
+
 // add  product
 export interface IProducts {
   _id: string;
   product_name: string;
   description: string;
   basePrice: number;
-  brand_id: string;
+  brand_id: IBrand;
   imageUrls: string[];
-  category_id: string;
+  category_id: ICategory;
   gender: string;
   material: string;
-  variants?: Variant[];
+  variants?: IVariants[] | undefined;
+  createdAt: string;
+  updatedAt: string;
 
 }
 export interface IProductDetail {
@@ -37,13 +44,7 @@ export interface IProductDetail {
 }
 
 
-interface Variant {
-  color: string;
-  size: string;
-  stock: number;
-  price?: number;
-  image: string[];
-}
+
 export interface CurrentImage {
   uid: string;
   name: string;

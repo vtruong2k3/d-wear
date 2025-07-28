@@ -82,8 +82,10 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
   // Mock data for demo
   const mockRating = 4.5;
   const mockReviews = 156;
-  const mockDiscount = 15;
-  const originalPrice = item.basePrice * 1.2;
+  const salePrice = item.variants?.[0]?.price || item.basePrice;
+  const originalPrice = item.basePrice; // hoặc item.basePrice cũng được
+
+  const discountPercent = Math.round(((originalPrice - salePrice) / originalPrice) * 100);
 
   return isLoading ? (
     <Grow in={true} timeout={800}>
@@ -94,10 +96,10 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
           cover={
             <div className="relative z-1 overflow-hidden">
               {/* Discount Badge */}
-              {mockDiscount > 0 && (
+              {discountPercent > 0 && (
                 <div className="absolute top-3 left-3 z-10">
                   <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                    -{mockDiscount}%
+                    -{discountPercent}%
                   </span>
                 </div>
               )}
@@ -196,7 +198,7 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
           <div className="flex-1 flex flex-col justify-between space-y-3">
             {/* Category */}
             <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
-              POLO SHIRT
+              {item.category_id.category_name}
             </div>
 
             {/* Product Name */}
@@ -239,18 +241,18 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-red-600">
-                    {formatCurrency(item.basePrice)}
+                    {formatCurrency(item.variants?.[0]?.price || item.basePrice)}
                   </span>
-                  {mockDiscount > 0 && (
+                  {discountPercent > 0 && (
                     <span className="text-sm text-gray-400 line-through">
                       {formatCurrency(originalPrice)}
                     </span>
                   )}
                 </div>
               </div>
-              {mockDiscount > 0 && (
+              {discountPercent > 0 && (
                 <div className="text-xs text-green-600 font-medium mt-1">
-                  Tiết kiệm {formatCurrency(originalPrice - item.basePrice)}
+                  Tiết kiệm {formatCurrency(item.basePrice - salePrice)}
                 </div>
               )}
             </div>
