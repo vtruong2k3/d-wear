@@ -250,15 +250,130 @@ const ProductEdit = () => {
 
 
   //hàm xử lí submit
+  // const onFinish = async (values: IProducts) => {
+  //   try {
+  //     // ✅ Validate biến thể giống ProductAdd
+  //     const errors: { [index: number]: string[] } = {};
+  //     let isValid = true;
+
+  //     variants.forEach((variant, idx) => {
+  //       const errs: string[] = [];
+
+  //       if (!variant.size) errs.push("size");
+  //       if (!variant.color) errs.push("color");
+  //       if (
+  //         variant.price === null ||
+  //         variant.price === undefined ||
+  //         variant.price <= 0
+  //       )
+  //         errs.push("price");
+  //       if (
+  //         variant.stock === null ||
+  //         variant.stock === undefined ||
+  //         variant.stock < 0
+  //       )
+  //         errs.push("stock");
+
+  //       if (errs.length > 0) {
+  //         errors[idx] = errs;
+  //         isValid = false;
+  //       }
+  //     });
+
+  //     if (!isValid) {
+  //       setVariantErrors(errors);
+  //       toast.error(
+  //         "Vui lòng nhập đầy đủ và hợp lệ thông tin cho các biến thể!"
+  //       );
+  //       return;
+  //     }
+
+  //     setLoading(true);
+
+  //     const formData = new FormData();
+
+  //     // ✅ Thông tin cơ bản
+  //     formData.append("product_name", values.product_name);
+  //     formData.append("description", values.description);
+  //     formData.append("basePrice", String(values.basePrice));
+  //     formData.append("brand_id", values.brand_id);
+  //     formData.append("category_id", values.category_id);
+  //     formData.append("gender", values.gender);
+  //     formData.append("material", values.material);
+
+  //     // ✅ Ảnh hiện tại
+  //     currentImages.forEach((img) => {
+  //       formData.append("existingImageUrls", img.url);
+  //     });
+
+  //     // ✅ Ảnh mới được upload
+  //     imageList.forEach((file) => {
+  //       if (file.originFileObj) {
+  //         formData.append("productImage", file.originFileObj);
+  //       }
+  //     });
+
+  //     // ✅ Biến thể (JSON)
+  //     const plainVariants = variants.map((v) => {
+  //       const oldImages = v.image
+  //         .filter((img) => {
+  //           if (typeof img === "string") return true;
+  //           const file = img as UploadFileWithRaw;
+  //           return !file.originFileObj && (file.rawFileName || file.name);
+  //         })
+  //         .map((img) => {
+  //           if (typeof img === "string") return img;
+  //           const file = img as UploadFileWithRaw;
+  //           return file.rawFileName || file.name;
+  //         });
+
+  //       return {
+  //         _id: v._id,
+  //         size: v.size,
+  //         color: v.color,
+  //         stock: v.stock,
+  //         price: v.price,
+  //         image: oldImages, // ✅ string[]
+  //       };
+  //     });
+
+  //     formData.append("variants", JSON.stringify(plainVariants));
+
+
+
+  //     // ✅ Ảnh biến thể
+  //     variants.forEach((variant) => {
+  //       variant.image.forEach((imgFile) => {
+  //         if (imgFile.originFileObj) {
+  //           formData.append("imageVariant", imgFile.originFileObj);
+  //         }
+  //       });
+  //     });
+
+  //     // ✅ PUT request
+  //     const data = await updateProduct(id, formData)
+
+  //     toast.success(data.message);
+  //     navigate("/admin/products");
+  //   } catch (error) {
+  //     const errorMessage =
+  //       (error as ErrorType).response?.data?.message ||
+  //       (error as ErrorType).message ||
+  //       "Đã xảy ra lỗi, vui lòng thử lại.";
+  //     toast.error(errorMessage);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const onFinish = async (values: IProducts) => {
     try {
       // ✅ Validate biến thể giống ProductAdd
       const errors: { [index: number]: string[] } = {};
       let isValid = true;
-
+  
       variants.forEach((variant, idx) => {
         const errs: string[] = [];
-
+  
         if (!variant.size) errs.push("size");
         if (!variant.color) errs.push("color");
         if (
@@ -273,13 +388,13 @@ const ProductEdit = () => {
           variant.stock < 0
         )
           errs.push("stock");
-
+  
         if (errs.length > 0) {
           errors[idx] = errs;
           isValid = false;
         }
       });
-
+  
       if (!isValid) {
         setVariantErrors(errors);
         toast.error(
@@ -287,11 +402,11 @@ const ProductEdit = () => {
         );
         return;
       }
-
+  
       setLoading(true);
-
+  
       const formData = new FormData();
-
+  
       // ✅ Thông tin cơ bản
       formData.append("product_name", values.product_name);
       formData.append("description", values.description);
@@ -300,19 +415,19 @@ const ProductEdit = () => {
       formData.append("category_id", values.category_id);
       formData.append("gender", values.gender);
       formData.append("material", values.material);
-
+  
       // ✅ Ảnh hiện tại
       currentImages.forEach((img) => {
         formData.append("existingImageUrls", img.url);
       });
-
+  
       // ✅ Ảnh mới được upload
       imageList.forEach((file) => {
         if (file.originFileObj) {
           formData.append("productImage", file.originFileObj);
         }
       });
-
+  
       // ✅ Biến thể (JSON)
       const plainVariants = variants.map((v) => {
         const oldImages = v.image
@@ -326,7 +441,7 @@ const ProductEdit = () => {
             const file = img as UploadFileWithRaw;
             return file.rawFileName || file.name;
           });
-
+  
         return {
           _id: v._id,
           size: v.size,
@@ -336,23 +451,21 @@ const ProductEdit = () => {
           image: oldImages, // ✅ string[]
         };
       });
-
+  
       formData.append("variants", JSON.stringify(plainVariants));
-
-
-
-      // ✅ Ảnh biến thể
-      variants.forEach((variant) => {
+  
+      // ✅ Ảnh biến thể MỚI - quan trọng: gửi kèm index
+      variants.forEach((variant, idx) => {
         variant.image.forEach((imgFile) => {
           if (imgFile.originFileObj) {
-            formData.append("imageVariant", imgFile.originFileObj);
+            formData.append(`imageVariant_${idx}[]`, imgFile.originFileObj);
           }
         });
       });
-
+  
       // ✅ PUT request
-      const data = await updateProduct(id, formData)
-
+      const data = await updateProduct(id, formData);
+  
       toast.success(data.message);
       navigate("/admin/products");
     } catch (error) {
@@ -365,7 +478,7 @@ const ProductEdit = () => {
       setLoading(false);
     }
   };
-
+  
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
       toast.warning("Chỉ được tải tối đa 8 ảnh!");
