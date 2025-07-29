@@ -1,5 +1,9 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-
+import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import { fetchAllUsers, fetchUserById } from "../../../services/client/userApi";
 
 // ✅ Định nghĩa kiểu UserType với isDeleted
 export interface UserType {
@@ -44,94 +48,73 @@ const initialState: UserState = {
   addressLoading: false,
 };
 
-// ✅ MOCK DATA có kiểu trả về rõ ràng với isDeleted
+//danh sách user
 export const fetchUsers = createAsyncThunk<UserType[]>(
   "admin/user/fetchUsers",
   async () => {
-    return [
-      {
-        _id: "1",
-        name: "Nguyễn văn A",
-        email: "a@gmail.com",
-        role: "user",
-        status: "active",
-        createdAt: new Date().toISOString(),
-        phone: "0909123456",
-        isDeleted: false,
-      },
-      {
-        _id: "2",
-        name: "Trần Thị B",
-        email: "b@gmail.com",
-        role: "admin",
-        status: "banned",
-        createdAt: new Date().toISOString(),
-        phone: "0908765432",
-        isDeleted: false,
-      },
-      {
-        _id: "3",
-        name: "Lê Văn C",
-        email: "c@gmail.com",
-        role: "user",
-        status: "active",
-        createdAt: new Date().toISOString(),
-        phone: "0907654321",
-        isDeleted: true, // User đã bị xóa mềm
-      },
-    ];
+    const users = await fetchAllUsers(); // gọi API thật
+    return users;
   }
 );
 
 // ✅ Fetch địa chỉ của user
-export const fetchUserAddresses = createAsyncThunk<AddressType[], string>(
-  "admin/user/fetchUserAddresses",
+// export const fetchUserAddresses = createAsyncThunk<AddressType[], string>(
+//   "admin/user/fetchUserAddresses",
+//   async (userId: string) => {
+//     // Mock địa chỉ
+//     const mockAddresses: AddressType[] = [
+//       {
+//         _id: "addr1",
+//         user_id: "1",
+//         name: "Nguyễn Văn A",
+//         phone: "0909123456",
+//         provinceName: "Hà Nội",
+//         districtName: "Ba Đình",
+//         wardName: "Phúc Xá",
+//         detailAddress: "123 Đường ABC",
+//         fullAddress: "123 Đường ABC, Phúc Xá, Ba Đình, Hà Nội",
+//         isDefault: true,
+//         createdAt: new Date().toISOString(),
+//       },
+//       {
+//         _id: "addr2",
+//         user_id: "1",
+//         name: "Nguyễn Văn A (Công ty)",
+//         phone: "0909123456",
+//         provinceName: "Hà Nội",
+//         districtName: "Hoàn Kiếm",
+//         wardName: "Tràng Tiền",
+//         detailAddress: "456 Phố Tràng Tiền",
+//         fullAddress: "456 Phố Tràng Tiền, Tràng Tiền, Hoàn Kiếm, Hà Nội",
+//         isDefault: false,
+//         createdAt: new Date().toISOString(),
+//       },
+//       {
+//         _id: "addr3",
+//         user_id: "2",
+//         name: "Trần Thị B",
+//         phone: "0908765432",
+//         provinceName: "TP. Hồ Chí Minh",
+//         districtName: "Quận 1",
+//         wardName: "Phường Bến Nghé",
+//         detailAddress: "789 Nguyễn Huệ",
+//         fullAddress: "789 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
+//         isDefault: true,
+//         createdAt: new Date().toISOString(),
+//       },
+//     ];
+
+//     // Lọc địa chỉ theo user_id
+//     return mockAddresses.filter((addr) => addr.user_id === userId);
+//   }
+// );
+
+//mới
+export const getUserDetail = createAsyncThunk(
+  "admin/user/getUserDetail",
   async (userId: string) => {
-    // Mock địa chỉ
-    const mockAddresses: AddressType[] = [
-      {
-        _id: "addr1",
-        user_id: "1",
-        name: "Nguyễn Văn A",
-        phone: "0909123456",
-        provinceName: "Hà Nội",
-        districtName: "Ba Đình",
-        wardName: "Phúc Xá",
-        detailAddress: "123 Đường ABC",
-        fullAddress: "123 Đường ABC, Phúc Xá, Ba Đình, Hà Nội",
-        isDefault: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: "addr2",
-        user_id: "1",
-        name: "Nguyễn Văn A (Công ty)",
-        phone: "0909123456",
-        provinceName: "Hà Nội",
-        districtName: "Hoàn Kiếm",
-        wardName: "Tràng Tiền",
-        detailAddress: "456 Phố Tràng Tiền",
-        fullAddress: "456 Phố Tràng Tiền, Tràng Tiền, Hoàn Kiếm, Hà Nội",
-        isDefault: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: "addr3",
-        user_id: "2",
-        name: "Trần Thị B",
-        phone: "0908765432",
-        provinceName: "TP. Hồ Chí Minh",
-        districtName: "Quận 1",
-        wardName: "Phường Bến Nghé",
-        detailAddress: "789 Nguyễn Huệ",
-        fullAddress: "789 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
-        isDefault: true,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    
-    // Lọc địa chỉ theo user_id
-    return mockAddresses.filter(addr => addr.user_id === userId);
+    const res = await fetchUserById(userId);
+    return res; // { user, addresses }
   }
 );
 
@@ -140,7 +123,7 @@ export const softDeleteUser = createAsyncThunk<string, string>(
   "admin/user/softDeleteUser",
   async (userId: string) => {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     return userId;
   }
 );
@@ -150,7 +133,7 @@ export const restoreUser = createAsyncThunk<string, string>(
   "admin/user/restoreUser",
   async (userId: string) => {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     return userId;
   }
 );
@@ -183,40 +166,42 @@ const userSlice = createSlice({
       .addCase(fetchUsers.rejected, (state) => {
         state.loading = false;
       })
-      
+
       // Fetch User Addresses
-      .addCase(fetchUserAddresses.pending, (state) => {
-        state.addressLoading = true;
+      .addCase(getUserDetail.pending, (state) => {
+        state.loading = true;
       })
-      .addCase(
-        fetchUserAddresses.fulfilled,
-        (state, action: PayloadAction<AddressType[]>) => {
-          state.addressLoading = false;
-          state.userAddresses = action.payload;
-        }
-      )
-      .addCase(fetchUserAddresses.rejected, (state) => {
-        state.addressLoading = false;
+      .addCase(getUserDetail.fulfilled, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.selectedUser = action.payload.user;
+        state.userAddresses = action.payload.addresses;
       })
-      
+      .addCase(getUserDetail.rejected, (state) => {
+        state.loading = false;
+      })
+
       // Soft Delete User
       .addCase(
         softDeleteUser.fulfilled,
         (state, action: PayloadAction<string>) => {
           const userId = action.payload;
-          const userIndex = state.users.findIndex(user => user._id === userId);
+          const userIndex = state.users.findIndex(
+            (user) => user._id === userId
+          );
           if (userIndex !== -1) {
             state.users[userIndex].isDeleted = true;
           }
         }
       )
-      
+
       // Restore User
       .addCase(
         restoreUser.fulfilled,
         (state, action: PayloadAction<string>) => {
           const userId = action.payload;
-          const userIndex = state.users.findIndex(user => user._id === userId);
+          const userIndex = state.users.findIndex(
+            (user) => user._id === userId
+          );
           if (userIndex !== -1) {
             state.users[userIndex].isDeleted = false;
           }

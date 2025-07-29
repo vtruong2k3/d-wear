@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, restoreUser, selectUser, softDeleteUser, type UserType } from "../../../../redux/features/admin/userSlice";
+import {
+  fetchUsers,
+  restoreUser,
+  getUserDetail,
+  softDeleteUser,
+  type UserType,
+} from "../../../../redux/features/admin/userSlice";
 import { EyeOutlined, DeleteOutlined, UndoOutlined } from "@ant-design/icons";
-import { fetchUserAddresses } from "../../../../redux/features/admin/userSlice";
 import { Button, message, Modal, Space, Spin, Switch, Table, Tag } from "antd";
-import Title from "antd/es/skeleton/Title";
+// import Title from "antd/es/skeleton/Title";
+import { Typography } from "antd";
+const { Title } = Typography;
 import UserDetailModal from "./UserDetailModal";
 import type { RootState } from "../../../../redux/store";
 
@@ -21,14 +28,14 @@ const UsersList = () => {
   }, [dispatch]);
 
   // Lọc user theo trạng thái
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter((user) =>
     showDeleted ? user.isDeleted : !user.isDeleted
   );
 
   const handleSoftDelete = (userId: string) => {
     Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa người dùng này?',
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa người dùng này?",
       onOk: () => {
         dispatch(softDeleteUser(userId) as any);
         message.success("Đã xóa người dùng thành công!");
@@ -76,16 +83,16 @@ const UsersList = () => {
       title: "Hành động",
       render: (_: any, record: UserType) => (
         <Space>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             icon={<EyeOutlined />}
-            onClick={() => dispatch(selectUser(record))}
+            onClick={() => dispatch(getUserDetail(record._id) as any)}
           >
             Xem chi tiết
           </Button>
           {!showDeleted ? (
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               danger
               icon={<DeleteOutlined />}
               onClick={() => handleSoftDelete(record._id)}
@@ -93,8 +100,8 @@ const UsersList = () => {
               Xóa
             </Button>
           ) : (
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               icon={<UndoOutlined />}
               onClick={() => handleRestore(record._id)}
             >
@@ -108,13 +115,20 @@ const UsersList = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
         <Title level={3}>
           {showDeleted ? "Người dùng đã xóa" : "Quản lý tài khoản người dùng"}
         </Title>
         <Space>
           <span>Hiển thị người dùng đã xóa:</span>
-          <Switch 
+          <Switch
             checked={showDeleted}
             onChange={setShowDeleted}
             checkedChildren="Đã xóa"
@@ -124,7 +138,7 @@ const UsersList = () => {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 50 }}>
+        <div style={{ textAlign: "center", padding: 50 }}>
           <Spin size="large" />
         </div>
       ) : (
@@ -132,17 +146,17 @@ const UsersList = () => {
           dataSource={filteredUsers}
           columns={columns}
           rowKey="_id"
-          pagination={{ 
+          pagination={{
             pageSize: 5,
             showSizeChanger: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} của ${total} người dùng`
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} người dùng`,
           }}
         />
       )}
-      <UserDetailModal user={selectedUser} />
+      <UserDetailModal />
     </div>
   );
 };
 
-export default UsersList
+export default UsersList;

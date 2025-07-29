@@ -5,25 +5,27 @@ import {
   Image,
   Input,
   Popconfirm,
+  Switch,
   Table,
   Tag,
   Typography,
   Space,
-  Switch,
 } from "antd";
 import {
   DeleteOutlined,
   SearchOutlined,
   PlusOutlined,
   EditOutlined,
-  EyeInvisibleOutlined,
+  RollbackOutlined,
 } from "@ant-design/icons";
 import type { IVariants } from "../../../../types/IVariants";
 import { toast } from "react-toastify";
 import {
   deleteVariant,
   getAllVariants,
-  softDeleteVariant, // Thêm chức năng xoá mềm
+  getSoftDeletedVariants,
+  softDeleteVariant,
+  restoreVariant,
 } from "../../../../services/admin/variantServices";
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
@@ -34,22 +36,23 @@ const { Title } = Typography;
 const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [showHidden, setShowHidden] = useState(false); // sẽ dùng ở bước tiếp theo
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
+  const [showHidden, setShowHidden] = useState(false);
   const { setLoading } = useLoading();
 
   const fetchVariants = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, total } = await getAllVariants(
-        currentPage,
-        pageSize,
-        searchText
-      );
-      setVariants(data);
-      setTotalItems(total);
+      let res;
+      if (showHidden) {
+        res = await getSoftDeletedVariants(currentPage, pageSize, searchText);
+      } else {
+        res = await getAllVariants(currentPage, pageSize, searchText);
+      }
+      setVariants(res.data);
+      setTotalItems(res.total);
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -59,13 +62,12 @@ const Variants: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [setLoading, currentPage, pageSize, searchText]);
+  }, [setLoading, currentPage, pageSize, searchText, showHidden]);
 
   useEffect(() => {
     fetchVariants();
   }, [fetchVariants]);
 
-  //  Hàm xử lý xoá mềm biến thể
   const handleSoftDelete = async (id: string) => {
     try {
       setLoading(true);
@@ -76,7 +78,24 @@ const Variants: React.FC = () => {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
-        "Đã xảy ra lỗi khi xoá mềm.";
+        "Đã xảy ra lỗi khi ẩn.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestore = async (id: string) => {
+    try {
+      setLoading(true);
+      const res = await restoreVariant(id);
+      toast.success(res.message);
+      fetchVariants();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi khi khôi phục.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -86,14 +105,14 @@ const Variants: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       setLoading(true);
-      await deleteVariant(id);
+      const res = await deleteVariant(id);
+      toast.success(res.message);
       fetchVariants();
-      toast.success("Xóa cứng biến thể thành công!");
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
-        "Đã xảy ra lỗi, vui lòng thử lại.";
+        "Đã xảy ra lỗi khi xoá.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -159,25 +178,41 @@ const Variants: React.FC = () => {
       key: "actions",
       render: (_: IVariants, record: IVariants) => (
         <Space>
-          <Button icon={<EditOutlined />} />
-          {/*  Nút xoá mềm biến thể */}
-          <Popconfirm
-            title="Ẩn biến thể này khỏi danh sách chính?"
-            onConfirm={() => handleSoftDelete(record._id)}
-            okText="Ẩn"
-            cancelText="Huỷ"
-          >
-            <Button icon={<EyeInvisibleOutlined />} />
-          </Popconfirm>
-          <Popconfirm
-            title="Xác nhận xóa cứng biến thể này?"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {!showHidden ? (
+            <>
+              <Button icon={<EditOutlined />} />
+
+              <Popconfirm
+                title="Xác nhận xoá mềm sản phẩm"
+                onConfirm={() => handleSoftDelete(record._id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+                okButtonProps={{ danger: true }}
+              >
+                <Button danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </>
+          ) : (
+            <>
+              <Popconfirm
+                title="Khôi phục biến thể này?"
+                onConfirm={() => handleRestore(record._id)}
+                okText="Khôi phục"
+                cancelText="Huỷ"
+              >
+                <Button icon={<RollbackOutlined />} type="primary"></Button>
+              </Popconfirm>
+              <Popconfirm
+                title="Xoá vĩnh viễn biến thể này?"
+                onConfirm={() => handleDelete(record._id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+                okButtonProps={{ danger: true }}
+              >
+                <Button danger icon={<DeleteOutlined />}></Button>
+              </Popconfirm>
+            </>
+          )}
         </Space>
       ),
     },
@@ -187,6 +222,15 @@ const Variants: React.FC = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <Title level={2}>Quản Lý Biến Thể Sản Phẩm</Title>
+        <Switch
+          checked={showHidden}
+          onChange={(checked) => {
+            setShowHidden(checked);
+            setCurrentPage(1);
+          }}
+          checkedChildren="Xem đã xoá"
+          unCheckedChildren="Xem đang hoạt động"
+        />
       </div>
 
       <Card
@@ -222,9 +266,9 @@ const Variants: React.FC = () => {
             pageSizeOptions: ["10", "20", "30", "50", "100"],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} của ${total} biến thể`,
-            onChange: (page, pageSize) => {
+            onChange: (page, size) => {
               setCurrentPage(page);
-              setPageSize(pageSize);
+              setPageSize(size);
             },
             style: { marginTop: 16 },
           }}

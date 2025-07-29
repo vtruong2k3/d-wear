@@ -36,8 +36,8 @@ productRouter.delete(
 //  Lấy tất cả sản phẩm
 productRouter.get("/product", productControler.getAllProductWithVariants);
 
-//  Lấy 1 sản phẩm kèm biến thể
-productRouter.get("/product/:id", productControler.getProductWithVariantsById);
+// //  Lấy 1 sản phẩm kèm biến thể
+// productRouter.get("/product/:id", productControler.getProductWithVariantsById);
 
 //  Lấy item rút gọn
 productRouter.get("/product/items", productControler.getAllProdutsItem);
@@ -53,5 +53,8 @@ productRouter.get(
   "/product/deleted", //  fix dấu `/` bị thiếu!
   productControler.getAllDeletedProductWithVariants
 );
+
+// ✅ Rồi mới đến /product/:id
+productRouter.get("/product/:id", productControler.getProductWithVariantsById);
 
 module.exports = productRouter;

@@ -6,7 +6,7 @@ export const getProvinces = () => {
 };
 
 // Lấy danh sách quận/huyện theo tỉnh
-export const getDistricts = (provinceId: string) => {
+export const getDistricts = (provinceId: number) => {
   return axios.get(`/api/ghn/districts/${provinceId}`);
 };
 // Lấy danh sách phường/xã theo quận

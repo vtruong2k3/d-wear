@@ -30,14 +30,12 @@ import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 import { useLoading } from "../../../../contexts/LoadingContext";
 import { useEffect } from "react";
-
-
+import { softDeleteProduct } from "../../../../services/admin/productService";
 const { Title } = Typography;
 
 const Products: React.FC = () => {
-
   const navigate = useNavigate();
-  const { setLoading } = useLoading()
+  const { setLoading } = useLoading();
   const [query, updateQuery] = useQuery({
     page: 1,
     limit: 10,
@@ -94,7 +92,6 @@ const Products: React.FC = () => {
       };
     }) || [];
 
-
   const columns: ColumnsType<IProduct> = [
     {
       title: "ID",
@@ -103,15 +100,17 @@ const Products: React.FC = () => {
       width: 80,
 
       align: "center",
-      render: (id) => <Link to={`/product/${id}`}><Tag color="blue">#{id}</Tag></Link>,
-
+      render: (id) => (
+        <Link to={`/product/${id}`}>
+          <Tag color="blue">#{id}</Tag>
+        </Link>
+      ),
     },
     {
       title: "Sản phẩm",
       key: "product",
       width: 300,
       render: (_, record) => (
-
         <Link to={`/product/${record._id}`}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div
@@ -141,7 +140,6 @@ const Products: React.FC = () => {
                 {record.title}
               </div>
               <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
-
                 {record.brand}
               </div>
             </div>
@@ -149,8 +147,6 @@ const Products: React.FC = () => {
         </Link>
       ),
     },
-
-
 
     {
       title: "Giá",
@@ -162,7 +158,6 @@ const Products: React.FC = () => {
       render: (price) => (
         <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
           {typeof price === "number" ? formatCurrency(price) : "N/A"}
-
         </span>
       ),
     },
@@ -172,12 +167,10 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
-
         <Tag color="geekblue" style={{ borderRadius: "12px" }}>
           {category}
         </Tag>
       ),
-
     },
     {
       title: "Thao tác",
@@ -192,9 +185,7 @@ const Products: React.FC = () => {
             type="text"
             icon={<FaPen />}
             onClick={() => navigate(`/admin/products/edit/${record.id}`)}
-
             style={{ color: "#1890ff" }}
-
             title="Chỉnh sửa"
           />
           <Popconfirm
@@ -205,18 +196,31 @@ const Products: React.FC = () => {
             cancelText="Hủy"
           >
             <Button type="text" danger icon={<MdDelete />} title="Xóa" />
-
           </Popconfirm>
         </Space>
       ),
     },
   ];
 
+  // const handleDelete = async (id: number) => {
+  //   try {
+  //     const { data } = await axios.delete(`/api/product/${id}`);
+  //     toast.success(data.message);
+  //     refetch();
+  //   } catch (error) {
+  //     const errorMessage =
+  //       (error as ErrorType).response?.data?.message ||
+  //       (error as ErrorType).message ||
+  //       "Đã xảy ra lỗi, vui lòng thử lại.";
+  //     toast.error(errorMessage);
+  //   }
+  // };
 
-  const handleDelete = async (id: number) => {
+  //xóa mềm
+  const handleDelete = async (id: string) => {
     try {
-      const { data } = await axios.delete(`/api/product/${id}`);
-      toast.success(data.message);
+      const data = await softDeleteProduct(id, true); // Gửi true rõ ràng
+      toast.success(data.message || "Đã xoá mềm sản phẩm.");
       refetch();
     } catch (error) {
       const errorMessage =
@@ -257,7 +261,6 @@ const Products: React.FC = () => {
         </Title>
 
         <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
-
           <Col flex="auto">
             <Space size="middle" wrap>
               <Search
@@ -271,14 +274,11 @@ const Products: React.FC = () => {
               <Select
                 placeholder="Sắp xếp theo"
                 style={{ minWidth: 180 }}
-
                 size="large"
                 onChange={handleSort}
                 options={sortOptions}
                 suffixIcon={<FaFilter />}
-
                 allowClear
-
               />
             </Space>
           </Col>
@@ -289,10 +289,8 @@ const Products: React.FC = () => {
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
               style={{
-
                 borderRadius: 8,
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
-
               }}
             >
               Thêm sản phẩm
@@ -300,12 +298,9 @@ const Products: React.FC = () => {
           </Col>
         </Row>
 
-
         <Divider />
 
-
         <Table
-
           dataSource={products}
           rowKey={(record) => record.id || record._id || record.title}
           columns={columns}
@@ -328,17 +323,13 @@ const Products: React.FC = () => {
             },
             style: { marginTop: 16 },
           }}
-
           style={{ background: "white", borderRadius: 8 }}
           scroll={{ x: 800 }}
           size="middle"
         />
-
       </Card>
     </div>
   );
 };
 
-
 export default Products;
-

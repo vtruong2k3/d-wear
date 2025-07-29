@@ -123,7 +123,6 @@ exports.updateOrderStatus = async (req, res) => {
 
     const currentStatus = order.status;
 
-    //  Các trạng thái được phép chuyển tiếp
     const validTransitions = {
       pending: ["processing", "cancelled"],
       processing: ["shipped", "cancelled"],
@@ -140,14 +139,22 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    //  Cập nhật trạng thái
-    order.status = newStatus;
-    await order.save();
+    // Nếu là "delivered", cập nhật cả paymentStatus
+    const updateFields = {
+      status: newStatus,
+    };
+    if (newStatus === "delivered") {
+      updateFields.paymentStatus = "paid";
+    }
 
-    //  Gửi email cập nhật trạng thái
-    const email = order.email;
-    await sendOrderStatusUpdateEmail(email, order);
-    //  Gửi socket để client cập nhật real-time
+    const updatedOrder = await Order.findByIdAndUpdate(id, updateFields, {
+      new: true,
+    });
+
+    // Gửi email cập nhật trạng thái
+    await sendOrderStatusUpdateEmail(updatedOrder.email, updatedOrder);
+
+    // Gửi socket thông báo
     const io = getIO();
     io.to(id).emit("orderStatusUpdate", {
       orderId: id,
@@ -161,7 +168,7 @@ exports.updateOrderStatus = async (req, res) => {
       status: newStatus,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi cập nhật trạng thái:", error.message);
+    console.error(" Lỗi khi cập nhật trạng thái:", error.message);
     return res.status(500).json({
       message: "Lỗi server",
       error: error.message,

@@ -15,9 +15,9 @@ const PaymentResult = () => {
   useEffect(() => {
     const orderId = searchParams.get("orderId");
     const resultCode = searchParams.get("resultCode");
-    const transId = searchParams.get("transId"); // ✅ Lấy thêm transId
+    const transId = searchParams.get("transId"); //  Lấy thêm transId
 
-    // ✅ Nếu không có orderId, báo lỗi ngay
+    //  Nếu không có orderId, báo lỗi ngay
     if (!orderId || orderId === "payment") {
       toast.error("Không tìm thấy mã đơn hàng hợp lệ");
       navigate("/orders");
