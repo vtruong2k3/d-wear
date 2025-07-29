@@ -68,7 +68,20 @@ import {
       };
     });
   
-    
+    const handleRestore = async (id: string) => {
+        try {
+          const { data } = await axios.put(`/api/product/${id}/soft-delete`, {
+            isdeleted: false,
+          });
+          toast.success(data.message || "Khôi phục thành công.");
+          refetch();
+        } catch (error: any) {
+          console.error("❌ Lỗi khi khôi phục:", error?.response?.data || error.message);
+          toast.error("Lỗi khi khôi phục sản phẩm.");
+        }
+      };
+  
+      
       
   
     const columns: ColumnsType<IProduct> = [
