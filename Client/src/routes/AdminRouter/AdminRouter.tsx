@@ -5,6 +5,7 @@ import Products from "../../pages/admin/PageAdmin/Products/Products";
 import LoginAdmin from "../../pages/admin/auth/LoginAdmin";
 import ProductEdit from "../../pages/admin/PageAdmin/Products/ProductEdit";
 import ProductAdd from "../../pages/admin/PageAdmin/Products/ProductAdd";
+import DeletedProducts from "../../pages/admin/PageAdmin/Products/DeletedProducts";
 import Orders from "../../pages/admin/PageAdmin/Orders/Orders";
 import Orderdetail from "../../pages/admin/PageAdmin/Orders/OrderDetail";
 import Brand from "../../pages/admin/PageAdmin/Brand/Brand";
@@ -24,7 +25,7 @@ const adminRouter = [
       { path: "products/add", element: <ProductAdd /> },
       { path: "categories", element: <Categories /> },
       { path: "variants", element: <Variants /> },
-
+      { path: "products/deleted",element: <DeletedProducts />},
       { path: "orders", element: <Orders /> },
       { path: "orders/:id", element: <Orderdetail /> },
       { path: "brands", element: <Brand /> },
