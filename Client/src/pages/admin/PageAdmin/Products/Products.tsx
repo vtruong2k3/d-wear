@@ -20,7 +20,7 @@ import type { ColumnsType } from "antd/es/table";
 import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import axios from "axios";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -70,11 +70,12 @@ const Products: React.FC = () => {
     total,
     refetch,
   } = useFetchList<IProduct>("product", query, {});
+
   useEffect(() => {
     if (rawProducts) {
-      setLoading(false); //  Tắt loading khi dữ liệu đã load xong
+      setLoading(false);
     }
-  }, [rawProducts]);
+  }, [rawProducts, setLoading]);
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
       const rawPath = item.imageUrls?.[0] ?? "";
@@ -102,7 +103,7 @@ const Products: React.FC = () => {
       width: 80,
 
       align: "center",
-      render: (id) => <Tag color="blue">#{id}</Tag>,
+      render: (id) => <Link to={`/product/${id}`}><Tag color="blue">#{id}</Tag></Link>,
 
     },
     {
@@ -111,39 +112,41 @@ const Products: React.FC = () => {
       width: 300,
       render: (_, record) => (
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: 60,
-              height: 60,
-              flexShrink: 0,
-              borderRadius: 8,
-              border: "1px solid #f0f0f0",
-              overflow: "hidden", //k tràn ảnh
-              backgroundColor: "#fff",
-            }}
-          >
-            <img
-              src={record.thumbnail}
-              alt="product"
+        <Link to={`/product/${record._id}`}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
+                width: 60,
+                height: 60,
+                flexShrink: 0,
+                borderRadius: 8,
+                border: "1px solid #f0f0f0",
+                overflow: "hidden", //k tràn ảnh
+                backgroundColor: "#fff",
               }}
-            />
-          </div>
-          <div>
-            <div style={{ fontWeight: "600", color: "#262626" }}>
-              {record.title}
+            >
+              <img
+                src={record.thumbnail}
+                alt="product"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
             </div>
-            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+            <div>
+              <div style={{ fontWeight: "600", color: "#262626" }}>
+                {record.title}
+              </div>
+              <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
 
-              {record.brand}
+                {record.brand}
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
       ),
     },
 

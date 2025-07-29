@@ -13,7 +13,7 @@ import {
   type UploadFile,
 } from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import type { IProducts } from "../../../../types/IProducts";
+import type { IProductAdd } from "../../../../types/IProducts";
 import type { Category } from "../../../../types/IProducts";
 import type { Brand } from "../../../../types/IProducts";
 import { useEffect } from "react";
@@ -169,76 +169,8 @@ const ProductAdd = () => {
     fetchSelectOptions();
   }, []);
 
-  // Submit form để tạo sản phẩm mới
-  // const onFinish = async (values: IProducts) => {
-  //   try {
-  //     // ✅ Kiểm tra lỗi từng dòng variant và hiển thị trên form
-  //     if (!validateVariants()) {
-  //       toast.error("Vui lòng nhập đầy đủ thông tin cho các biến thể!");
-  //       return;
-  //     }
 
-  //     setLoading(true);
-
-  //     const formData = new FormData();
-
-  //     // Thêm thông tin sản phẩm
-  //     formData.append("product_name", values.product_name);
-  //     formData.append("description", values.description);
-  //     formData.append("basePrice", String(values.basePrice));
-  //     formData.append("brand_id", values.brand_id);
-  //     formData.append("category_id", values.category_id);
-  //     formData.append("gender", values.gender);
-  //     formData.append("material", values.material);
-
-  //     // Ảnh sản phẩm
-  //     imageList.forEach((file) => {
-  //       if (file.originFileObj) {
-  //         formData.append("productImage", file.originFileObj);
-  //       }
-  //     });
-
-  //     // Biến thể JSON
-  //     const plainVariants = variants.map((variant) => ({
-  //       size: variant.size,
-  //       color: variant.color,
-  //       stock: variant.stock,
-  //       price: variant.price,
-  //     }));
-
-  //     formData.append("variants", JSON.stringify(plainVariants));
-
-  //     // Ảnh biến thể
-  //     variants.forEach((variant) => {
-  //       variant.image.forEach((imgFile) => {
-  //         if (imgFile.originFileObj) {
-  //           formData.append("imageVariant", imgFile.originFileObj);
-  //         }
-  //       });
-  //     });
-
-  //     // Debug log
-  //     console.log("==== CHECKING FORMDATA ====");
-  //     for (const [key, value] of formData.entries()) {
-  //       console.log(`${key}:`, value);
-  //     }
-
-  //     // Gửi request
-  //     const data = await createProduct(formData)
-
-  //     toast.success(data.message);
-  //     navigate("/admin/products");
-  //   } catch (error) {
-  //     const errorMessage =
-  //       (error as ErrorType).response?.data?.message ||
-  //       (error as ErrorType).message ||
-  //       "Đã xảy ra lỗi, vui lòng thử lại.";
-  //     toast.error(errorMessage);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  const onFinish = async (values: IProducts) => {
+  const onFinish = async (values: IProductAdd) => {
     try {
 
       if (!validateVariants()) {

@@ -29,6 +29,20 @@ export interface IProducts {
   updatedAt: string;
 
 }
+export interface IProductAdd {
+  _id: string;
+  product_name: string;
+  description: string;
+  basePrice: number;
+  brand_id: string;
+  imageUrls: string[];
+  category_id: string;
+  gender: string;
+  material: string;
+  variants?: IVariants[] | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
 export interface IProductDetail {
   _id: string;
   product_name: string;
