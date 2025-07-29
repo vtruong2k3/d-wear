@@ -202,10 +202,25 @@ const Products: React.FC = () => {
     },
   ];
 
-  const handleDelete = async (id: number) => {
+  // const handleDelete = async (id: number) => {
+  //   try {
+  //     const { data } = await axios.delete(`/api/product/${id}`);
+  //     toast.success(data.message);
+  //     refetch();
+  //   } catch (error) {
+  //     const errorMessage =
+  //       (error as ErrorType).response?.data?.message ||
+  //       (error as ErrorType).message ||
+  //       "Đã xảy ra lỗi, vui lòng thử lại.";
+  //     toast.error(errorMessage);
+  //   }
+  // };
+
+  //xóa mềm
+  const handleDelete = async (id: string) => {
     try {
-      const { data } = await axios.delete(`/api/product/${id}`);
-      toast.success(data.message);
+      const data = await softDeleteProduct(id, true); // Gửi true rõ ràng
+      toast.success(data.message || "Đã xoá mềm sản phẩm.");
       refetch();
     } catch (error) {
       const errorMessage =
@@ -215,9 +230,6 @@ const Products: React.FC = () => {
       toast.error(errorMessage);
     }
   };
-
-  //xóa mềm
-  
 
   const handleSearch = (value: string) => {
     updateQuery({ q: value, page: 1 });
