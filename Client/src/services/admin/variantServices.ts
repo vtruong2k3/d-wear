@@ -85,3 +85,10 @@ export const deleteVariant = async (id: string | number) => {
   const res = await axios.delete(`/api/variant/${id}`);
   return res.data;
 };
+// xoá mềm biến thể
+export const softDeleteVariant = async (id: string) => {
+  const res = await axios.put(`/api/variant/${id}/soft-delete`, {
+    isdelete: true,
+  });
+  return res.data;
+};

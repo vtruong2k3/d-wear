@@ -17,13 +17,13 @@ import {
   PlusOutlined,
   EditOutlined,
   EyeInvisibleOutlined,
-  UndoOutlined,
 } from "@ant-design/icons";
 import type { IVariants } from "../../../../types/IVariants";
 import { toast } from "react-toastify";
 import {
   deleteVariant,
   getAllVariants,
+  softDeleteVariant, // ✅ Thêm chức năng xoá mềm
 } from "../../../../services/admin/variantServices";
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
@@ -34,42 +34,20 @@ const { Title } = Typography;
 const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [showHidden, setShowHidden] = useState(false);
+  const [showHidden, setShowHidden] = useState(false); // sẽ dùng ở bước tiếp theo
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const { setLoading } = useLoading();
 
-  const getHiddenIds = () => {
-    const raw = localStorage.getItem("hiddenVariants") || "[]";
-    return JSON.parse(raw) as string[];
-  };
-
-  const saveHiddenIds = (ids: string[]) => {
-    localStorage.setItem("hiddenVariants", JSON.stringify(ids));
-  };
-
-  const handleHide = (id: string) => {
-    const ids = getHiddenIds();
-    if (!ids.includes(id)) {
-      ids.push(id);
-      saveHiddenIds(ids);
-      toast.success("Đã ẩn biến thể!");
-      fetchVariants();
-    }
-  };
-
-  const handleRestore = (id: string) => {
-    const ids = getHiddenIds().filter((hiddenId) => hiddenId !== id);
-    saveHiddenIds(ids);
-    toast.success("Đã khôi phục biến thể!");
-    fetchVariants();
-  };
-
   const fetchVariants = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, total } = await getAllVariants(currentPage, pageSize, searchText);
+      const { data, total } = await getAllVariants(
+        currentPage,
+        pageSize,
+        searchText
+      );
       setVariants(data);
       setTotalItems(total);
     } catch (error) {
@@ -87,12 +65,30 @@ const Variants: React.FC = () => {
     fetchVariants();
   }, [fetchVariants]);
 
+  // ✅ Hàm xử lý xoá mềm biến thể
+  const handleSoftDelete = async (id: string) => {
+    try {
+      setLoading(true);
+      await softDeleteVariant(id); // Gọi API soft delete
+      toast.success("Đã ẩn biến thể thành công!");
+      fetchVariants(); // Cập nhật lại danh sách
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi khi xoá mềm.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       setLoading(true);
       await deleteVariant(id);
       fetchVariants();
-      toast.success("Xóa biến thể thành công!");
+      toast.success("Xóa cứng biến thể thành công!");
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -103,13 +99,6 @@ const Variants: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const hiddenIds = getHiddenIds();
-
-  const filteredVariants = variants.filter((variant) => {
-    const isHidden = hiddenIds.includes(variant._id);
-    return showHidden ? isHidden : !isHidden;
-  });
 
   const columns = [
     { title: "ID", dataIndex: "_id", key: "_id", width: 80 },
@@ -171,23 +160,15 @@ const Variants: React.FC = () => {
       render: (_: IVariants, record: IVariants) => (
         <Space>
           <Button icon={<EditOutlined />} />
-          {!showHidden ? (
-            <Popconfirm
-              title="Ẩn biến thể này khỏi danh sách chính?"
-              onConfirm={() => handleHide(record._id)}
-              okText="Ẩn"
-              cancelText="Huỷ"
-            >
-              <Button icon={<EyeInvisibleOutlined />} />
-            </Popconfirm>
-          ) : (
-            <Button
-              icon={<UndoOutlined />}
-              onClick={() => handleRestore(record._id)}
-            >
-              Khôi phục
-            </Button>
-          )}
+          {/* ✅ Nút xoá mềm biến thể */}
+          <Popconfirm
+            title="Ẩn biến thể này khỏi danh sách chính?"
+            onConfirm={() => handleSoftDelete(record._id)}
+            okText="Ẩn"
+            cancelText="Huỷ"
+          >
+            <Button icon={<EyeInvisibleOutlined />} />
+          </Popconfirm>
           <Popconfirm
             title="Xác nhận xóa cứng biến thể này?"
             onConfirm={() => handleDelete(record._id)}
@@ -205,22 +186,11 @@ const Variants: React.FC = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <Title level={2}>
-          {showHidden ? "Biến Thể Đã Ẩn" : "Quản Lý Biến Thể Sản Phẩm"}
-        </Title>
-        <Space>
-          <span>Hiển thị biến thể đã ẩn:</span>
-          <Switch
-            checked={showHidden}
-            onChange={setShowHidden}
-            checkedChildren="Đã ẩn"
-            unCheckedChildren="Hoạt động"
-          />
-        </Space>
+        <Title level={2}>Quản Lý Biến Thể Sản Phẩm</Title>
       </div>
 
       <Card
-        title={showHidden ? "Danh Sách Đã Ẩn" : "Danh Sách Biến Thể"}
+        title="Danh Sách Biến Thể"
         extra={
           <div className="flex gap-2">
             <Input
@@ -241,7 +211,7 @@ const Variants: React.FC = () => {
       >
         <Table
           columns={columns}
-          dataSource={filteredVariants}
+          dataSource={variants}
           rowKey="_id"
           pagination={{
             current: currentPage,
