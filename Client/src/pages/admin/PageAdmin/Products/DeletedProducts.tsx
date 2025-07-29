@@ -81,7 +81,16 @@ import {
         }
       };
   
-      
+      const handleHardDelete = async (id: string) => {
+        try {
+          const { data } = await axios.delete(`/api/product/${id}`);
+          toast.success(data.message || "Đã xoá vĩnh viễn.");
+          refetch();
+        } catch (error: any) {
+          console.error("❌ Lỗi xoá vĩnh viễn:", error?.response?.data || error.message);
+          toast.error("Lỗi khi xoá vĩnh viễn.");
+        }
+      };
       
   
     const columns: ColumnsType<IProduct> = [
