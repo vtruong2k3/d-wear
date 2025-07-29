@@ -23,7 +23,7 @@ import { toast } from "react-toastify";
 import {
   deleteVariant,
   getAllVariants,
-  softDeleteVariant, // ✅ Thêm chức năng xoá mềm
+  softDeleteVariant, // Thêm chức năng xoá mềm
 } from "../../../../services/admin/variantServices";
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
@@ -65,13 +65,13 @@ const Variants: React.FC = () => {
     fetchVariants();
   }, [fetchVariants]);
 
-  // ✅ Hàm xử lý xoá mềm biến thể
+  //  Hàm xử lý xoá mềm biến thể
   const handleSoftDelete = async (id: string) => {
     try {
       setLoading(true);
-      await softDeleteVariant(id); // Gọi API soft delete
+      await softDeleteVariant(id);
       toast.success("Đã ẩn biến thể thành công!");
-      fetchVariants(); // Cập nhật lại danh sách
+      fetchVariants();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -160,7 +160,7 @@ const Variants: React.FC = () => {
       render: (_: IVariants, record: IVariants) => (
         <Space>
           <Button icon={<EditOutlined />} />
-          {/* ✅ Nút xoá mềm biến thể */}
+          {/*  Nút xoá mềm biến thể */}
           <Popconfirm
             title="Ẩn biến thể này khỏi danh sách chính?"
             onConfirm={() => handleSoftDelete(record._id)}
