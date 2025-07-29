@@ -18,6 +18,7 @@ import ProductImageGallery from "../../../components/Client/ProductDtail/Product
 import ProductInfo from "../../../components/Client/ProductDtail/ProductInfo";
 import ProductReviews from "../../../components/Client/ProductDtail/ProductReviews";
 import RelatedProducts from "../../../components/Client/ProductDtail/RelatedProducts";
+import type { ErrorType } from "../../../types/error/IError";
 
 // Interface cho đánh giá
 interface IReview {
@@ -129,10 +130,12 @@ const DetailProduct = () => {
           setDataDetail(null);
           toast.error("Không tìm thấy sản phẩm");
         }
-      } catch (err) {
-        console.error("Lỗi khi lấy chi tiết sản phẩm:", err);
-        setDataDetail(null);
-        toast.error("Có lỗi xảy ra khi tải sản phẩm");
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }

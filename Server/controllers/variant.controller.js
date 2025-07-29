@@ -158,7 +158,7 @@ exports.createVariant = async (req, res) => {
 exports.updateVariant = async (req, res) => {
   const { id } = req.params;
 
-  // ✅ Chỉ gán image nếu có ảnh mới
+  //  Chỉ gán image nếu có ảnh mới
   if (req.files?.imageVariant && req.files.imageVariant.length > 0) {
     req.body.image = req.files.imageVariant.map((file) => file.path);
   } else {
@@ -285,33 +285,43 @@ exports.softDeleteVariant = async (req, res) => {
   }
 };
 
-exports.getDeletedProducts = async (req, res) => {
+exports.getSoftDeletedVariants = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
-      Product.find({ isDelete: true })
+    const [variants, total] = await Promise.all([
+      Variant.find({ isDelete: true })
+        .populate({
+          path: "product_id",
+          select: "product_name", // chỉ lấy trường name từ product
+        })
         .skip(skip)
         .limit(limit)
-        .sort({ createdAt: -1 }), // tuỳ sắp xếp
+        .sort({ createdAt: -1 }),
 
-      Product.countDocuments({ isDelete: true }),
+      Variant.countDocuments({ isDelete: true }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
 
+    const formattedVariants = variants.map((v) => ({
+      ...v._doc,
+      product_name: v.product_id?.name || "Không xác định",
+    }));
+
     return res.status(200).json({
-      message: "Danh sách sản phẩm đã xoá mềm",
+      message: "Danh sách biến thể đã xoá mềm",
       page,
       totalPages,
       total,
-      products,
+      variants: formattedVariants,
     });
   } catch (error) {
+    console.error("Lỗi getSoftDeletedVariants:", error);
     return res.status(500).json({
-      message: "Lỗi server khi lấy sản phẩm đã xoá mềm",
+      message: "Lỗi server khi lấy biến thể đã xoá mềm",
       error: error.message,
     });
   }

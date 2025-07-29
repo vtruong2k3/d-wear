@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
   Package,
@@ -80,7 +80,7 @@ const OrderDetailPage = () => {
       setLoading(false);
     }
   };
-  const getOrderDetails = async () => {
+  const getOrderDetails = useCallback(async () => {
     setLoading(true);
     try {
       const res = await getOrderDetail(id);
@@ -95,13 +95,19 @@ const OrderDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  }
+
+  }, [id, setLoading]);
+
+
   useEffect(() => {
     if (!id) return;
     getOrderDetails();
-  }, [id, setLoading]);
+  }, [id, getOrderDetails]);
+
+
+
   useEffect(() => {
-    if (!id || id === "payment") return; //  Chặn lỗi Cast to ObjectId
+    if (!id || id === "payment") return;
 
     socket.emit("joinRoom", id);
 
