@@ -145,7 +145,7 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
 
               {/* Product Image */}
               <div
-                className="relative h-80 bg-gray-100 overflow-hidden cursor-pointer"
+                className="relative h-100 bg-gray-100 overflow-hidden cursor-pointer"
                 onClick={() => navigate(`/product/${item._id}`)}
                 onMouseEnter={handleImageHover}
                 onMouseLeave={handleImageLeave}
@@ -197,7 +197,7 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
           {/* Product Info */}
           <div className="flex-1 flex flex-col justify-between space-y-3">
             {/* Category */}
-            <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-medium !mb-0">
               {item.category_id.category_name}
             </div>
 
@@ -206,7 +206,7 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
               className="cursor-pointer flex-1"
               onClick={() => navigate(`/product/${item._id}`)}
             >
-              <h3 className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors duration-200 mb-2"
+              <h3 className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors duration-200 !mb-0"
                 style={{
                   display: '-webkit-box',
                   WebkitLineClamp: 2,

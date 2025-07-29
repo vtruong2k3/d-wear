@@ -90,7 +90,7 @@ const Checkout = () => {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<string>("");
+  const [selectedProvince, setSelectedProvince] = useState<number | undefined>();
   const [selectedDistrict, setSelectedDistrict] = useState<number | undefined>();
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [shippingFee, setShippingFee] = useState<number>(0);
@@ -200,13 +200,13 @@ const Checkout = () => {
       // Reset tất cả state liên quan đến địa chỉ đã lưu
       setSelectedAddressId("");
       form.resetFields(["name", "phone", "address"]);
-      setSelectedProvince("");
+      setSelectedProvince(undefined);
       setSelectedDistrict(undefined);
       setSelectedWard("");
       setShippingFee(0);
     } else {
       // Reset state địa chỉ nhập tay
-      setSelectedProvince("");
+      setSelectedProvince(undefined);
       setSelectedDistrict(undefined);
       setSelectedWard("");
 
@@ -280,7 +280,7 @@ const Checkout = () => {
 
 
   // Xử lý khi chọn tỉnh/thành phố (cho địa chỉ nhập tay)
-  const handleProvinceChange = async (provinceId: string) => {
+  const handleProvinceChange = async (provinceId: number) => {
     setSelectedProvince(provinceId);
     setSelectedDistrict(undefined);
     setSelectedWard("");
@@ -782,7 +782,7 @@ const Checkout = () => {
                       }}
                       allowClear
                       onClear={() => {
-                        setSelectedProvince("");
+                        setSelectedProvince(undefined);
                         setSelectedDistrict(undefined);
                         setSelectedWard("");
                         setShippingFee(0);
@@ -822,6 +822,8 @@ const Checkout = () => {
                         .filter(
                           (district) => district.ProvinceID === selectedProvince
                         )
+
+
 
                         .map((district) => (
                           <Select.Option

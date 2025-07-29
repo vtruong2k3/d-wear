@@ -5,7 +5,7 @@ import UpdateAddressModal from "../../../components/Client/Address/UpdateAddress
 import { Popconfirm } from "antd";
 import {
   getUserAddresses,
-  addUserAddress,
+
   updateUserAddress,
   deleteUserAddress,
 } from "../../../services/client/addressService";
@@ -24,6 +24,8 @@ import {
   getDistricts,
   getWards,
 } from "../../../services/client/ghnService";
+import type { ErrorType } from "../../../types/error/IError";
+import toast from "react-hot-toast";
 
 const AddressManagement = () => {
   const [isAddAddressModalVisible, setIsAddAddressModalVisible] =
@@ -56,24 +58,32 @@ const AddressManagement = () => {
     try {
       const res = await getUserAddresses();
       const fetched = res?.data?.address;
-      console.log("📦 Fetched addresses:", fetched);
+      console.log(" Fetched addresses:", fetched);
       setAddresses(Array.isArray(fetched) ? fetched : []);
     } catch (error) {
-      console.error("❌ Lỗi khi lấy danh sách địa chỉ:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
   const fetchProvinces = async () => {
     try {
       const res = await getProvinces();
-      console.log("🌐 Provinces API response:", res.data);
+      console.log(" Provinces API response:", res.data);
       if (res.status === 200 && Array.isArray(res.data.provinces)) {
         setProvinces(res.data.provinces);
       } else {
         console.error("⚠️ Sai cấu trúc provinces:", res.data);
       }
     } catch (error) {
-      console.error("❌ Lỗi khi lấy Tỉnh/TP:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
@@ -87,29 +97,33 @@ const AddressManagement = () => {
     }
   }, [selectedProvince]);
 
-  const fetchDistricts = async (provinceId: any) => {
+  const fetchDistricts = async (provinceId: number) => {
     try {
       const res = await getDistricts(provinceId);
-      console.log("🌐 Districts API:", res.data);
+      console.log(" Districts API:", res.data);
       if (res.status === 200 && Array.isArray(res.data)) {
         const mapped: District[] = res.data.map((raw: RawDistrict) => ({
           id: raw.DistrictID.toString(),
           name: raw.DistrictName,
           DistrictID: raw.DistrictID,
           DistrictName: raw.DistrictName,
-          ProvinceID: raw.ProvinceID.toString(),
+          ProvinceID: raw.ProvinceID,
         }));
-        console.log("✅ Mapped Districts:", mapped);
+        console.log(" Mapped Districts:", mapped);
         setDistricts(mapped);
       }
     } catch (error) {
-      console.error("❌ Lỗi khi lấy Quận/Huyện:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
   useEffect(() => {
     if (selectedDistrict) {
-      console.log("📌 District selected:", selectedDistrict);
+      console.log(" District selected:", selectedDistrict);
       fetchWards(selectedDistrict);
     } else {
       setWards([]);
@@ -121,43 +135,51 @@ const AddressManagement = () => {
       const res = await getWards(districtId);
       console.log("🌐 Wards API:", res.data);
       if (res.status === 200 && Array.isArray(res.data)) {
-        console.log("✅ Wards:", res.data);
+        console.log(" Wards:", res.data);
         setWards(res.data);
       }
     } catch (error) {
-      console.error("❌ Lỗi khi lấy Phường/Xã:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
-  const handleAddNewAddress = async (_: any) => {
+  const handleAddNewAddress = async () => {
     fetchAddresses(); // chỉ refetch thôi
     setIsAddAddressModalVisible(false);
   };
 
 
-  const handleSetDefault = async (addressId: any) => {
-    console.log("➡️ Đặt mặc định cho:", addressId);
+  const handleSetDefault = async (addressId: string) => {
+    console.log(" Đặt mặc định cho:", addressId);
     try {
       await updateUserAddress(addressId, { isDefault: true });
       fetchAddresses();
     } catch (error) {
-      console.error("❌ Lỗi khi đặt mặc định:", error);
+      console.error(" Lỗi khi đặt mặc định:", error);
     }
   };
 
-  const handleEditClick = (address: any) => {
-    console.log("✏️ Edit Click:", address);
+  const handleEditClick = (address: SavedAddress) => {
+    console.log(" Edit Click:", address);
     setAddressToEdit(address);
     setIsEditModalVisible(true);
   };
 
   const handleDeleteAddress = async (addressId: string) => {
-    console.log("🗑️ Xoá địa chỉ:", addressId);
+    console.log(" Xoá địa chỉ:", addressId);
     try {
       await deleteUserAddress(addressId);
       fetchAddresses();
     } catch (error) {
-      console.error("❌ Lỗi khi xoá địa chỉ:", error);
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
@@ -177,11 +199,10 @@ const AddressManagement = () => {
           {addresses.map((address, index) => (
             <div
               key={address._id || address.id || index}
-              className={`bg-white rounded-lg p-4 relative shadow-sm overflow-hidden transition-all ${
-                address.isDefault
-                  ? "!border-2 !border-green-400"
-                  : "!border !border-gray-200"
-              }`}
+              className={`bg-white rounded-lg p-4 relative shadow-sm overflow-hidden transition-all ${address.isDefault
+                ? "!border-2 !border-green-400"
+                : "!border !border-gray-200"
+                }`}
             >
               {address.isDefault && (
                 <div className="absolute top-0 right-0 w-24 h-7 bg-green-500 rounded-bl-lg flex items-center justify-center">
@@ -196,9 +217,8 @@ const AddressManagement = () => {
                   <div className="w-4 h-4 bg-gray-600 rounded-full"></div>
                 </div>
                 <span
-                  className={`font-medium ${
-                    address.isDefault ? "text-green-600" : "text-gray-900"
-                  }`}
+                  className={`font-medium ${address.isDefault ? "text-green-600" : "text-gray-900"
+                    }`}
                 >
                   {address.name}
                 </span>

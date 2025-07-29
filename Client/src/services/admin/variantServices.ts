@@ -92,3 +92,35 @@ export const softDeleteVariant = async (id: string) => {
   });
   return res.data;
 };
+export const restoreVariant = async (id: string) => {
+  const res = await axios.put(`/api/variant/${id}/soft-delete`, {
+    isdelete: false,
+  });
+  return res.data;
+};
+export const getSoftDeletedVariants = async (
+  page: number,
+  limit: number,
+  q: string = ""
+): Promise<{ data: IVariants[]; total: number }> => {
+  const res = await axios.get("/api/variant/soft-delete", {
+    params: { page, limit, q },
+  });
+
+  const variants = Array.isArray(res.data?.variants) ? res.data.variants : [];
+
+  return {
+    total: res.data.total || 0,
+    data: variants.map((v: IVariants) => ({
+      ...v,
+      id: v._id,
+      image: Array.isArray(v.image)
+        ? v.image.map((img: string) =>
+            img.startsWith("http")
+              ? img
+              : `http://localhost:5000/${img.replace(/\\/g, "/")}`
+          )
+        : [],
+    })),
+  };
+};
