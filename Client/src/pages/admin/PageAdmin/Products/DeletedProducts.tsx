@@ -43,6 +43,31 @@ import {
     const rawProducts = Array.isArray(rawData) ? rawData : [];
     const total = rawProducts.length;
   
+    useEffect(() => {
+      if (rawData) {
+        console.log("🧪 rawData FULL:", JSON.stringify(rawData, null, 2));
+        setLoading(false);
+      }
+    }, [rawData, setLoading]);
+  
+    const products: IProduct[] = rawProducts.map((item: any) => {
+      const rawPath = item.imageUrls?.[0] ?? "";
+      const fullPath = rawPath.startsWith("http")
+        ? rawPath
+        : `http://localhost:5000/${rawPath.replace(/\\/g, "/")}`;
+  
+      return {
+        key: item._id,
+        _id: item._id,
+        id: item._id,
+        title: item.product_name,
+        price: item.basePrice,
+        thumbnail: fullPath,
+        category: item.category_id?.category_name || "Chưa phân loại",
+        brand: item.brand_id?.brand_name || "Không rõ",
+      };
+    });
+  
     
       
   
