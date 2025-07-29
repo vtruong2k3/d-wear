@@ -22,6 +22,7 @@ import socket from "../../../../sockets/socket";
 import { toast } from "react-toastify";
 import { useLoading } from "../../../../contexts/LoadingContext";
 import type { ErrorType } from "../../../../types/error/IError";
+import { getPaymentStatusLabel, getStatusLabel, paymentColor } from "../../../../utils/Status";
 
 
 const { Option } = Select;
@@ -54,7 +55,7 @@ const OrderList = () => {
     try {
       setLoading(true)
       const response = await fetchGetAllOrder();
-      console.log("Dữ liệu trả về từ API:", response);
+
       const all = response.orders || [];
       const hidden = JSON.parse(localStorage.getItem("hiddenOrders") || "[]");
       setHiddenOrders(hidden);
@@ -91,7 +92,7 @@ const OrderList = () => {
           order._id === orderId ? { ...order, paymentStatus } : order
         )
       );
-      toast.info(`💰 Đơn hàng ${orderId} đã được thanh toán thành công.`);
+      toast.info(` Đơn hàng ${orderId} đã được thanh toán thành công.`);
     });
 
     return () => {
@@ -199,7 +200,9 @@ const OrderList = () => {
         order._id === orderId ? { ...order, status: newStatus } : order
       );
       setOrders(updatedOrders);
-
+      if (newStatus === "delivered") {
+        fetchData()
+      }
       toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
       const errorMessage =
@@ -215,32 +218,8 @@ const OrderList = () => {
 
 
   // Hàm lấy label cho trạng thái đơn hàng
-  const getStatusLabel = (status: string) => {
-    const statusLabels: Record<string, string> = {
-      pending: "Chờ xử lý",
-      processing: "Đang xử lý",
-      shipped: "Đã giao hàng",
-      delivered: "Đã giao",
-      cancelled: "Đã hủy"
-    };
-    return statusLabels[status] || status;
-  };
-
-  // Hàm lấy label cho trạng thái thanh toán
-  const getPaymentStatusLabel = (paymentStatus: string) => {
-    const paymentLabels: Record<string, string> = {
-      unpaid: "Chưa thanh toán",
-      paid: "Đã thanh toán"
-    };
-    return paymentLabels[paymentStatus] || paymentStatus;
-  };
 
 
-
-  const paymentColor: Record<string, string> = {
-    unpaid: "volcano",
-    paid: "green",
-  };
 
   const columns: ColumnsType<IOrder> = [
     {

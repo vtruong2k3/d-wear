@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Table,
@@ -11,6 +11,7 @@ import {
   Button,
   Select,
   Modal,
+  Tag,
 } from "antd";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
@@ -20,6 +21,7 @@ import { useLoading } from "../../../../contexts/LoadingContext";
 import { formatCurrency } from "../../../../utils/Format";
 import { Option } from "antd/es/mentions";
 import socket from "../../../../sockets/socket";
+import { getPaymentMethodLabel, getPaymentStatusLabel, getStatusLabel, paymentColor, paymentMethodColor } from "../../../../utils/Status";
 
 
 const { Title } = Typography;
@@ -29,25 +31,25 @@ const OrderDetail = () => {
   const { id } = useParams();
   const [data, setData] = useState<OrderDetailResponse | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const res = await fetchGetOrderDetail(id);
-        setData(res);
-      } catch (error) {
-        const errorMessage =
-          (error as ErrorType).response?.data?.message ||
-          (error as ErrorType).message ||
-          "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetchGetOrderDetail(id);
+      setData(res);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }, [id, setLoading]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
 
   const validTransitions: Record<IOrder["status"], IOrder["status"][]> = {
     pending: ["processing", "cancelled"],
@@ -61,7 +63,7 @@ const OrderDetail = () => {
 
     const currentStatus = order.status;
 
-    // ✅ Validate trạng thái
+    //  Validate trạng thái
     const allowedStatuses = validTransitions[currentStatus];
     if (!allowedStatuses.includes(newStatus)) {
       toast.error(
@@ -88,7 +90,9 @@ const OrderDetail = () => {
           }
           : prev
       );
-
+      if (newStatus === "delivered") {
+        fetchData()
+      }
       toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
       const errorMessage =
@@ -135,16 +139,7 @@ const OrderDetail = () => {
       socket.off('orderPaid');
     };
   }, [id]);
-  const getStatusLabel = (status: string) => {
-    const statusLabels: Record<string, string> = {
-      pending: "Chờ xử lý",
-      processing: "Đang xử lý",
-      shipped: "Đã giao hàng",
-      delivered: "Đã giao",
-      cancelled: "Đã hủy"
-    };
-    return statusLabels[status] || status;
-  };
+
 
   const handleStatusUpdate = (newStatus: IOrder["status"]) => {
     Modal.confirm({
@@ -278,8 +273,8 @@ const OrderDetail = () => {
               <Descriptions.Item label="Ngày đặt">
                 {new Date(order.createdAt).toLocaleDateString()}
               </Descriptions.Item>
-              <Descriptions.Item label="Phương thức thanh toán">{order.paymentMethod}</Descriptions.Item>
-              <Descriptions.Item label="Trạng thái thanh toán">{order.paymentStatus}</Descriptions.Item>
+              <Descriptions.Item label="Phương thức thanh toán"><Tag color={paymentMethodColor[order.paymentMethod]}>{getPaymentMethodLabel(order.paymentMethod)}</Tag></Descriptions.Item>
+              <Descriptions.Item label="Trạng thái thanh toán"><Tag color={paymentColor[order.paymentStatus]}>{getPaymentStatusLabel(order.paymentStatus)}</Tag></Descriptions.Item>
               <Descriptions.Item label="Trạng thái đơn hàng">
                 <Select
                   value={order.status}
