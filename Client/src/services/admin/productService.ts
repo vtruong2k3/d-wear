@@ -26,3 +26,24 @@ export const createProduct = async (formData: FormData) => {
 
   return data;
 };
+//xóa mềm
+export const softDeleteProduct = async (id: string) => {
+  const { data } = await axios.put(`/api/product/${id}/soft-delete`, {
+    isDeleted: true, 
+  });
+  return data;
+};
+
+//khôi phục sản phẩm xóa mềm
+export const restoreProduct = async (id: string) => {
+  const { data } = await axios.put(`/api/product/${id}/soft-delete`, {
+    isdeleted: false,
+  });
+  return data;
+};
+// lấy danh sách xóa mềm
+export const getDeletedProducts = async (params = {}) => {
+  const { data } = await axios.get("/api/product/deleted", { params });
+  return data;
+};
+
