@@ -16,7 +16,7 @@ import {
   SearchOutlined,
   PlusOutlined,
   EditOutlined,
-  EyeInvisibleOutlined,
+
   RollbackOutlined,
 } from "@ant-design/icons";
 import type { IVariants } from "../../../../types/IVariants";
