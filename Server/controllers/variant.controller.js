@@ -257,10 +257,11 @@ exports.deleteIdProductVariant = async (req, res) => {
 exports.softDeleteVariant = async (req, res) => {
   try {
     const { id } = req.params;
-
+    const { isdelete } = req.body; // lấy từ body
+    const isDeleteBool = isdelete === true || isdelete === "true";
     const variant = await Variant.findByIdAndUpdate(
       id,
-      { isDelete: true },
+      { isDelete: isdelete },
       { new: true }
     );
 
@@ -268,17 +269,22 @@ exports.softDeleteVariant = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy biến thể" });
     }
 
+    const message = isDeleteBool
+      ? "Xoá mềm biến thể thành công"
+      : "Khôi phục biến thể thành công";
+
     return res.status(200).json({
-      message: "Xoá mềm biến thể thành công",
+      message,
       variant,
     });
   } catch (error) {
     return res.status(500).json({
-      message: "Lỗi server khi xoá biến thể",
+      message: "Lỗi server khi cập nhật trạng thái biến thể",
       error: error.message,
     });
   }
 };
+
 exports.getDeletedProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

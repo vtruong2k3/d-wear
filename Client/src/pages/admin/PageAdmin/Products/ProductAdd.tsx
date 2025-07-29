@@ -112,7 +112,8 @@ const ProductAdd = () => {
     const isValidType =
       file.type === "image/jpeg" ||
       file.type === "image/png" ||
-      file.type === "image/webp";
+      file.type === "image/webp" ||
+      file.type === "image/avif";
 
     if (!isValidType) {
       toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
@@ -249,7 +250,7 @@ const ProductAdd = () => {
 
       const formData = new FormData();
 
-      // ✔️ Thông tin sản phẩm
+      //  Thông tin sản phẩm
       formData.append("product_name", values.product_name);
       formData.append("description", values.description);
       formData.append("basePrice", String(values.basePrice));
@@ -258,14 +259,14 @@ const ProductAdd = () => {
       formData.append("gender", values.gender);
       formData.append("material", values.material);
 
-      // ✔️ Ảnh sản phẩm
+      //  Ảnh sản phẩm
       imageList.forEach((file) => {
         if (file.originFileObj) {
           formData.append("productImage", file.originFileObj);
         }
       });
 
-      // ✔️ Biến thể JSON (KHÔNG có ảnh)
+      //  Biến thể JSON (KHÔNG có ảnh)
       const plainVariants = variants.map((variant) => ({
         size: variant.size,
         color: variant.color,
@@ -274,7 +275,7 @@ const ProductAdd = () => {
       }));
       formData.append("variants", JSON.stringify(plainVariants));
 
-      // ✔️ Ảnh biến thể — KÈM INDEX để backend biết ảnh nào của biến thể nào
+      //  Ảnh biến thể — KÈM INDEX để backend biết ảnh nào của biến thể nào
       variants.forEach((variant, idx) => {
         variant.image.forEach((imgFile) => {
           if (imgFile.originFileObj) {

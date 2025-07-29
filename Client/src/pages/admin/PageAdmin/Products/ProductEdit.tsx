@@ -157,7 +157,8 @@ const ProductEdit = () => {
     const isValidType =
       file.type === "image/jpeg" ||
       file.type === "image/png" ||
-      file.type === "image/webp";
+      file.type === "image/webp" ||
+      file.type === "image/avif";
 
     if (!isValidType) {
       toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
@@ -370,10 +371,10 @@ const ProductEdit = () => {
       // ✅ Validate biến thể giống ProductAdd
       const errors: { [index: number]: string[] } = {};
       let isValid = true;
-  
+
       variants.forEach((variant, idx) => {
         const errs: string[] = [];
-  
+
         if (!variant.size) errs.push("size");
         if (!variant.color) errs.push("color");
         if (
@@ -388,13 +389,13 @@ const ProductEdit = () => {
           variant.stock < 0
         )
           errs.push("stock");
-  
+
         if (errs.length > 0) {
           errors[idx] = errs;
           isValid = false;
         }
       });
-  
+
       if (!isValid) {
         setVariantErrors(errors);
         toast.error(
@@ -402,11 +403,11 @@ const ProductEdit = () => {
         );
         return;
       }
-  
+
       setLoading(true);
-  
+
       const formData = new FormData();
-  
+
       // ✅ Thông tin cơ bản
       formData.append("product_name", values.product_name);
       formData.append("description", values.description);
@@ -415,19 +416,19 @@ const ProductEdit = () => {
       formData.append("category_id", values.category_id);
       formData.append("gender", values.gender);
       formData.append("material", values.material);
-  
+
       // ✅ Ảnh hiện tại
       currentImages.forEach((img) => {
         formData.append("existingImageUrls", img.url);
       });
-  
+
       // ✅ Ảnh mới được upload
       imageList.forEach((file) => {
         if (file.originFileObj) {
           formData.append("productImage", file.originFileObj);
         }
       });
-  
+
       // ✅ Biến thể (JSON)
       const plainVariants = variants.map((v) => {
         const oldImages = v.image
@@ -441,7 +442,7 @@ const ProductEdit = () => {
             const file = img as UploadFileWithRaw;
             return file.rawFileName || file.name;
           });
-  
+
         return {
           _id: v._id,
           size: v.size,
@@ -451,9 +452,9 @@ const ProductEdit = () => {
           image: oldImages, // ✅ string[]
         };
       });
-  
+
       formData.append("variants", JSON.stringify(plainVariants));
-  
+
       // ✅ Ảnh biến thể MỚI - quan trọng: gửi kèm index
       variants.forEach((variant, idx) => {
         variant.image.forEach((imgFile) => {
@@ -462,10 +463,10 @@ const ProductEdit = () => {
           }
         });
       });
-  
+
       // ✅ PUT request
       const data = await updateProduct(id, formData);
-  
+
       toast.success(data.message);
       navigate("/admin/products");
     } catch (error) {
@@ -478,7 +479,7 @@ const ProductEdit = () => {
       setLoading(false);
     }
   };
-  
+
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
       toast.warning("Chỉ được tải tối đa 8 ảnh!");

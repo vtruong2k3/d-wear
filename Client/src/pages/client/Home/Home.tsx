@@ -14,7 +14,7 @@ const Home = () => {
   const [products, setProducts] = useState<IProducts[]>([]);
   const fetchDataGetAllProduct = async () => {
     const res = await apiServiceProduct.getAllProducts({});
-    console.log(res.data.products, "resresres");
+
     if (res.status === 200) {
       setProducts(res.data.products);
     }

@@ -55,7 +55,7 @@ const storage = multer.diskStorage({
 
 // File filter (allow jpg, jpeg, png, webp)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
+  const allowedTypes = /jpeg|jpg|png|webp|avif/;
   const extName = allowedTypes.test(
     path.extname(file.originalname).toLowerCase()
   );
@@ -78,4 +78,3 @@ const upload = multer({
 });
 
 module.exports = upload;
-
