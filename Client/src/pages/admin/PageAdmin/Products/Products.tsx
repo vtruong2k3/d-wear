@@ -22,14 +22,14 @@ import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
 import { Link, useNavigate } from "react-router-dom";
 
-import axios from "axios";
+
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
 import { toast } from "react-toastify";
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 import { useLoading } from "../../../../contexts/LoadingContext";
-import { useEffect } from "react";
+
 import { softDeleteProduct } from "../../../../services/admin/productService";
 const { Title } = Typography;
 
@@ -67,13 +67,18 @@ const Products: React.FC = () => {
     data: rawProducts,
     total,
     refetch,
+    loading
   } = useFetchList<IProduct>("product", query, {});
 
-  useEffect(() => {
-    if (rawProducts) {
-      setLoading(false);
-    }
-  }, [rawProducts, setLoading]);
+  // useEffect(() => {
+  //   setLoading(true); // Bắt đầu loading mỗi khi query thay đổi (tức là sẽ fetch lại)
+  // }, [query, setLoading]);
+
+  // useEffect(() => {
+  //   if (rawProducts) {
+  //     setLoading(false);
+  //   }
+  // }, [rawProducts, setLoading]);
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
       const rawPath = item.imageUrls?.[0] ?? "";
@@ -219,7 +224,7 @@ const Products: React.FC = () => {
   //xóa mềm
   const handleDelete = async (id: string) => {
     try {
-      const data = await softDeleteProduct(id, true); // Gửi true rõ ràng
+      const data = await softDeleteProduct(id); // Gửi true rõ ràng
       toast.success(data.message || "Đã xoá mềm sản phẩm.");
       refetch();
     } catch (error) {
@@ -304,6 +309,7 @@ const Products: React.FC = () => {
           dataSource={products}
           rowKey={(record) => record.id || record._id || record.title}
           columns={columns}
+          loading={loading}
           pagination={{
             current: query.page,
             pageSize: query.limit,

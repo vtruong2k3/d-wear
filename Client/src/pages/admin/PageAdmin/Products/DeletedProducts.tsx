@@ -8,21 +8,23 @@ import {
   Card,
   Divider,
 } from "antd";
-import { useEffect } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { MdRestore, MdDeleteForever } from "react-icons/md";
 import { formatCurrency } from "../../../../utils/Format";
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import useQuery from "../../../../hooks/useQuery";
 import useFetchList from "../../../../hooks/useFetchList";
 import type { ColumnsType } from "antd/es/table";
 import type { IProduct } from "../../../../types/IProducts";
 import axios from "axios";
+import type { ErrorType } from "../../../../types/error/IError";
+import { restoreProduct } from "../../../../services/admin/productService";
 
 const { Title } = Typography;
 
 const DeletedProducts: React.FC = () => {
-  const { setLoading } = useLoading();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [query, updateQuery] = useQuery({
     page: 1,
@@ -35,12 +37,7 @@ const DeletedProducts: React.FC = () => {
     refetch,
   } = useFetchList<any>("product/deleted", query, {});
 
-  useEffect(() => {
-    if (rawProducts) {
-      console.log("🧪 rawProducts FULL:", JSON.stringify(rawProducts, null, 2));
-      setLoading(false);
-    }
-  }, [rawProducts, setLoading]);
+
 
   const products: IProduct[] = rawProducts.map((item: any) => {
     const rawPath = item.imageUrls?.[0] ?? "";
@@ -64,31 +61,35 @@ const DeletedProducts: React.FC = () => {
 
   const handleRestore = async (id: string) => {
     try {
-      const { data } = await axios.put(`/api/product/${id}/soft-delete`, {
-        isDeleted: false, // ✅ field đúng
-      });
+      setLoading(true)
+      const { data } = await restoreProduct(id)
       toast.success(data.message || "Khôi phục thành công.");
       refetch();
-    } catch (error: any) {
-      console.error(
-        "❌ Lỗi khi khôi phục:",
-        error?.response?.data || error.message
-      );
-      toast.error("Lỗi khi khôi phục sản phẩm.");
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
     }
   };
 
   const handleHardDelete = async (id: string) => {
     try {
+      setLoading(true)
       const { data } = await axios.delete(`/api/product/${id}`);
       toast.success(data.message || "Đã xoá vĩnh viễn.");
       refetch();
-    } catch (error: any) {
-      console.error(
-        "❌ Lỗi xoá vĩnh viễn:",
-        error?.response?.data || error.message
-      );
-      toast.error("Lỗi khi xoá vĩnh viễn.");
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -188,6 +189,7 @@ const DeletedProducts: React.FC = () => {
         <Table
           dataSource={products}
           rowKey="id"
+          loading={loading}
           columns={columns}
           pagination={{
             current: query.page,

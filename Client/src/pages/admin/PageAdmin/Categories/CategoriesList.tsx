@@ -16,7 +16,7 @@ import {
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch } from "react-icons/fa";
 
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import AddCategory from "./AddCategory";
 import EditCategory from "./EditCatgory";
 import { fetchGetAllCategory, deleteCategoryById } from "../../../../services/admin/categoryService";
@@ -32,7 +32,7 @@ const CategoriesList: React.FC = () => {
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [searchText, setSearchText] = useState("");
-  const { setLoading } = useLoading();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
@@ -143,7 +143,7 @@ const CategoriesList: React.FC = () => {
         </Row>
         <Divider />
         <Table
-          loading={false}
+          loading={loading}
           dataSource={filteredCategories}
           rowKey="_id"
           columns={columns}

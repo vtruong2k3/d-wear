@@ -33,6 +33,7 @@ const AddColorModal = ({ isOpen, onSave, onCancel }: AddColorModalProps) => {
 
     return (
         <Modal
+
             title="Thêm Màu Sắc"
             open={isOpen}
             onOk={handleOk}

@@ -29,7 +29,7 @@ import {
   restoreVariant,
 } from "../../../../services/admin/variantServices";
 import type { ErrorType } from "../../../../types/error/IError";
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import { formatCurrency } from "../../../../utils/Format";
 
 const { Title } = Typography;
@@ -41,7 +41,7 @@ const Variants: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [showHidden, setShowHidden] = useState(false);
-  const { setLoading } = useLoading();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchVariants = useCallback(async () => {
     try {
@@ -259,6 +259,7 @@ const Variants: React.FC = () => {
         }
       >
         <Table
+          loading={loading}
           columns={columns}
           dataSource={variants}
           rowKey="_id"
