@@ -39,12 +39,16 @@ export const useProductList = (
           return acc;
         }, {} as Record<string, string>)
       ).toString();
-
+  
+      console.log("🔍 Gửi request:", `/api/${path}?${queryString}`); // ✅ Di chuyển dòng này vào đây
+  
       const response = await axios.get<ProductListResponse>(
         `/api/${path}?${queryString}`,
         config
       );
-
+  
+      console.log("📦 Dữ liệu sản phẩm trả về:", response.data.products); // ✅ Có thể log thêm dòng này để kiểm tra
+  
       setData(response.data.products || []);
       setTotal(response.data.total || 0);
     } catch (err) {
@@ -53,10 +57,11 @@ export const useProductList = (
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchProducts();
   }, [JSON.stringify(query), JSON.stringify(config)]);
+  
 
   return {
     data,

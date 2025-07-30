@@ -24,6 +24,7 @@
     "firebase": "^11.10.0",
     "json-server": "^1.0.0-beta.3",
     "lucide-react": "^0.517.0",
+    "query-string": "^9.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.58.0",
