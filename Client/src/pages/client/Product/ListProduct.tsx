@@ -27,8 +27,6 @@ import {
 
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import BannerProductList from "./BannerProductList";
-
-import { useLocation } from "react-router-dom";
 import queryString from "query-string";
 import type { IProducts } from "../../../types/IProducts";
 import { formatCurrency } from "../../../utils/Format";
@@ -38,7 +36,6 @@ import type { ErrorType } from "../../../types/error/IError";
 import toast from "react-hot-toast";
 import { fetchGetAllCategory } from "../../../services/client/apiServiceCategory";
 import type { ICategory } from "../../../types/category/ICategory";
-import { useSearchParams } from "react-router-dom";
 import type { IBrand } from "../../../types/brand/IBrand";
 import { fetchAllBrands } from "../../../services/client/apiBrandService";
 import { useLoading } from "../../../contexts/LoadingContext";
@@ -84,34 +81,43 @@ const ListProduct = () => {
   });
 
   const path =
-  query.category_id || query.brand_id
-    ? "product/by-category-band"
-    : "product";
+    query.category_id || query.brand_id
+      ? "product/by-category-band"
+      : "product";
 
+      useEffect(() => {
+        const parsed = queryString.parse(location.search);
+        const safeQ = Array.isArray(parsed.q) ? parsed.q[0] || "" : parsed.q || "";
+        const categoryId = Array.isArray(parsed.category_id)
+          ? parsed.category_id[0] || ""
+          : parsed.category_id || "";
+      
+        // Giữ nguyên sortBy, order
+        const sortBy = Array.isArray(parsed.sortBy) ? parsed.sortBy[0] : parsed.sortBy;
+        const order = Array.isArray(parsed.order) ? parsed.order[0] : parsed.order;
+      
+        updateQuery({
+          page: 1,
+          q: safeQ,
+          category_id: categoryId,
+          sortBy: sortBy || "createdAt", // fallback
+          order: order || "desc",
+        });
+      
+        setCategory(categoryId);
+      }, [location.search]);
+      
 
-  useEffect(() => {
-    const parsed = queryString.parse(location.search);
-    const safeQ = Array.isArray(parsed.q) ? parsed.q[0] || "" : parsed.q || "";
-    const categoryId = Array.isArray(parsed.category_id)
-      ? parsed.category_id[0] || ""
-      : parsed.category_id || "";
-
-    // Update lại query từ URL mới
-    updateQuery({
-      page: 1,
-      q: safeQ,
-      category_id: categoryId,
-    });
-
-    // Đồng bộ lại category trong local state
-    setCategory(categoryId);
-  }, [location.search]);
 
   const { data: products, total } = useProductList(path, {
+    
     ...query,
     ...(category && { category_id: category }),
     ...(brand && { brand_id: brand }),
+    minPrice: priceRange[0],
+    maxPrice: priceRange[1],
   });
+
   const getCategory = useCallback(async () => {
     try {
       setLoading(true);
@@ -197,7 +203,6 @@ const ListProduct = () => {
       ),
     })),
   ];
-
   return (
     <div style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
       <BannerProductList />
@@ -251,7 +256,6 @@ const ListProduct = () => {
                     category_id: key as string,
                   });
                 }}
-                
                 items={menuItems}
                 style={{
                   backgroundColor: "transparent",
@@ -393,6 +397,7 @@ const ListProduct = () => {
                       setPriceRange(tempPriceRange);
                       updateQuery({ page: 1 });
                     }}
+                    
                     style={{ width: "100%" }}
                   >
                     Áp dụng
@@ -440,7 +445,7 @@ const ListProduct = () => {
                 border: "1px solid #e8e8e8",
               }}
             >
-              <Row justify="space-between" align="middle" gutter={[16, 16]}> 
+              <Row justify="space-between" align="middle" gutter={[16, 16]}>
                 <Col xs={24} sm={12} md={8}>
                   <Input.Search
                     placeholder="Tìm kiếm sản phẩm..."
@@ -464,12 +469,22 @@ const ListProduct = () => {
                     placeholder="Sắp xếp theo"
                     size="large"
                     style={{ width: "100%" }}
+                    value={`${query.sortBy},${query.order}`}
+                    onChange={(value) => {
+                      const [sortBy, order] = value.split(",");
+                      updateQuery({ page: 1, sortBy, order });
+                    }}
+                    
                   >
-                    <Option value="">Mặc định</Option>
-                    <Option value="price,desc">Giá: Cao đến thấp</Option>
-                    <Option value="price,asc">Giá: Thấp đến cao</Option>
-                    <Option value="title,asc">Tên: A-Z</Option>
-                    <Option value="title,desc">Tên: Z-A</Option>
+                    <Option value="createdAt,desc">Mới nhất</Option>
+                    <Option value="basePrice,desc">
+                      Giá: Cao đến thấp
+                    </Option>{" "}
+                    <Option value="basePrice,asc">
+                      Giá: Thấp đến cao
+                    </Option>{" "}
+                    <Option value="product_name,asc">Tên: A-Z</Option>
+                    <Option value="product_name,desc">Tên: Z-A</Option>
                   </Select>
                 </Col>
 
@@ -533,6 +548,7 @@ const ListProduct = () => {
               </div>
 
               <Divider style={{ margin: "16px 0" }} />
+              
 
               <Row gutter={[24, 24]}>
                 {products.length > 0 ? (
