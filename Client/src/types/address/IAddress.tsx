@@ -1,4 +1,28 @@
 // Địa chỉ người dùng đã lưu trong hệ thống (MongoDB)
+export interface IAddress {
+  _id?: string; // nếu có dùng trong client
+  user_id: string; // hoặc mongoose.Types.ObjectId nếu dùng ở backend
+  name: string;
+  phone: string;
+
+  provinceId: number;
+  provinceName: string;
+
+  districtId: number;
+  districtName: string;
+
+  wardId: string;
+  wardName: string;
+
+  detailAddress: string;
+  fullAddress: string;
+
+  isDefault: boolean;
+
+  createdAt: string; // ISO format hoặc Date
+  updatedAt: string;
+}
+
 export interface SavedAddress {
   id: string;             // ID tạm cho FE
   _id: string;            // ID thực từ Mongo

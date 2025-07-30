@@ -69,7 +69,7 @@ exports.getAllUsers = async (req, res) => {
     res.status(200).json({
       currentPage: page,
       totalPages: Math.ceil(total / limit),
-      totalUsers: total,
+      total,
       users,
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Layout,
   Menu,
@@ -24,18 +24,25 @@ import {
   UnorderedListOutlined,
   DownOutlined
 } from "@ant-design/icons";
-import useFetchGetDataAllCategory from "../../../hooks/Client/useFetchGetDataAllCategory";
-import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
+
+
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import BannerProductList from "./BannerProductList";
-import {
-  filterProductReducer,
-  initialState,
-  TYPE_ACTION,
-} from "./Reducer/FilterProductReducer";
-import useHandleChange from "../../../hooks/Client/useHandleChange";
-import useDebounce from "../../../hooks/Client/useDebounce";
-import { useSearchParams } from "react-router-dom";
+
+
+import type { IProducts } from "../../../types/IProducts";
+import { formatCurrency } from "../../../utils/Format";
+import useProductList from "../../../hooks/Client/useProduct";
+import useQuery from "../../../hooks/useQuery";
+import type { ErrorType } from "../../../types/error/IError";
+import toast from "react-hot-toast";
+import { fetchGetAllCategory } from "../../../services/client/apiServiceCategory";
+import type { ICategory } from "../../../types/category/ICategory";
+
+import type { IBrand } from "../../../types/brand/IBrand";
+import { fetchAllBrands } from "../../../services/client/apiBrandService";
+import { useLoading } from "../../../contexts/LoadingContext";
+
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -43,159 +50,69 @@ const { Option } = Select;
 const { Panel } = Collapse;
 
 // Interfaces
-interface Category {
-  id: string | number;
-  name: string;
-  slug: string;
-}
 
-interface Product {
-  id: string | number;
-  title: string;
-  price: number;
-}
 
-interface FilterState {
-  limit: number;
-  sortBy?: string;
-  order?: string;
-  q?: string;
-  skip?: number;
-  minPrice?: number;
-  maxPrice?: number;
-}
 
 const ListProduct = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { categories } = useFetchGetDataAllCategory();
-  const [category, setCategory] = useState("");
+
+
+  const [category, setCategory] = useState<string>(""); // Đang chọn
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [brand, setBrand] = useState<string>("");
+  const [brands, setBrands] = useState<IBrand[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 10000000]);
-  const [filterProduct, dispatch] = useReducer(
-    filterProductReducer,
-    initialState
-  );
-  const { formData, handleChange } = useHandleChange({ valueSearch: "" });
-  const { products, totalProduct } = useFetchGetDataProduct(
-    category,
-    filterProduct
-  );
-  const debouncedValue = useDebounce(formData.valueSearch, 500);
+  const { setLoading } = useLoading()
+  const [query, updateQuery] = useQuery({
+    page: 1,
+    limit: 10,
+    sortBy: "createdAt",
+    order: "desc",
+    q: "",
+  });
+  const path = category || brand ? "product/by-category-band" : "product";
+  const { data: products, total } = useProductList(path, {
+    ...query,
+    ...(category && { category_id: category }),
+    ...(brand && { brand_id: brand }),
 
-  const handleChangeSort = (value: string) => {
-    const sortValue = value.split(",");
-    dispatch({
-      type: TYPE_ACTION.CHANGE_SORT,
-      payload: {
-        sortBy: sortValue[0],
-        order: sortValue[1],
-      },
-    });
-  };
-
-  const handleChangePage = (page: number) => {
-    dispatch({
-      type: TYPE_ACTION.CHANGE_PAGE,
-      payload: (page - 1) * 12,
-    });
-  };
-
-  const handleSearch = (value: string) => {
-    dispatch({
-      type: TYPE_ACTION.CHANGE_QUERY,
-      payload: value,
-    });
-  };
-
-  const handlePriceRangeChange = (value: [number, number]) => {
-    setTempPriceRange(value);
-  };
-
-  const handleApplyPriceFilter = () => {
-    setPriceRange(tempPriceRange);
-    dispatch({
-      type: TYPE_ACTION.CHANGE_PRICE_RANGE,
-      payload: {
-        minPrice: tempPriceRange[0],
-        maxPrice: tempPriceRange[1],
-      },
-    });
-  };
-
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(value);
-  };
-
-  useEffect(() => {
-    if (debouncedValue) {
-      dispatch({
-        type: TYPE_ACTION.CHANGE_QUERY,
-        payload: debouncedValue,
-      });
-    } else {
-      dispatch({
-        type: TYPE_ACTION.CHANGE_QUERY,
-        payload: "",
-      });
+  });
+  const getCategory = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await fetchGetAllCategory()
+      setCategories(res)
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi khi tải danh sách.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
     }
-  }, [debouncedValue]);
+  }, [setLoading])
 
-  useEffect(() => {
-    if (filterProduct) {
-      const stringJson = JSON.stringify({ ...filterProduct });
-      const dataFilterJson = JSON.parse(stringJson);
-      setSearchParams(new URLSearchParams(dataFilterJson));
+  const getAllBrand = async () => {
+    try {
+      setLoading(true)
+      const res = await fetchAllBrands();
+      setBrands(res)
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        'Đã xảy ra lỗi khi tải danh sách.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
     }
-  }, [filterProduct]);
-
+  }
   useEffect(() => {
-    let tmpDataFilter: FilterState = {
-      limit: 12,
-    };
-
-    if (searchParams.size > 0) {
-      const dataFromSearchParams = JSON.parse(
-        '{"' +
-        decodeURI(
-          searchParams.toString().replace(/&/g, '","').replace(/=/g, '":"')
-        ) +
-        '"}'
-      );
-
-      tmpDataFilter = {
-        limit: dataFromSearchParams["limit"] || 12,
-        sortBy: dataFromSearchParams["sortBy"],
-        order: dataFromSearchParams["order"],
-        q: dataFromSearchParams["q"]?.replace(/\+/g, " "),
-        skip: dataFromSearchParams["skip"],
-        minPrice: dataFromSearchParams["minPrice"] ? Number(dataFromSearchParams["minPrice"]) : undefined,
-        maxPrice: dataFromSearchParams["maxPrice"] ? Number(dataFromSearchParams["maxPrice"]) : undefined,
-      };
-
-      if (tmpDataFilter.minPrice !== undefined && tmpDataFilter.maxPrice !== undefined) {
-        setPriceRange([tmpDataFilter.minPrice, tmpDataFilter.maxPrice]);
-        setTempPriceRange([tmpDataFilter.minPrice, tmpDataFilter.maxPrice]);
-      }
-
-      dispatch({
-        type: TYPE_ACTION.CHANGE_INITIAL,
-        payload: { ...tmpDataFilter },
-      });
-    }
-  }, []);
-
-  const handleReset = () => {
-    setPriceRange([0, 10000000]);
-    setTempPriceRange([0, 10000000]);
-    dispatch({
-      type: TYPE_ACTION.CHANGE_RESET,
-      payload: 12,
-    });
-  };
+    getAllBrand()
+    getCategory()
+  }, [getCategory])
 
   const menuItems = [
     {
@@ -206,11 +123,30 @@ const ListProduct = () => {
         </Text>
       ),
     },
-    ...categories.map((item: Category) => ({
-      key: item.slug,
+    ...categories.map((item: ICategory) => ({
+      key: item._id,
       label: (
-        <Text strong={category === item.slug} style={{ color: category === item.slug ? '#1890ff' : '#000' }}>
-          {item.name}
+        <Text strong={category === item._id} style={{ color: category === item._id ? '#1890ff' : '#000' }}>
+          {item.category_name}
+        </Text>
+      ),
+    })),
+  ];
+
+  const menuItemBrands = [
+    {
+      key: "",
+      label: (
+        <Text strong={brand === ""} style={{ color: brand === "" ? '#1890ff' : '#000' }}>
+          Tất cả sản phẩm
+        </Text>
+      ),
+    },
+    ...brands.map((item: IBrand) => ({
+      key: item._id,
+      label: (
+        <Text strong={brand === item._id} style={{ color: brand === item._id ? '#1890ff' : '#000' }}>
+          {item.brand_name}
         </Text>
       ),
     })),
@@ -250,8 +186,35 @@ const ListProduct = () => {
               <Menu
                 mode="vertical"
                 selectedKeys={[category]}
-                onClick={({ key }) => setCategory(key as string)}
+                onClick={({ key }) => {
+                  setCategory(key as string);
+                  updateQuery({ page: 1 }); // reset phân trang
+                }}
                 items={menuItems}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none'
+                }}
+              />
+            </Panel>
+            <Panel
+              header={<Title level={4} style={{ margin: 0, color: '#000' }}>Thương hiệu</Title>}
+              key="brands"
+              style={{
+                backgroundColor: '#fafafa',
+                border: '1px solid #e8e8e8',
+                borderRadius: '6px',
+                marginBottom: '16px'
+              }}
+            >
+              <Menu
+                mode="vertical"
+                selectedKeys={[brand]}
+                onClick={({ key }) => {
+                  setBrand(key as string);
+                  updateQuery({ page: 1 }); // reset phân trang
+                }}
+                items={menuItemBrands}
                 style={{
                   backgroundColor: 'transparent',
                   border: 'none'
@@ -279,10 +242,8 @@ const ListProduct = () => {
                       max={10000000}
                       step={100000}
                       value={tempPriceRange}
-                      onChange={handlePriceRangeChange}
-                      tooltip={{
-                        formatter: (value) => formatPrice(value || 0)
-                      }}
+
+
                     />
                   </div>
                 </div>
@@ -299,8 +260,9 @@ const ListProduct = () => {
                         value={tempPriceRange[0]}
                         onChange={(value) => setTempPriceRange([value || 0, tempPriceRange[1]])}
                         formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                        parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ''))}
                       />
+
                     </div>
                   </Col>
                   <Col span={12}>
@@ -314,20 +276,24 @@ const ListProduct = () => {
                         value={tempPriceRange[1]}
                         onChange={(value) => setTempPriceRange([tempPriceRange[0], value || 10000000])}
                         formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                        parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ''))}
                       />
+
                     </div>
                   </Col>
                 </Row>
 
                 <div style={{ textAlign: 'center', marginTop: '16px' }}>
                   <Text style={{ color: '#666', fontSize: '12px', display: 'block', marginBottom: '8px' }}>
-                    {formatPrice(tempPriceRange[0])} - {formatPrice(tempPriceRange[1])}
+                    {formatCurrency(tempPriceRange[0])} - {formatCurrency(tempPriceRange[1])}
                   </Text>
                   <Button
                     type="primary"
                     size="small"
-                    onClick={handleApplyPriceFilter}
+                    onClick={() => {
+                      setPriceRange(tempPriceRange);
+                      updateQuery({ page: 1 });
+                    }}
                     style={{ width: '100%' }}
                   >
                     Áp dụng
@@ -367,17 +333,18 @@ const ListProduct = () => {
                 border: '1px solid #e8e8e8'
               }}
             >
-              <Row justify="space-between" align="middle" gutter={[16, 16]}>
+              <Row justify="space-between" align="middle" gutter={[16, 16]} >
                 <Col xs={24} sm={12} md={8}>
                   <Input.Search
                     placeholder="Tìm kiếm sản phẩm..."
                     allowClear
                     enterButton={<SearchOutlined />}
                     size="large"
-                    onChange={(e) => handleChange(e)}
-                    onSearch={handleSearch}
-                    name="valueSearch"
-                    value={formData.valueSearch}
+                    defaultValue={query.q}
+                    onSearch={(value) => updateQuery({ page: 1, q: value })}
+                    onChange={(e) => {
+                      if (!e.target.value) updateQuery({ page: 1, q: "" });
+                    }}
                     style={{
                       borderRadius: '6px',
                       border: '1px solid #d9d9d9'
@@ -390,9 +357,7 @@ const ListProduct = () => {
                     placeholder="Sắp xếp theo"
                     size="large"
                     style={{ width: '100%' }}
-                    onChange={handleChangeSort}
-                    value={filterProduct.sortBy && filterProduct.order ?
-                      `${filterProduct.sortBy},${filterProduct.order}` : undefined}
+
                   >
                     <Option value="">Mặc định</Option>
                     <Option value="price,desc">Giá: Cao đến thấp</Option>
@@ -418,8 +383,14 @@ const ListProduct = () => {
                     </Button.Group>
 
                     <Button
+
                       icon={<ReloadOutlined />}
-                      onClick={handleReset}
+                      onClick={() => {
+                        setCategory('');
+                        setTempPriceRange([0, 10000000]);
+                        setPriceRange([0, 10000000]);
+                        updateQuery({ page: 1, q: '', sortBy: 'createdAt', order: 'desc' });
+                      }}
                       style={{
                         borderColor: '#d9d9d9',
                         color: '#000'
@@ -441,11 +412,11 @@ const ListProduct = () => {
             >
               <div style={{ marginBottom: '16px' }}>
                 <Text type="secondary">
-                  Hiển thị {products.length} trong tổng số {totalProduct} sản phẩm
+                  Hiển thị {products.length} trong tổng số {total} sản phẩm
                 </Text>
                 {(priceRange[0] > 0 || priceRange[1] < 10000000) && (
                   <Text type="secondary" style={{ marginLeft: '16px' }}>
-                    • Giá: {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                    • Giá: {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
                   </Text>
                 )}
               </div>
@@ -454,9 +425,9 @@ const ListProduct = () => {
 
               <Row gutter={[24, 24]}>
                 {products.length > 0 ? (
-                  products.map((item: Product) => (
+                  products.map((item: IProducts) => (
                     <Col
-                      key={item.id}
+                      key={item._id}
                       xs={24}
                       sm={12}
                       md={viewMode === 'grid' ? 8 : 24}
@@ -488,18 +459,11 @@ const ListProduct = () => {
                   <Divider style={{ margin: '32px 0' }} />
                   <Row justify="center">
                     <Pagination
-                      current={Math.floor((filterProduct.skip || 0) / 12) + 1}
-                      total={totalProduct}
-                      pageSize={12}
-                      onChange={handleChangePage}
+                      current={query.page}
+                      total={total}
+                      pageSize={query.limit}
+                      onChange={(page) => updateQuery({ page })}
                       showSizeChanger={false}
-                      showQuickJumper
-                      showTotal={(total, range) =>
-                        `${range[0]}-${range[1]} của ${total} sản phẩm`
-                      }
-                      style={{
-                        textAlign: 'center'
-                      }}
                     />
                   </Row>
                 </>

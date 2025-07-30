@@ -71,8 +71,8 @@ const Variants: React.FC = () => {
   const handleSoftDelete = async (id: string) => {
     try {
       setLoading(true);
-      await softDeleteVariant(id);
-      toast.success("Đã ẩn biến thể thành công!");
+      const res = await softDeleteVariant(id);
+      toast.success(res.message);
       fetchVariants();
     } catch (error) {
       const errorMessage =
@@ -228,8 +228,8 @@ const Variants: React.FC = () => {
             setShowHidden(checked);
             setCurrentPage(1);
           }}
-          checkedChildren="Xem đã xoá"
-          unCheckedChildren="Xem đang hoạt động"
+          checkedChildren="Đã xoá"
+          unCheckedChildren="Hoạt động"
         />
       </div>
 

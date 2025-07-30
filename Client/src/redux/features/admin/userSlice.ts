@@ -3,41 +3,20 @@ import {
   createSlice,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import { fetchAllUsers, fetchUserById } from "../../../services/client/userApi";
 
-// ✅ Định nghĩa kiểu UserType với isDeleted
-export interface UserType {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: "active" | "banned";
-  createdAt: string;
-  phone?: string;
-  isDeleted?: boolean; // Thêm field xóa mềm
-}
-
-// ✅ Định nghĩa kiểu AddressType
-interface AddressType {
-  _id: string;
-  user_id: string;
-  name: string;
-  phone: string;
-  provinceName: string;
-  districtName: string;
-  wardName: string;
-  detailAddress: string;
-  fullAddress: string;
-  isDefault: boolean;
-  createdAt: string;
-}
+import type { IAddress } from "../../../types/address/IAddress";
+import type { UserType } from "../../../types/IUser";
+import { fetchUsers, getUserDetail } from "./thunks/userAdminThunk";
 
 interface UserState {
   users: UserType[];
   loading: boolean;
   selectedUser: UserType | null;
-  userAddresses: AddressType[];
+  userAddresses: IAddress[];
   addressLoading: boolean;
+  total: number;
+  currentPage: number;
+  totalPages: number;
 }
 
 const initialState: UserState = {
@@ -46,79 +25,14 @@ const initialState: UserState = {
   selectedUser: null,
   userAddresses: [],
   addressLoading: false,
+  total: 0,
+  currentPage: 1,
+  totalPages: 0,
 };
 
 //danh sách user
-export const fetchUsers = createAsyncThunk<UserType[]>(
-  "admin/user/fetchUsers",
-  async () => {
-    const users = await fetchAllUsers(); // gọi API thật
-    return users;
-  }
-);
 
-// ✅ Fetch địa chỉ của user
-// export const fetchUserAddresses = createAsyncThunk<AddressType[], string>(
-//   "admin/user/fetchUserAddresses",
-//   async (userId: string) => {
-//     // Mock địa chỉ
-//     const mockAddresses: AddressType[] = [
-//       {
-//         _id: "addr1",
-//         user_id: "1",
-//         name: "Nguyễn Văn A",
-//         phone: "0909123456",
-//         provinceName: "Hà Nội",
-//         districtName: "Ba Đình",
-//         wardName: "Phúc Xá",
-//         detailAddress: "123 Đường ABC",
-//         fullAddress: "123 Đường ABC, Phúc Xá, Ba Đình, Hà Nội",
-//         isDefault: true,
-//         createdAt: new Date().toISOString(),
-//       },
-//       {
-//         _id: "addr2",
-//         user_id: "1",
-//         name: "Nguyễn Văn A (Công ty)",
-//         phone: "0909123456",
-//         provinceName: "Hà Nội",
-//         districtName: "Hoàn Kiếm",
-//         wardName: "Tràng Tiền",
-//         detailAddress: "456 Phố Tràng Tiền",
-//         fullAddress: "456 Phố Tràng Tiền, Tràng Tiền, Hoàn Kiếm, Hà Nội",
-//         isDefault: false,
-//         createdAt: new Date().toISOString(),
-//       },
-//       {
-//         _id: "addr3",
-//         user_id: "2",
-//         name: "Trần Thị B",
-//         phone: "0908765432",
-//         provinceName: "TP. Hồ Chí Minh",
-//         districtName: "Quận 1",
-//         wardName: "Phường Bến Nghé",
-//         detailAddress: "789 Nguyễn Huệ",
-//         fullAddress: "789 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
-//         isDefault: true,
-//         createdAt: new Date().toISOString(),
-//       },
-//     ];
-
-//     // Lọc địa chỉ theo user_id
-//     return mockAddresses.filter((addr) => addr.user_id === userId);
-//   }
-// );
-
-//mới
-export const getUserDetail = createAsyncThunk(
-  "admin/user/getUserDetail",
-  async (userId: string) => {
-    const res = await fetchUserById(userId);
-    return res; // { user, addresses }
-  }
-);
-
-// ✅ Xóa mềm người dùng
+//
 export const softDeleteUser = createAsyncThunk<string, string>(
   "admin/user/softDeleteUser",
   async (userId: string) => {
@@ -156,13 +70,13 @@ const userSlice = createSlice({
       .addCase(fetchUsers.pending, (state) => {
         state.loading = true;
       })
-      .addCase(
-        fetchUsers.fulfilled,
-        (state, action: PayloadAction<UserType[]>) => {
-          state.loading = false;
-          state.users = action.payload;
-        }
-      )
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload.users;
+        state.total = action.payload.total;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
+      })
       .addCase(fetchUsers.rejected, (state) => {
         state.loading = false;
       })
@@ -171,7 +85,7 @@ const userSlice = createSlice({
       .addCase(getUserDetail.pending, (state) => {
         state.loading = true;
       })
-      .addCase(getUserDetail.fulfilled, (state, action: PayloadAction<any>) => {
+      .addCase(getUserDetail.fulfilled, (state, action) => {
         state.loading = false;
         state.selectedUser = action.payload.user;
         state.userAddresses = action.payload.addresses;

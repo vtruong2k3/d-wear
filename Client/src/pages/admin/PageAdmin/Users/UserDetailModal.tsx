@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import {
   clearSelectedUser,
-  type UserType,
+
 } from "../../../../redux/features/admin/userSlice";
 import { useState } from "react";
 import { Descriptions, Modal, Spin, Tag, Card, Tabs } from "antd";
@@ -14,6 +14,7 @@ import {
 
 // RootState từ redux store
 import type { RootState } from "../../../../redux/store";
+import type { IAddress } from "../../../../types/address/IAddress";
 
 const UserDetailModal = () => {
   const dispatch = useDispatch();
@@ -42,7 +43,7 @@ const UserDetailModal = () => {
           size="small"
           style={{ marginTop: 16 }}
         >
-          <Descriptions.Item label="Tên">{user.name}</Descriptions.Item>
+          <Descriptions.Item label="Tên">{user.username}</Descriptions.Item>
           <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
           <Descriptions.Item label="Số điện thoại">
             {user.phone || "—"}
@@ -53,8 +54,8 @@ const UserDetailModal = () => {
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Trạng thái">
-            <Tag color={user.status === "active" ? "green" : "red"}>
-              {user.status}
+            <Tag color={user.isActive ? "green" : "red"}>
+              {user.isActive ? "Kích Hoạt" : "Đã Khoá"}
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Tình trạng tài khoản">
@@ -87,152 +88,154 @@ const UserDetailModal = () => {
             </div>
           ) : userAddresses.length > 0 ? (
             <div style={{ display: "grid", gap: 16 }}>
-              {userAddresses.map((address: any, index: number) => (
-                <Card
-                  key={address._id || index}
-                  size="small"
-                  style={{
-                    background: address.isDefault ? "#f6ffed" : "#fafafa",
-                    border: address.isDefault
-                      ? "2px solid #52c41a"
-                      : "1px solid #e8e8e8",
-                    borderRadius: 12,
-                    position: "relative",
-                  }}
-                  bodyStyle={{ padding: 20 }}
-                >
-                  {address.isDefault && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: -1,
-                        right: 16,
-                        background: "#52c41a",
-                        color: "white",
-                        padding: "4px 12px",
-                        borderRadius: "0 0 8px 8px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Địa chỉ mặc định
-                    </div>
-                  )}
-
-                  <div
+              {[...userAddresses]
+                .sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0)) // Đưa isDefault === true lên đầu
+                .map((address: IAddress, index: number) => (
+                  <Card
+                    key={address._id || index}
+                    size="small"
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
+                      background: address.isDefault ? "#f6ffed" : "#fafafa",
+                      border: address.isDefault
+                        ? "2px solid #52c41a"
+                        : "1px solid #e8e8e8",
+                      borderRadius: 12,
+                      position: "relative",
                     }}
+                    bodyStyle={{ padding: 20 }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <div>
-                        <div
-                          style={{
-                            fontSize: 16,
-                            fontWeight: 600,
-                            color: "#262626",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 4,
-                          }}
-                        >
-                          <UserOutlined />
-                          {address.name}
-                        </div>
-                        <div
-                          style={{
-                            color: "#666",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <PhoneOutlined />
-                          {address.phone}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        background: "white",
-                        padding: 12,
-                        borderRadius: 8,
-                        border: "1px solid #f0f0f0",
-                      }}
-                    >
+                    {address.isDefault && (
                       <div
                         style={{
-                          fontSize: 14,
-                          lineHeight: 1.6,
-                          color: "#595959",
-                          marginBottom: 8,
-                        }}
-                      >
-                        <EnvironmentOutlined style={{ marginRight: 8 }} />
-                        {address.fullAddress}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr 1fr",
-                          gap: 8,
+                          position: "absolute",
+                          top: -1,
+                          right: 16,
+                          background: "#52c41a",
+                          color: "white",
+                          padding: "4px 12px",
+                          borderRadius: "0 0 8px 8px",
                           fontSize: 12,
+                          fontWeight: 600,
                         }}
                       >
-                        <div>
-                          <span style={{ color: "#8c8c8c" }}>Tỉnh/TP:</span>
-                          <div style={{ fontWeight: 500 }}>
-                            {address.provinceName}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#8c8c8c" }}>Quận/Huyện:</span>
-                          <div style={{ fontWeight: 500 }}>
-                            {address.districtName}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#8c8c8c" }}>Phường/Xã:</span>
-                          <div style={{ fontWeight: 500 }}>
-                            {address.wardName}
-                          </div>
-                        </div>
+                        Địa chỉ mặc định
                       </div>
-                    </div>
+                    )}
 
                     <div
                       style={{
                         display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        fontSize: 12,
-                        color: "#8c8c8c",
-                        borderTop: "1px solid #f0f0f0",
-                        paddingTop: 8,
+                        flexDirection: "column",
+                        gap: 12,
                       }}
                     >
-                      <span>Địa chỉ #{index + 1}</span>
-                      <span>
-                        Tạo lúc:{" "}
-                        {new Date(address.createdAt).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 16,
+                              fontWeight: 600,
+                              color: "#262626",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              marginBottom: 4,
+                            }}
+                          >
+                            <UserOutlined />
+                            {address.name}
+                          </div>
+                          <div
+                            style={{
+                              color: "#666",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <PhoneOutlined />
+                            {address.phone}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: "white",
+                          padding: 12,
+                          borderRadius: 8,
+                          border: "1px solid #f0f0f0",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            color: "#595959",
+                            marginBottom: 8,
+                          }}
+                        >
+                          <EnvironmentOutlined style={{ marginRight: 8 }} />
+                          {address.fullAddress}
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr 1fr",
+                            gap: 8,
+                            fontSize: 12,
+                          }}
+                        >
+                          <div>
+                            <span style={{ color: "#8c8c8c" }}>Tỉnh/TP:</span>
+                            <div style={{ fontWeight: 500 }}>
+                              {address.provinceName}
+                            </div>
+                          </div>
+                          <div>
+                            <span style={{ color: "#8c8c8c" }}>Quận/Huyện:</span>
+                            <div style={{ fontWeight: 500 }}>
+                              {address.districtName}
+                            </div>
+                          </div>
+                          <div>
+                            <span style={{ color: "#8c8c8c" }}>Phường/Xã:</span>
+                            <div style={{ fontWeight: 500 }}>
+                              {address.wardName}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: 12,
+                          color: "#8c8c8c",
+                          borderTop: "1px solid #f0f0f0",
+                          paddingTop: 8,
+                        }}
+                      >
+                        <span>Địa chỉ #{index + 1}</span>
+                        <span>
+                          Tạo lúc:{" "}
+                          {new Date(address.createdAt).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
             </div>
           ) : (
             <Card

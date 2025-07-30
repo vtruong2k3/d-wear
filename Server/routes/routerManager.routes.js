@@ -15,6 +15,7 @@ const ghnRouter = require("./ghn.routes");
 const addressRouter = require("./address.routes");
 const statisticRouter = require("./statistics.routes");
 const userRouter = require("./user.routes");
+const reviewRouter = require("./review.routes");
 
 const routerManager = express.Router();
 
@@ -34,5 +35,6 @@ routerManager.use("/api", ghnRouter);
 routerManager.use("/api", addressRouter);
 routerManager.use("/api", statisticRouter);
 routerManager.use("/api", userRouter);
+routerManager.use("/api", reviewRouter);
 
 module.exports = routerManager;

@@ -35,6 +35,10 @@ productRouter.delete(
 
 //  Lấy tất cả sản phẩm
 productRouter.get("/product", productControler.getAllProductWithVariants);
+productRouter.get(
+  "/product/by-category-band",
+  productControler.getProductByCategoryWithVariants
+);
 
 // //  Lấy 1 sản phẩm kèm biến thể
 // productRouter.get("/product/:id", productControler.getProductWithVariantsById);

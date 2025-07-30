@@ -12,6 +12,7 @@ import {
   Tag,
   Typography,
   Divider,
+  Switch,
 } from "antd";
 
 import useFetchList from "../../../../hooks/useFetchList";
@@ -30,12 +31,16 @@ import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 import { useLoading } from "../../../../contexts/LoadingContext";
 
-import { softDeleteProduct } from "../../../../services/admin/productService";
+import { restoreProduct, softDeleteProduct } from "../../../../services/admin/productService";
+import { useState } from "react";
+import axios from "axios";
+import { RollbackOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const { setLoading } = useLoading();
+  const [showHidden, setShowHidden] = useState(false);
   const [query, updateQuery] = useQuery({
     page: 1,
     limit: 10,
@@ -64,21 +69,17 @@ const Products: React.FC = () => {
   ];
 
   const {
-    data: rawProducts,
+    data: rawProducts = [],
     total,
     refetch,
     loading
-  } = useFetchList<IProduct>("product", query, {});
+  } = useFetchList<IProduct>(
+    showHidden ? "product/deleted" : "product",
+    query,
+    {}
+  );
 
-  // useEffect(() => {
-  //   setLoading(true); // Bắt đầu loading mỗi khi query thay đổi (tức là sẽ fetch lại)
-  // }, [query, setLoading]);
 
-  // useEffect(() => {
-  //   if (rawProducts) {
-  //     setLoading(false);
-  //   }
-  // }, [rawProducts, setLoading]);
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
       const rawPath = item.imageUrls?.[0] ?? "";
@@ -103,7 +104,6 @@ const Products: React.FC = () => {
       dataIndex: "id",
       key: "id",
       width: 80,
-
       align: "center",
       render: (id) => (
         <Link to={`/product/${id}`}>
@@ -125,7 +125,7 @@ const Products: React.FC = () => {
                 flexShrink: 0,
                 borderRadius: 8,
                 border: "1px solid #f0f0f0",
-                overflow: "hidden", //k tràn ảnh
+                overflow: "hidden",
                 backgroundColor: "#fff",
               }}
             >
@@ -152,13 +152,11 @@ const Products: React.FC = () => {
         </Link>
       ),
     },
-
     {
       title: "Giá",
       dataIndex: "price",
       key: "price",
       width: 150,
-
       align: "right",
       render: (price) => (
         <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
@@ -180,47 +178,104 @@ const Products: React.FC = () => {
     {
       title: "Thao tác",
       key: "action",
-      width: 120,
-
+      width: 160,
       align: "center",
-
       render: (_, record: any) => (
         <Space size="small">
-          <Button
-            type="text"
-            icon={<FaPen />}
-            onClick={() => navigate(`/admin/products/edit/${record.id}`)}
-            style={{ color: "#1890ff" }}
-            title="Chỉnh sửa"
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc muốn xoá sản phẩm này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button type="text" danger icon={<MdDelete />} title="Xóa" />
-          </Popconfirm>
+          {!showHidden ? (
+            <>
+              <Button
+                type="text"
+                icon={<FaPen />}
+                onClick={() => navigate(`/admin/products/edit/${record.id}`)}
+                style={{ color: "#1890ff" }}
+                title="Chỉnh sửa"
+              />
+              <Popconfirm
+                title="Xác nhận xoá mềm"
+                description="Bạn có chắc muốn xoá sản phẩm này?"
+                onConfirm={() => handleDelete(record.id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+              >
+                <Button type="text" danger icon={<MdDelete />} title="Xoá mềm" />
+              </Popconfirm>
+            </>
+          ) : (
+            <Space size="small">
+              {/* Nút khôi phục */}
+              <Popconfirm
+                title="Khôi phục sản phẩm này?"
+                onConfirm={() => handleRestore(record._id)}
+                okText="Khôi phục"
+                cancelText="Huỷ"
+              >
+                <Button
+                  icon={<RollbackOutlined />}
+                  type="default"
+                  title="Khôi phục"
+                  style={{ border: "none" }}
+                />
+              </Popconfirm>
+
+              {/* Nút xoá vĩnh viễn */}
+              <Popconfirm
+                title="Xác nhận xoá vĩnh viễn"
+                description="Hành động này sẽ xoá vĩnh viễn sản phẩm. Không thể khôi phục."
+                onConfirm={() => handleHardDelete(record.id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={<MdDelete />}
+                  title="Xoá"
+
+                />
+              </Popconfirm>
+            </Space>
+
+          )}
         </Space>
       ),
     },
   ];
 
-  // const handleDelete = async (id: number) => {
-  //   try {
-  //     const { data } = await axios.delete(`/api/product/${id}`);
-  //     toast.success(data.message);
-  //     refetch();
-  //   } catch (error) {
-  //     const errorMessage =
-  //       (error as ErrorType).response?.data?.message ||
-  //       (error as ErrorType).message ||
-  //       "Đã xảy ra lỗi, vui lòng thử lại.";
-  //     toast.error(errorMessage);
-  //   }
-  // };
 
+  const handleRestore = async (id: string) => {
+    try {
+      setLoading(true)
+      const res = await restoreProduct(id)
+      toast.success(res.message || "Khôi phục thành công.");
+      refetch();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
+  };
+
+  const handleHardDelete = async (id: string) => {
+    try {
+      setLoading(true)
+      const { data } = await axios.delete(`/api/product/${id}`);
+      toast.success(data.message || "Đã xoá vĩnh viễn.");
+      refetch();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
+  };
   //xóa mềm
   const handleDelete = async (id: string) => {
     try {
@@ -254,16 +309,30 @@ const Products: React.FC = () => {
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         }}
       >
-        <Title
-          level={2}
-          style={{
-            textAlign: "center",
-            margin: "0 0 24px 0",
-            color: "#262626",
-          }}
-        >
-          📦 Danh sách sản phẩm
-        </Title>
+        <div className="flex justify-between items-center mb-6">
+          <Title
+            level={2}
+            style={{
+              textAlign: "center",
+              margin: "0 0 24px 0",
+              color: "#262626",
+
+            }}
+          >
+            Danh sách sản phẩm
+          </Title>
+          <Switch
+            checked={showHidden}
+            onChange={(checked) => {
+              setShowHidden(checked);
+              updateQuery({ page: 1 });
+            }}
+
+            checkedChildren="Đã xoá"
+            unCheckedChildren="Hoạt động"
+          />
+
+        </div>
 
         <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
           <Col flex="auto">
