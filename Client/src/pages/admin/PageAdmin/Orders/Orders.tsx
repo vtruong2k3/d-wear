@@ -20,7 +20,7 @@ import { formatCurrency } from "../../../../utils/Format";
 import type { ColumnsType } from "antd/es/table";
 import socket from "../../../../sockets/socket";
 import { toast } from "react-toastify";
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { getPaymentStatusLabel, getStatusLabel, paymentColor } from "../../../../utils/Status";
 
@@ -49,7 +49,7 @@ const OrderList = () => {
   const [dateFilter, setDateFilter] = useState<string>("");
   const [sortTotal, setSortTotal] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
-  const { setLoading } = useLoading()
+  const [loading, setLoading] = useState<boolean>(false);
   const [pageSize, setPageSize] = useState(10);
   const fetchData = async () => {
     try {
@@ -414,6 +414,7 @@ const OrderList = () => {
 
       <Table<IOrder>
         columns={columns}
+        loading={loading}
         dataSource={filteredOrders.slice(
           (currentPage - 1) * pageSize,
           currentPage * pageSize

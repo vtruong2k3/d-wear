@@ -17,7 +17,7 @@ import {
 import type { SizeOption } from '../../../../types/size/ISize';
 import type { ErrorType } from '../../../../types/error/IError';
 import { toast } from 'react-toastify';
-import { useLoading } from '../../../../contexts/LoadingContext';
+
 
 const { Title } = Typography;
 
@@ -32,7 +32,7 @@ const SizeManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingSize, setEditingSize] = useState<SizeOption | null>(null);
-    const { setLoading } = useLoading()
+    const [loading, setLoading] = useState<boolean>(false);
     const fetchSizes = useCallback(async () => {
         try {
             setLoading(true)
@@ -208,8 +208,10 @@ const SizeManagement = () => {
                 </div>
 
                 <Table
+                    loading={loading}
                     columns={columns}
                     dataSource={filteredSizes}
+
                     rowKey="_id"
                     pagination={{
                         current: currentPage,

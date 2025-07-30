@@ -9,7 +9,7 @@ import type { IVoucher } from '../../../../types/voucher/IVoucher';
 import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/admin/voucherService';
 import type { ErrorType } from '../../../../types/error/IError';
 import { toast } from 'react-toastify';
-import { useLoading } from '../../../../contexts/LoadingContext';
+
 
 const { Search } = Input;
 const { Option } = Select;
@@ -27,7 +27,7 @@ const VoucherManagement = () => {
     const [searchText, setSearchText] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
-    const { setLoading } = useLoading();
+    const [loading, setLoading] = useState<boolean>(false);
 
     const getAllVoucher = useCallback(
         async (page = 1, limit = 10) => {
@@ -339,6 +339,7 @@ const VoucherManagement = () => {
                     </div>
 
                     <Table
+                        loading={loading}
                         columns={columns}
                         dataSource={filteredVouchers}
                         rowKey="_id" // Nếu dùng MongoDB thì thường là _id

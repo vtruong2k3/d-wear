@@ -17,7 +17,7 @@ import { MdAdd, MdDelete } from "react-icons/md";
 import { FaPen, FaSearch } from "react-icons/fa";
 import AddBrand from "./AddBrand";
 import EditBrand from "./EditBrand";
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import { fetchAllBrands, deleteBrandById } from "../../../../services/admin/brandService";
 import type { IBrand } from "../../../../types/brand/IBrand";
 import { toast } from "react-toastify";
@@ -29,7 +29,7 @@ const { Search } = Input;
 
 const BrandList = () => {
   const [brands, setBrands] = useState<IBrand[]>([]);
-  const { setLoading } = useLoading();
+  const [loading, setLoading] = useState<boolean>(false);
   const [searchText, setSearchText] = useState("");
   const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
@@ -138,7 +138,7 @@ const BrandList = () => {
         <Divider />
         <Table
           rowKey="_id"
-          loading={false}
+          loading={loading}
           columns={columns}
           dataSource={filteredBrands}
         />

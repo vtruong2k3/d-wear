@@ -19,7 +19,7 @@ import {
 
 import type { ColorOption } from '../../../../types/color/IColor';
 import type { ErrorType } from '../../../../types/error/IError';
-import { useLoading } from '../../../../contexts/LoadingContext';
+
 
 const { Title } = Typography;
 
@@ -34,7 +34,8 @@ const ColorManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingColor, setEditingColor] = useState<ColorOption | null>(null);
-    const { setLoading } = useLoading()
+    const [loading, setLoading] = useState<boolean>(false);
+
 
     const fetchColors = useCallback(async () => {
         try {
@@ -207,6 +208,7 @@ const ColorManagement = () => {
                 </div>
 
                 <Table
+                    loading={loading}
                     columns={columns}
                     dataSource={filteredColors}
                     rowKey="_id"
