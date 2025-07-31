@@ -78,6 +78,10 @@ export interface OrderData {
     note: string;
 }
 
+export interface checkOrderReviewType {
+    canReview: boolean,
+    order_id: string | undefined
+}
 
 export interface GetOrdersResponse {
     orders: IOrder[];

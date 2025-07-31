@@ -1,36 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Star, ThumbsUp, MessageCircle, Flag, X } from 'lucide-react';
-import { Upload, Image, message } from 'antd';
+import { Upload, Image, message, Form, Input, Rate, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
+import type { checkOrderReviewType } from '../../../types/order/IOrder';
+import type { FormValuesReview, IReview } from '../../../types/IReview';
+import toast from 'react-hot-toast';
+import type { ErrorType } from '../../../types/error/IError';
+import { createReviewProduct, fetcheGetRivew } from '../../../services/client/reviewService';
+import type { RcFile } from 'antd/es/upload';
+import { checkReviewProduct } from '../../../services/client/orderAPI';
 
-interface IReview {
-    _id: string;
-    user_name: string;
-    user_avatar?: string;
-    rating: number;
-    comment: string;
-    images?: string[];
-    created_at: string;
-    verified_purchase: boolean;
-}
+const { TextArea } = Input;
+
+
 
 interface Props {
     initialReviews: IReview[];
     productId: string;
+    chechShowFormReview?: checkOrderReviewType;
 }
 
-const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
+const ProductReviews: React.FC<Props> = ({ initialReviews, productId, chechShowFormReview }) => {
     const reviewsContainerRef = useRef<HTMLDivElement | null>(null);
+    const [form] = Form.useForm();
 
     const [reviews, setReviews] = useState<IReview[]>(initialReviews);
-    const [showReviewForm, setShowReviewForm] = useState(true);
-    const [newReview, setNewReview] = useState({ rating: 5, comment: "", images: [] as string[] });
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [canReview, setCanReview] = useState<boolean>(chechShowFormReview?.canReview ?? false);
     const [reviewFilter, setReviewFilter] = useState<number | 'all'>('all');
     const [showAllReviews, setShowAllReviews] = useState(false);
     const [reviewsToShow, setReviewsToShow] = useState(3);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setReviews(initialReviews);
@@ -40,6 +44,13 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
         setShowAllReviews(false);
         setReviewsToShow(3);
     }, [reviewFilter]);
+    useEffect(() => {
+        setShowReviewForm(chechShowFormReview?.canReview ?? false);
+        setCanReview(chechShowFormReview?.canReview ?? false); // thêm dòng này
+    }, [chechShowFormReview]);
+    useEffect(() => {
+        setShowReviewForm(chechShowFormReview?.canReview ?? false);
+    }, [chechShowFormReview]);
 
     const calculateAverageRating = () => {
         if (reviews.length === 0) return "0.0";
@@ -64,46 +75,37 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
         });
     };
 
-    // Xử lý upload ảnh với Ant Design
-    const handleUploadChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-        setFileList(newFileList);
-
-        // Chuyển đổi fileList thành mảng base64 strings
-        const imageUrls: string[] = [];
-        newFileList.forEach(file => {
-            if (file.originFileObj) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const imageUrl = e.target?.result as string;
-                    imageUrls.push(imageUrl);
-                    if (imageUrls.length === newFileList.length) {
-                        setNewReview(prev => ({ ...prev, images: imageUrls }));
-                    }
-                };
-                reader.readAsDataURL(file.originFileObj);
-            }
-        });
-
-        if (newFileList.length === 0) {
-            setNewReview(prev => ({ ...prev, images: [] }));
-        }
-    };
-
-    const beforeUpload = (file: File) => {
-        const isImage = file.type.startsWith('image/');
+    // Giới hạn upload ảnh: chỉ ảnh < 5MB
+    const beforeUpload: UploadProps["beforeUpload"] = (file) => {
+        const isImage = file.type.startsWith("image/");
         if (!isImage) {
-            message.error('Chỉ được upload file ảnh!');
-            return false;
+            message.error("Chỉ được upload file ảnh!");
+            return Upload.LIST_IGNORE;
         }
 
         const isLt5M = file.size / 1024 / 1024 < 5;
         if (!isLt5M) {
-            message.error('Kích thước ảnh phải nhỏ hơn 5MB!');
-            return false;
+            message.error("Kích thước ảnh phải nhỏ hơn 5MB!");
+            return Upload.LIST_IGNORE;
         }
 
-        return false; // Ngăn upload tự động, chỉ xử lý local
+        // Không upload ngay, chỉ lưu vào fileList
+        return false;
     };
+
+    // Xử lý thay đổi file upload
+    const handleUploadChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
+        setFileList(newFileList);
+    };
+
+    // // Chuyển File sang base64 nếu cần (dùng để preview ảnh)
+    // const getBase64 = (file: File): Promise<string> =>
+    //     new Promise((resolve, reject) => {
+    //         const reader = new FileReader();
+    //         reader.readAsDataURL(file);
+    //         reader.onload = () => resolve(reader.result as string);
+    //         reader.onerror = (error) => reject(error);
+    //     });
 
     const handleShowMoreReviews = () => {
         setIsTransitioning(true);
@@ -122,28 +124,57 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
         }, 150);
     };
 
-    const handleSubmitReview = () => {
-        if (newReview.comment.trim() === "") {
-            message.error("Vui lòng nhập bình luận");
-            return;
+    const handleSubmitReview = async (values: FormValuesReview) => {
+        try {
+            setLoading(true);
+
+            // Lấy danh sách ảnh từ fileList
+            const images: File[] = fileList
+                .map((file) => file.originFileObj as RcFile | undefined)
+                .filter((file): file is RcFile => !!file);
+
+            // Tạo FormData để gửi kèm ảnh
+            const formData = new FormData();
+            formData.append("order_id", chechShowFormReview?.order_id || "");
+            formData.append("product_id", productId);
+            formData.append("rating", values.rating.toString());
+            formData.append("comment", values.comment);
+
+            images.forEach((file) => {
+                formData.append("reviewImage", file);
+            });
+
+            const res = await createReviewProduct(formData);
+
+
+
+            // Reset form
+            form.resetFields();
+            setFileList([]);
+            setShowReviewForm(false);
+
+            if (res) {
+                const updatedCheck = await checkReviewProduct(productId);
+                setCanReview(updatedCheck.canReview);
+                const realoadReview = await fetcheGetRivew(productId)
+                setReviews(realoadReview)
+            }
+            toast.success(res.message);
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        const review: IReview = {
-            _id: `r${Date.now()}`,
-            user_name: "Bạn",
-            user_avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-            rating: newReview.rating,
-            comment: newReview.comment,
-            images: newReview.images.length > 0 ? newReview.images : undefined,
-            created_at: new Date().toISOString(),
-            verified_purchase: true
-        };
-
-        setReviews([review, ...reviews]);
-        setNewReview({ rating: 5, comment: "", images: [] });
-        setFileList([]);
+    const handleCancelReview = () => {
         setShowReviewForm(false);
-        message.success("Đã gửi đánh giá thành công!");
+        form.resetFields();
+        setFileList([]);
     };
 
     const StarIcon = ({ filled }: { filled: boolean }) => (
@@ -171,6 +202,13 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
                     onClick={(e) => e.stopPropagation()}
                 />
             </div>
+        </div>
+    );
+
+    const uploadButton = (
+        <div>
+            <PlusOutlined />
+            <div style={{ marginTop: 8 }}>Thêm ảnh</div>
         </div>
     );
 
@@ -250,86 +288,95 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
                         })}
                     </div>
 
-                    <button
-                        onClick={() => setShowReviewForm(!showReviewForm)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                        Viết đánh giá
-                    </button>
+                    {canReview && (
+                        <button
+                            onClick={() => setShowReviewForm(!showReviewForm)}
+                            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            Viết đánh giá
+                        </button>
+                    )}
+
                 </div>
 
                 {showReviewForm && (
                     <div className="bg-white !border !border-gray-200 shadow-sm rounded-lg p-6 mb-8 transform transition-all duration-300 ease-in-out">
                         <h4 className="text-lg font-semibold mb-4">Viết đánh giá của bạn</h4>
 
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Đánh giá sao</label>
-                            <div className="flex gap-1">
-                                {[1, 2, 3, 4, 5].map(rating => (
-                                    <button
-                                        key={rating}
-                                        onClick={() => setNewReview({ ...newReview, rating })}
-                                        className="w-6 h-6 transition-all duration-200 hover:scale-110"
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            onFinish={handleSubmitReview}
+                            initialValues={{
+                                rating: 5,
+                                comment: ''
+                            }}
+                        >
+                            <Form.Item
+                                label="Đánh giá sao"
+                                name="rating"
+                                rules={[
+                                    { required: true, message: 'Vui lòng chọn số sao đánh giá!' }
+                                ]}
+                            >
+                                <Rate
+                                    allowHalf={false}
+                                    style={{ fontSize: 24 }}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Bình luận"
+                                name="comment"
+                                rules={[
+
+                                    { min: 5, message: 'Bình luận tối thiểu 10 ký tự!' }
+                                ]}
+                            >
+                                <TextArea
+                                    rows={4}
+                                    placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                                    showCount
+                                    maxLength={1000}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Hình ảnh (tùy chọn)"
+                                name="images"
+                            >
+                                <Upload
+                                    listType="picture-card"
+                                    fileList={fileList}
+                                    onChange={handleUploadChange}
+                                    beforeUpload={beforeUpload}
+                                    multiple
+                                    maxCount={5}
+                                    accept="image/*"
+                                >
+                                    {fileList.length >= 5 ? null : uploadButton}
+                                </Upload>
+                                <div className="text-xs text-gray-500 mt-2">
+                                    Tối đa 5 hình ảnh. Định dạng: JPG, PNG, GIF. Kích thước tối đa: 5MB
+                                </div>
+                            </Form.Item>
+
+                            <Form.Item>
+                                <div className="flex gap-3">
+                                    <Button
+                                        type="primary"
+                                        htmlType="submit"
+                                        loading={loading}
+                                        style={{ backgroundColor: '#000', borderColor: '#000' }}
                                     >
-                                        <StarIcon filled={rating <= newReview.rating} />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Bình luận</label>
-                            <textarea
-                                value={newReview.comment}
-                                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                                className="w-full p-3 !border !border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                rows={4}
-                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                            />
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Hình ảnh (tùy chọn)</label>
-                            <Upload
-                                listType="picture-card"
-                                fileList={fileList}
-                                onChange={handleUploadChange}
-                                beforeUpload={beforeUpload}
-                                multiple
-                                maxCount={5}
-                                accept="image/*"
-                                className="review-upload"
-                            >
-                                {fileList.length >= 5 ? null : (
-                                    <div className="flex flex-col items-center justify-center">
-                                        <div className="text-2xl text-gray-400 mb-2">+</div>
-                                        <div className="text-sm text-gray-600">Thêm ảnh</div>
-                                    </div>
-                                )}
-                            </Upload>
-                            <p className="text-xs text-gray-500 mt-2">
-                                Tối đa 5 hình ảnh. Định dạng: JPG, PNG, GIF. Kích thước tối đa: 5MB
-                            </p>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleSubmitReview}
-                                className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
-                            >
-                                Gửi đánh giá
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowReviewForm(false);
-                                    setNewReview({ rating: 5, comment: "", images: [] });
-                                    setFileList([]);
-                                }}
-                                className="bg-gray-100 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                Hủy
-                            </button>
-                        </div>
+                                        Gửi đánh giá
+                                    </Button>
+                                    <Button onClick={handleCancelReview}>
+                                        Hủy
+                                    </Button>
+                                </div>
+                            </Form.Item>
+                        </Form>
                     </div>
                 )}
 
@@ -345,7 +392,7 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
                             </div>
                         ) : (
                             <>
-                                {displayedReviews.map((review, index) => (
+                                {displayedReviews.map((review) => (
                                     <div
                                         key={review._id}
                                         className="bg-white !border !border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-300"
@@ -353,15 +400,19 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
                                         <div className="flex items-start gap-4">
                                             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                                                 <img
-                                                    src={review.user_avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"}
-                                                    alt={review.user_name}
+                                                    src={
+                                                        review.user_id?.avatar
+                                                            ? `http://localhost:5000${review.user_id.avatar}`
+                                                            : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+                                                    }
+                                                    alt={review.user_id?.username}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <h5 className="font-semibold text-gray-900">{review.user_name}</h5>
-                                                    {review.verified_purchase && (
+                                                    <h5 className="font-semibold text-gray-900">{review.user_id.username}</h5>
+                                                    {review.is_order && (
                                                         <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                                                             ✓ Đã mua hàng
                                                         </span>
@@ -374,7 +425,7 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
                                                         ))}
                                                     </div>
                                                     <span className="text-sm text-gray-500">
-                                                        {formatDate(review.created_at)}
+                                                        {formatDate(review.createdAt)}
                                                     </span>
                                                 </div>
                                                 <div className="text-gray-700 leading-relaxed mb-4">
@@ -388,7 +439,7 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId }) => {
                                                                 {review.images.map((image, imgIndex) => (
                                                                     <div key={imgIndex} className="relative">
                                                                         <Image
-                                                                            src={image}
+                                                                            src={`http://localhost:5000${image}`}
                                                                             alt={`Review image ${imgIndex + 1}`}
                                                                             className="w-full h-11 object-cover rounded-md border border-gray-200"
                                                                             style={{ width: '100%', height: '124px' }}

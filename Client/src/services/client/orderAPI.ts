@@ -28,3 +28,8 @@ export const cancelOrder = async (id: string | undefined, reason: string) => {
   });
   return response.data;
 };
+
+export const checkReviewProduct = async (id: string | undefined) => {
+  const res = await axios.get(`/api/order/user-review/${id}`);
+  return res.data;
+};

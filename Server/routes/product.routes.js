@@ -10,6 +10,21 @@ const variantFields = Array.from({ length: 100 }).map((_, i) => ({
   maxCount: 10,
 }));
 
+//  Lấy tất cả sản phẩm
+productRouter.get("/product", productControler.getAllProductWithVariants);
+productRouter.get(
+  "/product/by-category-band",
+  productControler.getProductByCategoryWithVariants
+);
+
+productRouter.get("/product/search", productControler.searchProducts);
+//  Lấy item rút gọn
+productRouter.get("/product/items", productControler.getAllProdutsItem);
+//  Lấy danh sách đã xoá mềm
+productRouter.get(
+  "/product/deleted",
+  productControler.getAllDeletedProductWithVariants
+);
 //  Tạo sản phẩm + biến thể
 productRouter.post(
   "/product",
@@ -33,27 +48,10 @@ productRouter.delete(
   productControler.deleteProductWithVariants
 );
 
-//  Lấy tất cả sản phẩm
-productRouter.get("/product", productControler.getAllProductWithVariants);
-productRouter.get(
-  "/product/by-category-band",
-  productControler.getProductByCategoryWithVariants
-);
-
-productRouter.get("/product/search", productControler.searchProducts);
-//  Lấy item rút gọn
-productRouter.get("/product/items", productControler.getAllProdutsItem);
-
 //  Xoá mềm
 productRouter.put(
   "/product/:id/soft-delete",
   productControler.softDeleteProduct
-);
-
-//  Lấy danh sách đã xoá mềm
-productRouter.get(
-  "/product/deleted",
-  productControler.getAllDeletedProductWithVariants
 );
 
 //  Rồi mới đến /product/:id

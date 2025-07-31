@@ -4,6 +4,14 @@ const authUserMiddelware = require("../middlewares/auth.middleware");
 const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 const orderRouter = expess.Router();
 
+// lấy giỏ hàng từ của user bên client
+orderRouter.get(
+  "/orders/items",
+  authUserMiddelware,
+  orderController.getAllByIdUser
+);
+// lấy all order bên admin
+orderRouter.get("/orders", authAdminMiddelware, orderController.getAllOrder);
 orderRouter.post(
   "/order/:id/status",
   authAdminMiddelware,
@@ -15,14 +23,13 @@ orderRouter.post(
   authUserMiddelware,
   orderController.cancelOrder
 );
-// lấy giỏ hàng từ của user bên client
+
+// kiểm tra xem đơn hàng giao thành công chưa để cho binhf luận
 orderRouter.get(
-  "/orders/items",
+  "/order/user-review/:productId",
   authUserMiddelware,
-  orderController.getAllByIdUser
+  orderController.getUserProductOrdersForReview
 );
-// lấy all order bên admin
-orderRouter.get("/orders", authAdminMiddelware, orderController.getAllOrder);
 orderRouter.get("/orders/:id", orderController.getOrderByIdAdmin);
 orderRouter.get(
   "/orders/items/:id",

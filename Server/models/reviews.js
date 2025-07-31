@@ -24,15 +24,19 @@ const reviewSchema = new mongoose.Schema(
       max: 5,
     },
     images: {
-      type: [String], // URL ảnh sau khi upload
+      type: [String],
       default: [],
     },
     comment: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     is_approved: {
+      type: Boolean,
+      default: true,
+    },
+    is_order: {
       type: Boolean,
       default: true,
     },

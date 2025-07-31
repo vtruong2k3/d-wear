@@ -10,6 +10,7 @@ const Variant = require("../models/variants");
 const { createOrderSchema } = require("../validate/orderValidate");
 const sendOrderCancellationEmail = require("../utils/sendOrderCancellationEmail");
 const sendOrderStatusUpdateEmail = require("../utils/updateSendEmail");
+const Review = require("../models/reviews");
 exports.cancelOrder = async (req, res) => {
   try {
     const order_id = req.params.id;
@@ -517,5 +518,61 @@ exports.createOrder = async (req, res) => {
       message: "Server Error",
       error: error.message,
     });
+  }
+};
+
+exports.getUserProductOrdersForReview = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const { productId } = req.params;
+
+    // 1. Lấy các đơn hàng đã giao thành công của user
+    const deliveredOrders = await Order.find({ user_id, status: "delivered" });
+    const deliveredOrderIds = deliveredOrders.map((order) => order._id);
+
+    if (deliveredOrderIds.length === 0) {
+      return res.json({
+        canReview: false,
+        order_id: null,
+      });
+    }
+
+    // 2. Lấy các OrderItem chứa productId trong các đơn hàng đã giao
+    const relatedOrderItems = await OrderItem.find({
+      order_id: { $in: deliveredOrderIds },
+      product_id: productId,
+    });
+
+    if (relatedOrderItems.length === 0) {
+      return res.json({
+        canReview: false,
+        order_id: null,
+      });
+    }
+
+    const orderIdsWithProduct = relatedOrderItems.map((item) =>
+      item.order_id.toString()
+    );
+
+    // 3. Tìm các review đã viết theo từng đơn hàng cho sản phẩm đó
+    const existingReviews = await Review.find({
+      user_id,
+      product_id: productId,
+      order_id: { $in: orderIdsWithProduct },
+    });
+
+    const reviewedOrderIds = existingReviews.map((r) => r.order_id.toString());
+
+    // 4. Lọc ra các đơn chưa review sản phẩm này
+    const notYetReviewedOrderIds = orderIdsWithProduct.filter(
+      (id) => !reviewedOrderIds.includes(id)
+    );
+
+    return res.json({
+      canReview: notYetReviewedOrderIds.length > 0,
+      order_id: notYetReviewedOrderIds[0] || null,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
