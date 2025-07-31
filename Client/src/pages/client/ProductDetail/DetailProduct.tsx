@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 import apiServiceProduct from "../../../services/client/apiServiceProduct";
 import useAuth from "../../../hooks/Client/useAuth";
-import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
+
 import { addToCartThunk } from "../../../redux/features/client/thunks/cartThunk";
 import type { AppDispatch, RootState } from "../../../redux/store";
 import type { IProducts, IProductDetail } from "../../../types/IProducts";
