@@ -27,7 +27,11 @@ import {
 
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import BannerProductList from "./BannerProductList";
+
 import queryString from "query-string";
+
+
+
 import type { IProducts } from "../../../types/IProducts";
 import { formatCurrency } from "../../../utils/Format";
 import useProductList from "../../../hooks/Client/useProduct";
@@ -45,7 +49,6 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { Panel } = Collapse;
 
-// Interfaces
 
 const ListProduct = () => {
   const [category, setCategory] = useState<string>(""); // Đang chọn
@@ -73,49 +76,50 @@ const ListProduct = () => {
 
   const [query, updateQuery] = useQuery({
     page: 1,
-    limit: 10,
+    limit: 9,
     sortBy: "createdAt",
     order: "desc",
     q: safeQ,
-    category_id: categoryId, // 👈 truyền vào query hook
+    category_id: categoryId,
+
   });
 
   const path =
-    query.category_id || query.brand_id
+    query.category_id || brand
       ? "product/by-category-band"
       : "product";
 
-      useEffect(() => {
-        const parsed = queryString.parse(location.search);
-        const safeQ = Array.isArray(parsed.q) ? parsed.q[0] || "" : parsed.q || "";
-        const categoryId = Array.isArray(parsed.category_id)
-          ? parsed.category_id[0] || ""
-          : parsed.category_id || "";
-      
-        // Giữ nguyên sortBy, order
-        const sortBy = Array.isArray(parsed.sortBy) ? parsed.sortBy[0] : parsed.sortBy;
-        const order = Array.isArray(parsed.order) ? parsed.order[0] : parsed.order;
-      
-        updateQuery({
-          page: 1,
-          q: safeQ,
-          category_id: categoryId,
-          sortBy: sortBy || "createdAt", // fallback
-          order: order || "desc",
-        });
-      
-        setCategory(categoryId);
-      }, [location.search]);
-      
+  useEffect(() => {
+    const parsed = queryString.parse(location.search);
+    const safeQ = Array.isArray(parsed.q) ? parsed.q[0] || "" : parsed.q || "";
+    const categoryId = Array.isArray(parsed.category_id)
+      ? parsed.category_id[0] || ""
+      : parsed.category_id || "";
+
+    // Giữ nguyên sortBy, order
+    const sortBy = Array.isArray(parsed.sortBy) ? parsed.sortBy[0] : parsed.sortBy;
+    const order = Array.isArray(parsed.order) ? parsed.order[0] : parsed.order;
+
+    updateQuery({
+      page: 1,
+      q: safeQ,
+      category_id: categoryId,
+      sortBy: sortBy || "createdAt", // fallback
+      order: order || "desc",
+    });
+
+    setCategory(categoryId);
+  }, [location.search]);
+
 
 
   const { data: products, total } = useProductList(path, {
-    
+
     ...query,
     ...(category && { category_id: category }),
     ...(brand && { brand_id: brand }),
-    minPrice: priceRange[0],
-    maxPrice: priceRange[1],
+
+
   });
 
   const getCategory = useCallback(async () => {
@@ -134,7 +138,7 @@ const ListProduct = () => {
     }
   }, [setLoading]);
 
-  const getAllBrand = async () => {
+  const getAllBrand = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetchAllBrands();
@@ -148,11 +152,14 @@ const ListProduct = () => {
     } finally {
       setLoading(false);
     }
-  };
+
+  }, [setLoading])
+
   useEffect(() => {
-    getAllBrand();
-    getCategory();
-  }, [getCategory]);
+    getAllBrand()
+    getCategory()
+  }, [getCategory, getAllBrand])
+
 
   const menuItems = [
     {
@@ -322,6 +329,9 @@ const ListProduct = () => {
                       max={10000000}
                       step={100000}
                       value={tempPriceRange}
+
+                      onChange={(value) => setTempPriceRange(value as [number, number])}
+
                     />
                   </div>
                 </div>
@@ -397,7 +407,7 @@ const ListProduct = () => {
                       setPriceRange(tempPriceRange);
                       updateQuery({ page: 1 });
                     }}
-                    
+
                     style={{ width: "100%" }}
                   >
                     Áp dụng
@@ -468,21 +478,21 @@ const ListProduct = () => {
                   <Select
                     placeholder="Sắp xếp theo"
                     size="large"
-                    style={{ width: "100%" }}
-                    value={`${query.sortBy},${query.order}`}
+
+                    style={{ width: '100%' }}
                     onChange={(value) => {
-                      const [sortBy, order] = value.split(",");
-                      updateQuery({ page: 1, sortBy, order });
+                      if (value) {
+                        const [sortBy, order] = value.split(',');
+                        updateQuery({ page: 1, sortBy, order });
+                      } else {
+                        updateQuery({ page: 1, sortBy: 'createdAt', order: 'desc' });
+                      }
                     }}
-                    
                   >
-                    <Option value="createdAt,desc">Mới nhất</Option>
-                    <Option value="basePrice,desc">
-                      Giá: Cao đến thấp
-                    </Option>{" "}
-                    <Option value="basePrice,asc">
-                      Giá: Thấp đến cao
-                    </Option>{" "}
+                    <Option value="">Mặc định</Option>
+                    <Option value="basePrice,desc">Giá: Cao đến thấp</Option>
+                    <Option value="basePrice,asc">Giá: Thấp đến cao</Option>
+
                     <Option value="product_name,asc">Tên: A-Z</Option>
                     <Option value="product_name,desc">Tên: Z-A</Option>
                   </Select>
@@ -506,7 +516,10 @@ const ListProduct = () => {
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={() => {
-                        setCategory("");
+
+                        setCategory('');
+                        setBrand('');
+
                         setTempPriceRange([0, 10000000]);
                         setPriceRange([0, 10000000]);
                         updateQuery({
@@ -548,17 +561,22 @@ const ListProduct = () => {
               </div>
 
               <Divider style={{ margin: "16px 0" }} />
-              
 
+
+              {/* Điều chỉnh responsive breakpoints để sản phẩm to hơn trên laptop */}
               <Row gutter={[24, 24]}>
                 {products.length > 0 ? (
                   products.map((item: IProducts) => (
                     <Col
                       key={item._id}
-                      xs={24}
-                      sm={12}
-                      md={viewMode === "grid" ? 8 : 24}
-                      lg={viewMode === "grid" ? 6 : 24}
+
+                      xs={24}        // Mobile: 1 sản phẩm/dòng
+                      sm={12}        // Tablet nhỏ: 2 sản phẩm/dòng  
+                      md={viewMode === 'grid' ? 12 : 24}  // Tablet lớn: 2 sản phẩm/dòng trong grid mode
+                      lg={viewMode === 'grid' ? 8 : 24}   // Laptop: 3 sản phẩm/dòng trong grid mode
+                      xl={viewMode === 'grid' ? 8 : 24}   // Desktop: 3 sản phẩm/dòng trong grid mode
+                      xxl={viewMode === 'grid' ? 6 : 24}  // Desktop lớn: 4 sản phẩm/dòng trong grid mode
+
                     >
                       <BoxProduct item={item} />
                     </Col>
@@ -592,7 +610,15 @@ const ListProduct = () => {
                       total={total}
                       pageSize={query.limit}
                       onChange={(page) => updateQuery({ page })}
-                      showSizeChanger={false}
+                      showSizeChanger={true}
+                      showQuickJumper={true}
+                      pageSizeOptions={["6", "9", "12", "18"]}
+                      showTotal={(total, range) =>
+                        `${range[0]}-${range[1]} của ${total} sản phẩm`
+                      }
+                      onShowSizeChange={(_current, size) => {
+                        updateQuery({ page: 1, limit: size });
+                      }}
                     />
                   </Row>
                 </>

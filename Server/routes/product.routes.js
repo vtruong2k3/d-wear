@@ -40,9 +40,6 @@ productRouter.get(
   productControler.getProductByCategoryWithVariants
 );
 
-// //  Lấy 1 sản phẩm kèm biến thể
-// productRouter.get("/product/:id", productControler.getProductWithVariantsById);
-
 //  Lấy item rút gọn
 productRouter.get("/product/items", productControler.getAllProdutsItem);
 
@@ -54,11 +51,11 @@ productRouter.put(
 
 //  Lấy danh sách đã xoá mềm
 productRouter.get(
-  "/product/deleted", //  fix dấu `/` bị thiếu!
+  "/product/deleted",
   productControler.getAllDeletedProductWithVariants
 );
 
-// ✅ Rồi mới đến /product/:id
+//  Rồi mới đến /product/:id
 productRouter.get("/product/:id", productControler.getProductWithVariantsById);
 
 module.exports = productRouter;

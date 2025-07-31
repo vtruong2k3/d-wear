@@ -8,8 +8,7 @@ exports.getAllCart = async (req, res) => {
     const userId = req.user.id;
 
     const result = await Cart.find({ user_id: userId })
-      // .populate("product_id", "product_name imageUrls")
-      // .populate("variant_id", "size color")
+
       .sort({ createdAt: -1 })
       .lean();
 
@@ -112,7 +111,7 @@ exports.addToCart = async (req, res) => {
         quantity,
         price: exsitingVariant.price,
       });
-      console.log(cart);
+
       return res.status(201).json({
         message: "Thêm sản phẩm vào giỏ hàng thành công",
         data: cart,

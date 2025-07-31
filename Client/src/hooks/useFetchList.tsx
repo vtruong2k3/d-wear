@@ -5,7 +5,7 @@ import type { AxiosRequestConfig } from "axios";
 
 interface UseFetchListResult<T> {
   data: T[];
-  total: number; // ✅ thêm dòng này
+  total: number; //  thêm dòng này
   loading: boolean;
   error: unknown;
   refetch: () => Promise<void>;
