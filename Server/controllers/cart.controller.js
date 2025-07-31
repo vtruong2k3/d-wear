@@ -112,7 +112,7 @@ exports.addToCart = async (req, res) => {
         quantity,
         price: exsitingVariant.price,
       });
-      console.log(cart);
+
       return res.status(201).json({
         message: "Thêm sản phẩm vào giỏ hàng thành công",
         data: cart,

@@ -25,10 +25,8 @@ import {
   DownOutlined
 } from "@ant-design/icons";
 
-
 import BoxProduct from "../../../components/Client/BoxProduct/BoxProduct";
 import BannerProductList from "./BannerProductList";
-
 
 import type { IProducts } from "../../../types/IProducts";
 import { formatCurrency } from "../../../utils/Format";
@@ -43,19 +41,12 @@ import type { IBrand } from "../../../types/brand/IBrand";
 import { fetchAllBrands } from "../../../services/client/apiBrandService";
 import { useLoading } from "../../../contexts/LoadingContext";
 
-
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { Panel } = Collapse;
 
-// Interfaces
-
-
-
 const ListProduct = () => {
-
-
   const [category, setCategory] = useState<string>(""); // Đang chọn
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [brand, setBrand] = useState<string>("");
@@ -66,7 +57,7 @@ const ListProduct = () => {
   const { setLoading } = useLoading()
   const [query, updateQuery] = useQuery({
     page: 1,
-    limit: 10,
+    limit: 9, // Giảm từ 10 xuống 9 để chia hết cho 3
     sortBy: "createdAt",
     order: "desc",
     q: "",
@@ -76,8 +67,8 @@ const ListProduct = () => {
     ...query,
     ...(category && { category_id: category }),
     ...(brand && { brand_id: brand }),
-
   });
+
   const getCategory = useCallback(async () => {
     try {
       setLoading(true)
@@ -94,7 +85,7 @@ const ListProduct = () => {
     }
   }, [setLoading])
 
-  const getAllBrand = async () => {
+  const getAllBrand = useCallback(async () => {
     try {
       setLoading(true)
       const res = await fetchAllBrands();
@@ -108,11 +99,12 @@ const ListProduct = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading])
+
   useEffect(() => {
     getAllBrand()
     getCategory()
-  }, [getCategory])
+  }, [getCategory, getAllBrand])
 
   const menuItems = [
     {
@@ -242,8 +234,7 @@ const ListProduct = () => {
                       max={10000000}
                       step={100000}
                       value={tempPriceRange}
-
-
+                      onChange={(value) => setTempPriceRange(value as [number, number])}
                     />
                   </div>
                 </div>
@@ -262,7 +253,6 @@ const ListProduct = () => {
                         formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ''))}
                       />
-
                     </div>
                   </Col>
                   <Col span={12}>
@@ -278,7 +268,6 @@ const ListProduct = () => {
                         formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ''))}
                       />
-
                     </div>
                   </Col>
                 </Row>
@@ -357,13 +346,20 @@ const ListProduct = () => {
                     placeholder="Sắp xếp theo"
                     size="large"
                     style={{ width: '100%' }}
-
+                    onChange={(value) => {
+                      if (value) {
+                        const [sortBy, order] = value.split(',');
+                        updateQuery({ page: 1, sortBy, order });
+                      } else {
+                        updateQuery({ page: 1, sortBy: 'createdAt', order: 'desc' });
+                      }
+                    }}
                   >
                     <Option value="">Mặc định</Option>
-                    <Option value="price,desc">Giá: Cao đến thấp</Option>
-                    <Option value="price,asc">Giá: Thấp đến cao</Option>
-                    <Option value="title,asc">Tên: A-Z</Option>
-                    <Option value="title,desc">Tên: Z-A</Option>
+                    <Option value="basePrice,desc">Giá: Cao đến thấp</Option>
+                    <Option value="basePrice,asc">Giá: Thấp đến cao</Option>
+                    <Option value="product_name,asc">Tên: A-Z</Option>
+                    <Option value="product_name,desc">Tên: Z-A</Option>
                   </Select>
                 </Col>
 
@@ -383,10 +379,10 @@ const ListProduct = () => {
                     </Button.Group>
 
                     <Button
-
                       icon={<ReloadOutlined />}
                       onClick={() => {
                         setCategory('');
+                        setBrand('');
                         setTempPriceRange([0, 10000000]);
                         setPriceRange([0, 10000000]);
                         updateQuery({ page: 1, q: '', sortBy: 'createdAt', order: 'desc' });
@@ -423,15 +419,18 @@ const ListProduct = () => {
 
               <Divider style={{ margin: '16px 0' }} />
 
+              {/* Điều chỉnh responsive breakpoints để sản phẩm to hơn trên laptop */}
               <Row gutter={[24, 24]}>
                 {products.length > 0 ? (
                   products.map((item: IProducts) => (
                     <Col
                       key={item._id}
-                      xs={24}
-                      sm={12}
-                      md={viewMode === 'grid' ? 8 : 24}
-                      lg={viewMode === 'grid' ? 6 : 24}
+                      xs={24}        // Mobile: 1 sản phẩm/dòng
+                      sm={12}        // Tablet nhỏ: 2 sản phẩm/dòng  
+                      md={viewMode === 'grid' ? 12 : 24}  // Tablet lớn: 2 sản phẩm/dòng trong grid mode
+                      lg={viewMode === 'grid' ? 8 : 24}   // Laptop: 3 sản phẩm/dòng trong grid mode
+                      xl={viewMode === 'grid' ? 8 : 24}   // Desktop: 3 sản phẩm/dòng trong grid mode
+                      xxl={viewMode === 'grid' ? 6 : 24}  // Desktop lớn: 4 sản phẩm/dòng trong grid mode
                     >
                       <BoxProduct item={item} />
                     </Col>
@@ -463,7 +462,15 @@ const ListProduct = () => {
                       total={total}
                       pageSize={query.limit}
                       onChange={(page) => updateQuery({ page })}
-                      showSizeChanger={false}
+                      showSizeChanger={true}
+                      showQuickJumper={true}
+                      pageSizeOptions={["6", "9", "12", "18"]}
+                      showTotal={(total, range) =>
+                        `${range[0]}-${range[1]} của ${total} sản phẩm`
+                      }
+                      onShowSizeChange={(_current, size) => {
+                        updateQuery({ page: 1, limit: size });
+                      }}
                     />
                   </Row>
                 </>

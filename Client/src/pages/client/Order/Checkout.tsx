@@ -778,7 +778,7 @@ const Checkout = () => {
                       value={selectedProvince || undefined}
                       onChange={(value) => {
                         handleProvinceChange(value); // gọi hàm gốc
-                        updateFullAddress(); // ✅ tự động cập nhật địa chỉ
+                        updateFullAddress(); //  tự động cập nhật địa chỉ
                       }}
                       allowClear
                       onClear={() => {
@@ -1082,6 +1082,7 @@ const Checkout = () => {
               </Button>
 
               <Button
+
                 type="primary"
                 size="large"
                 block
@@ -1092,7 +1093,8 @@ const Checkout = () => {
                   shippingFee === 0 ||
                   (addressType === "saved" && !selectedAddressId) ||
                   (addressType === "manual" &&
-                    (!selectedProvince || !selectedDistrict || !selectedWard))
+                    (!selectedProvince || !selectedDistrict || !selectedWard)) ||
+                  (isOverFiveProducts && paymentMethodValue !== "momo")
                 }
               >
                 {paymentMethodValue === "cod"
