@@ -13,7 +13,7 @@ reviewRouter.post(
 
 reviewRouter.get(
   "/review/:productId",
-  authUserMiddelware,
+
   reviewController.getAllReview
 );
 module.exports = reviewRouter;

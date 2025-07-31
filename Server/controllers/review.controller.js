@@ -80,17 +80,12 @@ exports.reviewOrderProduct = async (req, res) => {
 
 exports.getAllReview = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { productId } = req.params;
     const extingProduct = await Product.findById(productId);
     if (!extingProduct) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại" });
-    }
     const reviews = await Review.find({ product_id: productId })
       .populate("user_id", "username avatar")
       .sort({ createdAt: -1 });

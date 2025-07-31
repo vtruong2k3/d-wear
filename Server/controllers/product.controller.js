@@ -406,7 +406,7 @@ exports.getAllProdutsItem = async (req, res) => {
 exports.softDeleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isDeleted } = req.body; // ✅ đúng tên field
+    const { isDeleted } = req.body; //  đúng tên field
 
     // Chuyển đổi về boolean nếu là string
     const isDeletedBool = isDeleted === true || isDeleted === "true";
@@ -651,5 +651,52 @@ exports.searchProducts = async (req, res) => {
   } catch (error) {
     console.error(" Lỗi tìm kiếm:", error);
     res.status(500).json({ message: "Lỗi server khi tìm kiếm sản phẩm." });
+  }
+};
+
+exports.getProductRelated = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { productId } = req.query;
+
+    if (!categoryId) {
+      return res.status(400).json({ message: "Không có id danh mục" });
+    }
+
+    const query = {
+      category_id: categoryId,
+      isDeleted: false,
+    };
+
+    if (productId) {
+      query._id = { $ne: productId };
+    }
+
+    const products = await Product.find(query)
+      .limit(10)
+      .populate("brand_id", "brand_name")
+      .populate("category_id", "category_name");
+
+    const productIds = products.map((p) => p._id);
+    const variants = await Variant.find({ product_id: { $in: productIds } });
+
+    const productList = products.map((product) => {
+      const productVariants = variants.filter(
+        (v) => v.product_id.toString() === product._id.toString()
+      );
+
+      return {
+        ...product.toObject(),
+        variants: productVariants,
+      };
+    });
+
+    return res.status(200).json({
+      message: "Lấy sản phẩm liên quan thành công",
+      products: productList,
+    });
+  } catch (error) {
+    console.error("Lỗi hiển thị sản phẩm liên quan", error);
+    res.status(500).json({ message: "server error", error: error.message });
   }
 };

@@ -9,7 +9,7 @@ import useAuth from "../../../hooks/Client/useAuth";
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import { addToCartThunk } from "../../../redux/features/client/thunks/cartThunk";
 import type { AppDispatch, RootState } from "../../../redux/store";
-import type { IProductDetail } from "../../../types/IProducts";
+import type { IProducts, IProductDetail } from "../../../types/IProducts";
 import type { IVariantDetail } from "../../../types/IVariants";
 import '../../../styles/productDetail.css'
 
@@ -40,10 +40,11 @@ const DetailProduct = () => {
   const { setLoading } = useLoading();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [checkReview, setCheckRivew] = useState<checkOrderReviewType>()
-  const { products: relatedProducts } = useFetchGetDataProduct(
-    dataDetail?.category_id || "",
-    dataDetail?._id || ""
-  );
+  const [relatedProduct, setRelatedProducts] = useState<IProducts[]>([])
+  // const { products: relatedProducts } = useFetchGetDataProduct(
+  //   dataDetail?.category_id || "",
+  //   dataDetail?._id || ""
+  // );
 
   useEffect(() => {
     if (!id) return;
@@ -97,11 +98,33 @@ const DetailProduct = () => {
     }
   }, [setLoading, id])
 
-  useEffect(() => {
+  const getProductRelated = useCallback(async () => {
+    if (!dataDetail?.category_id || !dataDetail?._id) return;
+    try {
+      setLoading(true)
 
+      const res = await apiServiceProduct.getProductRelated(dataDetail?.category_id, dataDetail?._id)
+
+      setRelatedProducts(res.products)
+
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
+  }, [dataDetail?.category_id, setLoading, dataDetail?._id])
+
+  useEffect(() => {
+    getProductRelated()
     getAllReview()
 
-  }, [getAllReview])
+  }, [getAllReview, getProductRelated])
+
+
   const checkReviewUser = useCallback(async () => {
     try {
       const res = await checkReviewProduct(id)
@@ -173,7 +196,7 @@ const DetailProduct = () => {
             chechShowFormReview={checkReview}
           />
 
-          <RelatedProducts products={relatedProducts} />
+          <RelatedProducts products={relatedProduct} />
 
         </div>
       ) : (

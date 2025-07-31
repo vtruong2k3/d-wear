@@ -1,7 +1,7 @@
 const express = require("express");
 const productRouter = express.Router();
 const upload = require("../middlewares/uploadProduct.middleware");
-const productControler = require("../controllers/product.controller");
+const productController = require("../controllers/product.controller");
 const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 
 //  Tạo các field động cho ảnh biến thể: imageVariant_0[], imageVariant_1[], ...
@@ -11,26 +11,26 @@ const variantFields = Array.from({ length: 100 }).map((_, i) => ({
 }));
 
 //  Lấy tất cả sản phẩm
-productRouter.get("/product", productControler.getAllProductWithVariants);
+productRouter.get("/product", productController.getAllProductWithVariants);
 productRouter.get(
   "/product/by-category-band",
-  productControler.getProductByCategoryWithVariants
+  productController.getProductByCategoryWithVariants
 );
 
-productRouter.get("/product/search", productControler.searchProducts);
+productRouter.get("/product/search", productController.searchProducts);
 //  Lấy item rút gọn
-productRouter.get("/product/items", productControler.getAllProdutsItem);
+productRouter.get("/product/items", productController.getAllProdutsItem);
 //  Lấy danh sách đã xoá mềm
 productRouter.get(
   "/product/deleted",
-  productControler.getAllDeletedProductWithVariants
+  productController.getAllDeletedProductWithVariants
 );
 //  Tạo sản phẩm + biến thể
 productRouter.post(
   "/product",
   authAdminMiddelware,
   upload.fields([{ name: "productImage", maxCount: 8 }, ...variantFields]),
-  productControler.createProductWithVariants
+  productController.createProductWithVariants
 );
 
 //  Sửa sản phẩm + biến thể
@@ -38,23 +38,27 @@ productRouter.put(
   "/product/:id",
   authAdminMiddelware,
   upload.fields([{ name: "productImage", maxCount: 8 }, ...variantFields]),
-  productControler.updateProductWithVariants
+  productController.updateProductWithVariants
 );
 
 //  Xoá cứng
 productRouter.delete(
   "/product/:id",
   authAdminMiddelware,
-  productControler.deleteProductWithVariants
+  productController.deleteProductWithVariants
 );
-
+// Sản phẩm liên quan
+productRouter.get(
+  "/product/related/:categoryId",
+  productController.getProductRelated
+);
 //  Xoá mềm
 productRouter.put(
   "/product/:id/soft-delete",
-  productControler.softDeleteProduct
+  productController.softDeleteProduct
 );
 
 //  Rồi mới đến /product/:id
-productRouter.get("/product/:id", productControler.getProductWithVariantsById);
+productRouter.get("/product/:id", productController.getProductWithVariantsById);
 
 module.exports = productRouter;

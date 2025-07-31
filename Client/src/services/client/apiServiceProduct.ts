@@ -25,6 +25,17 @@ const apiServiceProduct = {
   searchProducts: async (params: { keyword: string }) => {
     return await axios.get(`/api/product/search`, { params });
   },
+
+  getProductRelated: async (categoryId?: string, productId?: string) => {
+    if (!categoryId) {
+      throw new Error("categoryId is required");
+    }
+
+    const query = productId ? `?productId=${productId}` : "";
+
+    const res = await axios.get(`/api/product/related/${categoryId}${query}`);
+    return res.data;
+  },
 };
 
 export default apiServiceProduct;
