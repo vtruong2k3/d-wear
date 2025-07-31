@@ -69,9 +69,9 @@ const Header = () => {
               productId: item._id,
               slug: item.slug || item._id,
             }))
-            
+
           ];
-          
+
 
           setOptions(mappedOptions);
         } catch (error) {
