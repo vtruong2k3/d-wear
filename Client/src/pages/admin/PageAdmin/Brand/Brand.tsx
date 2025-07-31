@@ -12,6 +12,7 @@ import {
 
   Divider,
   Tag,
+  message,
 } from "antd";
 import { MdAdd, MdDelete } from "react-icons/md";
 import { FaPen, FaSearch } from "react-icons/fa";
@@ -20,7 +21,7 @@ import EditBrand from "./EditBrand";
 
 import { fetchAllBrands, deleteBrandById } from "../../../../services/admin/brandService";
 import type { IBrand } from "../../../../types/brand/IBrand";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import type { ColumnsType } from "antd/es/table";
 
@@ -47,7 +48,7 @@ const BrandList = () => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -60,14 +61,14 @@ const BrandList = () => {
   const handleDelete = async (id: string) => {
     try {
       const res = await deleteBrandById(id);
-      toast.success(res.data.message || "Xoá thành công");
+      message.success(res.data.message || "Xoá thành công");
       fetchBrands();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     }
   };
 

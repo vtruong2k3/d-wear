@@ -11,6 +11,7 @@ import {
   Divider,
   Input,
   Tag,
+  message,
 
 } from "antd";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -23,7 +24,7 @@ import { fetchGetAllCategory, deleteCategoryById } from "../../../../services/ad
 import type { ICategory } from "../../../../types/category/ICategory";
 import type { ColumnsType } from "antd/es/table";
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -48,7 +49,7 @@ const CategoriesList: React.FC = () => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -61,14 +62,14 @@ const CategoriesList: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       const { data } = await deleteCategoryById(id);
-      toast.success(data.message)
+      message.success(data.message)
       fetchCategories();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     }
   };
 

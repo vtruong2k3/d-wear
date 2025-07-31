@@ -7,6 +7,7 @@ import {
 
   Pagination,
   Tag,
+  message,
 } from "antd";
 import {
   EyeOutlined,
@@ -19,7 +20,7 @@ import { fetchGetAllOrder, updateOrderStatus } from "../../../../services/admin/
 import { formatCurrency } from "../../../../utils/Format";
 import type { ColumnsType } from "antd/es/table";
 import socket from "../../../../sockets/socket";
-import { toast } from "react-toastify";
+
 
 import type { ErrorType } from "../../../../types/error/IError";
 import { getPaymentStatusLabel, getStatusLabel, paymentColor } from "../../../../utils/Status";
@@ -66,7 +67,7 @@ const OrderList = () => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false)
     }
@@ -83,7 +84,7 @@ const OrderList = () => {
 
 
       setOrders((prev) => [newOrder, ...prev]);
-      toast.success(` Có đơn hàng mới ${newOrder.order_code}`);
+      message.success(` Có đơn hàng mới ${newOrder.order_code}`);
     });
 
     socket.on("orderPaid", ({ orderId, paymentStatus }) => {
@@ -92,7 +93,7 @@ const OrderList = () => {
           order._id === orderId ? { ...order, paymentStatus } : order
         )
       );
-      toast.info(` Đơn hàng ${orderId} đã được thanh toán thành công.`);
+      message.info(` Đơn hàng ${orderId} đã được thanh toán thành công.`);
     });
 
     return () => {
@@ -116,7 +117,7 @@ const OrderList = () => {
 
         const updatedOrder = updated.find(order => order._id === orderId);
         if (updatedOrder) {
-          toast.success(`Đơn hàng ${updatedOrder.order_code} đã bị hủy`);
+          message.success(`Đơn hàng ${updatedOrder.order_code} đã bị hủy`);
         }
 
         return updated;
@@ -170,14 +171,14 @@ const OrderList = () => {
 
   const handleHide = (id: string) => {
     if (hiddenOrders.includes(id)) {
-      toast.info("Đơn hàng này đã được ẩn trước đó.");
+      message.info("Đơn hàng này đã được ẩn trước đó.");
       return;
     }
 
     const updated = [...hiddenOrders, id];
     setHiddenOrders(updated);
     localStorage.setItem("hiddenOrders", JSON.stringify(updated));
-    toast.success("Đã ẩn đơn hàng");
+    message.success("Đã ẩn đơn hàng");
   };
 
 
@@ -185,7 +186,7 @@ const OrderList = () => {
     const updated = hiddenOrders.filter((i) => i !== id);
     setHiddenOrders(updated);
     localStorage.setItem("hiddenOrders", JSON.stringify(updated));
-    toast.success("Đã khôi phục đơn hàng");
+    message.success("Đã khôi phục đơn hàng");
   };
 
   // Hàm xử lý thay đổi trạng thái đơn hàng
@@ -203,13 +204,13 @@ const OrderList = () => {
       if (newStatus === "delivered") {
         fetchData()
       }
-      toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+      message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

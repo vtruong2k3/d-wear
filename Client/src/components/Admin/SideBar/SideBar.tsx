@@ -15,7 +15,7 @@ import {
     AppstoreOutlined,
     ColumnWidthOutlined,
     BgColorsOutlined,
-    DeleteOutlined
+
 } from '@ant-design/icons';
 interface SidebarProps {
     collapsed: boolean;
@@ -86,16 +86,17 @@ const AsideAdmin = ({ collapsed }: SidebarProps) => {
             icon: <GiftOutlined />,
             label: <Link to="/admin/voucher">Voucher</Link>
         },
-        {
 
-            key: '/admin/customers',
-            icon: <UserOutlined />,
-            label: <Link to="/admin/customers">Khách hàng</Link>,
-        },
         {
             key: '/admin/users',
             icon: <TeamOutlined />,
             label: <Link to="/admin/users">Người dùng</Link>,
+        },
+        {
+
+            key: '/admin/messenger',
+            icon: <UserOutlined />,
+            label: <Link to="/admin/messenger">Tin nhắn</Link>,
         },
         {
             key: '/admin/reports',

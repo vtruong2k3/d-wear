@@ -8,6 +8,7 @@ import {
   Form,
   Input,
   InputNumber,
+  message,
   Select,
   Upload,
   type UploadFile,
@@ -20,7 +21,7 @@ import { useEffect } from "react";
 import "../../../../styles/addProduct.css";
 import type { UploadChangeParam } from "antd/es/upload";
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 import { DeleteOutlined } from "@ant-design/icons";
 import { createProduct } from "../../../../services/admin/productService";
 import type { VariantForm } from "../../../../types/IVariants";
@@ -94,13 +95,13 @@ const ProductAdd = () => {
       file.type === "image/webp";
 
     if (!isValidType) {
-      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      message.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
       return Upload.LIST_IGNORE;
     }
 
     const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
-      toast.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
+      message.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
       return Upload.LIST_IGNORE;
     }
 
@@ -116,13 +117,13 @@ const ProductAdd = () => {
       file.type === "image/avif";
 
     if (!isValidType) {
-      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      message.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
       return Upload.LIST_IGNORE;
     }
 
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
-      toast.error("Ảnh biến thể phải nhỏ hơn 5MB!");
+      message.error("Ảnh biến thể phải nhỏ hơn 5MB!");
       return Upload.LIST_IGNORE;
     }
 
@@ -174,7 +175,7 @@ const ProductAdd = () => {
     try {
 
       if (!validateVariants()) {
-        toast.error("Vui lòng nhập đầy đủ thông tin cho các biến thể!");
+        message.error("Vui lòng nhập đầy đủ thông tin cho các biến thể!");
         return;
       }
 
@@ -225,14 +226,14 @@ const ProductAdd = () => {
       const data = await createProduct(formData)
 
 
-      toast.success(data.message);
+      message.success(data.message);
       navigate("/admin/products");
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -243,7 +244,7 @@ const ProductAdd = () => {
 
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
-      toast.warning("Chỉ được tải tối đa 8 ảnh!");
+      message.warning("Chỉ được tải tối đa 8 ảnh!");
       return;
     }
 

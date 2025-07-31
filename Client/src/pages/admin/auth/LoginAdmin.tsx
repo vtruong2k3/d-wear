@@ -5,8 +5,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail, Shield } from "lucide-react";
-import { toast } from "react-toastify";
-import { Button } from "antd";
+
+import { Button, message } from "antd";
 
 
 import type { ErrorType } from "../../../types/error/IError";
@@ -53,7 +53,7 @@ export default function AdminLogin() {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

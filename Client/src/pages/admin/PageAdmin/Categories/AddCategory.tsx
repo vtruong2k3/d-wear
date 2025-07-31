@@ -1,7 +1,7 @@
-import { Modal, Form, Input, Button, Space } from "antd";
+import { Modal, Form, Input, Button, Space, message } from "antd";
 import { fetchCreateCategory } from "../../../../services/admin/categoryService"; // Cập nhật đúng path import
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 import { useLoading } from "../../../../contexts/LoadingContext";
 
 interface AddCategoryProps {
@@ -17,7 +17,7 @@ const AddCategory: React.FC<AddCategoryProps> = ({ visible, onClose, onSuccess }
     try {
       setLoading(true)
       const { data } = await fetchCreateCategory(values);
-      toast.success(data.message)
+      message.success(data.message)
       form.resetFields();
       onClose();
       onSuccess();
@@ -26,7 +26,7 @@ const AddCategory: React.FC<AddCategoryProps> = ({ visible, onClose, onSuccess }
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -12,8 +12,9 @@ import {
   Select,
   Modal,
   Tag,
+  message,
 } from "antd";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { fetchGetOrderDetail, updateOrderStatus } from "../../../../services/admin/orderService";
 import type { OrderDetailResponse, IOrder } from "../../../../types/order/IOrder";
@@ -41,7 +42,7 @@ const OrderDetail = () => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ const OrderDetail = () => {
     //  Validate trạng thái
     const allowedStatuses = validTransitions[currentStatus];
     if (!allowedStatuses.includes(newStatus)) {
-      toast.error(
+      message.error(
         `Không thể chuyển trạng thái từ "${getStatusLabel(currentStatus)}" sang "${getStatusLabel(newStatus)}"`
       );
       return;
@@ -93,13 +94,13 @@ const OrderDetail = () => {
       if (newStatus === "delivered") {
         fetchData()
       }
-      toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+      message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ const OrderDetail = () => {
           ...prev,
           order: { ...prev.order, status: data.status, cancellationReason: data.cancellationReason }
         } : prev);
-        toast.success(`Đơn hàng đã bị hủy vì lý do: ${data.cancellationReason || "Không có lý do"}`);
+        message.success(`Đơn hàng đã bị hủy vì lý do: ${data.cancellationReason || "Không có lý do"}`);
       }
     });
 
@@ -129,7 +130,7 @@ const OrderDetail = () => {
             paymentStatus: data.paymentStatus,
           }
         } : prev);
-        toast.info(` Đơn hàng đã được thanh toán thành công.`);
+        message.info(` Đơn hàng đã được thanh toán thành công.`);
       }
     });
 
@@ -168,13 +169,13 @@ const OrderDetail = () => {
               : prev
           );
 
-          toast.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
+          message.success(`Đã cập nhật trạng thái đơn hàng thành "${getStatusLabel(newStatus)}"`);
         } catch (error) {
           const errorMessage =
             (error as ErrorType).response?.data?.message ||
             (error as ErrorType).message ||
             "Đã xảy ra lỗi, vui lòng thử lại.";
-          toast.error(errorMessage);
+          message.error(errorMessage);
         } finally {
           setLoading(false);
         }

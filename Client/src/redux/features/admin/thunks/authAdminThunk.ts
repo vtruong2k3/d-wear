@@ -3,8 +3,9 @@ import type { LoginFormValues } from "../../../../types/auth/IAuth";
 import { loginAdminAPI } from "../../../../services/admin/authAPI";
 
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 import { getUserInfo } from "../../../../services/client/authService";
+import { message } from "antd";
 
 export const doLoginAdmin = createAsyncThunk(
   "authAdmin/login",
@@ -14,7 +15,7 @@ export const doLoginAdmin = createAsyncThunk(
 
       localStorage.setItem("token", res.token);
 
-      toast.success(res.message);
+      message.success(res.message);
 
       return res;
     } catch (error) {
@@ -22,7 +23,7 @@ export const doLoginAdmin = createAsyncThunk(
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
   }
@@ -40,7 +41,7 @@ export const fetchUserProfile = createAsyncThunk(
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
 
-      toast.error(errorMessage);
+      message.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
   }

@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-    Table, Button, Space, Input, Card, Typography, Popconfirm, Tag
+    Table, Button, Space, Input, Card, Typography, Popconfirm, Tag,
+    message
 } from 'antd';
 import {
     EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined
 } from '@ant-design/icons';
-import { toast } from 'react-toastify';
+
 
 import AddColorModal from './AddColor';
 import EditColorModal from './UpdateColor';
@@ -53,7 +54,7 @@ const ColorManagement = () => {
                 (error as ErrorType).response?.data?.message ||
                 (error as ErrorType).message ||
                 'Đã xảy ra lỗi khi tải danh sách.';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -78,13 +79,13 @@ const ColorManagement = () => {
         try {
             setLoading(true)
             const res = await createColor(newColor.color_name);
-            toast.success(res.message);
+            message.success(res.message);
             fetchColors();
             setIsAddModalOpen(false);
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message || 'Lỗi khi thêm màu sắc';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -103,14 +104,14 @@ const ColorManagement = () => {
             const res = await updateColor(updatedColor._id, {
                 color_name: updatedColor.color_name
             });
-            toast.success(res.message);
+            message.success(res.message);
             fetchColors();
             setIsEditModalOpen(false);
             setEditingColor(null);
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message || 'Lỗi khi cập nhật màu sắc';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -125,12 +126,12 @@ const ColorManagement = () => {
         try {
             setLoading(true)
             const res = await deleteColor(id);
-            toast.success(res.message);
+            message.success(res.message);
             fetchColors();
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message || 'Lỗi khi xoá màu sắc';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }

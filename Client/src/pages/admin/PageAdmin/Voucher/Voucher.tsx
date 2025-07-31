@@ -1,6 +1,6 @@
 // VoucherManagement.jsx
 import { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Space, Tag, Popconfirm, Input, Select, Row, Col } from 'antd';
+import { Table, Button, Space, Tag, Popconfirm, Input, Select, Row, Col, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import AddVoucherForm from './VoucherFomAdd';
 import EditVoucherForm from './VoucherFormUpadate';
@@ -8,7 +8,7 @@ import { formatCurrency, formatDate } from '../../../../utils/Format';
 import type { IVoucher } from '../../../../types/voucher/IVoucher';
 import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/admin/voucherService';
 import type { ErrorType } from '../../../../types/error/IError';
-import { toast } from 'react-toastify';
+
 
 
 const { Search } = Input;
@@ -42,7 +42,7 @@ const VoucherManagement = () => {
                     (error as ErrorType).response?.data?.message ||
                     (error as ErrorType).message ||
                     "Đã xảy ra lỗi, vui lòng thử lại.";
-                toast.error(errorMessage);
+                message.error(errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -75,14 +75,14 @@ const VoucherManagement = () => {
     const handleDelete = async (id: string) => {
         try {
             setLoading(true)
-            const { message } = await fetchDeleteVoucher(id);
+            const { message: msg } = await fetchDeleteVoucher(id);
             setVouchers((prev) => prev.filter((v) => v._id !== id));
-            toast.success(message);
+            message.success(msg);
         } catch (error) {
             const err = error as ErrorType;
             const errorMessage =
                 err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi xoá";
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -94,17 +94,17 @@ const VoucherManagement = () => {
     ) => {
         try {
             setLoading(true)
-            const { message, voucher } = await fetchCreateVoucher(values);
+            const { message: msg, voucher } = await fetchCreateVoucher(values);
             setVouchers([...vouchers, voucher]);
             setIsAddModalOpen(false);
-            toast.success(message);
+            message.success(msg);
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message ||
                 (error as ErrorType).message ||
                 'Đã xảy ra lỗi, vui lòng thử lại.';
             console.error('Lỗi:', errorMessage);
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -116,26 +116,26 @@ const VoucherManagement = () => {
 
         // Kiểm tra chắc chắn có editingVoucher và _id là string
         if (!editingVoucher || !editingVoucher._id) {
-            toast.error("Không tìm thấy voucher để cập nhật");
+            message.error("Không tìm thấy voucher để cập nhật");
             return;
         }
 
         try {
             setLoading(true)
-            const { message, voucher } = await fetchUpdateVoucher(editingVoucher._id, values);
+            const { message: msg, voucher } = await fetchUpdateVoucher(editingVoucher._id, values);
 
             setVouchers((prev) =>
                 prev.map((v) => (v._id === editingVoucher._id ? voucher : v))
             );
 
             setIsEditModalOpen(false);
-            toast.success(message);
+            message.success(msg);
         } catch (error) {
             const err = error as ErrorType;
             const errorMessage =
                 err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi cập nhật voucher";
             console.error("Lỗi cập nhật voucher:", errorMessage);
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }

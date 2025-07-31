@@ -12,6 +12,7 @@ import {
   Upload,
   Modal,
   type UploadFile,
+  message,
 } from "antd";
 import { PlusOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
 import type { CurrentImage, IProductAdd } from "../../../../types/IProducts";
@@ -19,7 +20,7 @@ import type { Category } from "../../../../types/IProducts";
 import type { Brand } from "../../../../types/IProducts";
 import "../../../../styles/addProduct.css";
 import type { UploadChangeParam } from "antd/es/upload";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -109,13 +110,13 @@ const ProductEdit = () => {
       file.type === "image/webp";
 
     if (!isValidType) {
-      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      message.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
       return Upload.LIST_IGNORE;
     }
 
     const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
-      toast.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
+      message.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
       return Upload.LIST_IGNORE;
     }
 
@@ -131,13 +132,13 @@ const ProductEdit = () => {
       file.type === "image/avif";
 
     if (!isValidType) {
-      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      message.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
       return Upload.LIST_IGNORE;
     }
 
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
-      toast.error("Ảnh biến thể phải nhỏ hơn 5MB!");
+      message.error("Ảnh biến thể phải nhỏ hơn 5MB!");
       return Upload.LIST_IGNORE;
     }
 
@@ -208,7 +209,7 @@ const ProductEdit = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -253,7 +254,7 @@ const ProductEdit = () => {
 
       if (!isValid) {
         setVariantErrors(errors);
-        toast.error(
+        message.error(
           "Vui lòng nhập đầy đủ và hợp lệ thông tin cho các biến thể!"
         );
         return;
@@ -322,14 +323,14 @@ const ProductEdit = () => {
       //  PUT request
       const data = await updateProduct(id, formData);
 
-      toast.success(data.message);
+      message.success(data.message);
       navigate("/admin/products");
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -337,7 +338,7 @@ const ProductEdit = () => {
 
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
-      toast.warning("Chỉ được tải tối đa 8 ảnh!");
+      message.warning("Chỉ được tải tối đa 8 ảnh!");
       return;
     }
 

@@ -42,7 +42,7 @@ export const softDeleteUser = createAsyncThunk<string, string>(
   }
 );
 
-// ✅ Khôi phục người dùng
+//  Khôi phục người dùng
 export const restoreUser = createAsyncThunk<string, string>(
   "admin/user/restoreUser",
   async (userId: string) => {

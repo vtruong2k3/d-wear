@@ -1,9 +1,9 @@
-import { Modal, Form, Input } from "antd";
+import { Modal, Form, Input, message } from "antd";
 import { useEffect } from "react";
 import { updateBrandById } from "../../../../services/admin/brandService";
 import type { IBrand } from "../../../../types/brand/IBrand";
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 import { useLoading } from "../../../../contexts/LoadingContext";
 
 interface EditBrandProps {
@@ -29,7 +29,7 @@ const EditBrand: React.FC<EditBrandProps> = ({ visible, onClose, onSuccess, bran
       setLoading(true)
       const values = await form.validateFields();
       const res = await updateBrandById(brand._id, values);
-      toast.success(res.data?.message || "Cập nhật brand thành công");
+      message.success(res.data?.message || "Cập nhật brand thành công");
       onClose();
       onSuccess();
       form.resetFields();
@@ -38,7 +38,7 @@ const EditBrand: React.FC<EditBrandProps> = ({ visible, onClose, onSuccess, bran
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false)
     }

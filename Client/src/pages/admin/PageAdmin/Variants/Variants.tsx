@@ -10,6 +10,7 @@ import {
   Tag,
   Typography,
   Space,
+  message,
 } from "antd";
 import {
   DeleteOutlined,
@@ -19,7 +20,7 @@ import {
   RollbackOutlined,
 } from "@ant-design/icons";
 import type { IVariants } from "../../../../types/IVariants";
-import { toast } from "react-toastify";
+
 import {
   deleteVariant,
   getAllVariants,
@@ -58,7 +59,7 @@ const Variants: React.FC = () => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -72,14 +73,14 @@ const Variants: React.FC = () => {
     try {
       setLoading(true);
       const res = await softDeleteVariant(id);
-      toast.success(res.message);
+      message.success(res.message);
       fetchVariants();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi khi ẩn.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -89,14 +90,14 @@ const Variants: React.FC = () => {
     try {
       setLoading(true);
       const res = await restoreVariant(id);
-      toast.success(res.message);
+      message.success(res.message);
       fetchVariants();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi khi khôi phục.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -106,14 +107,14 @@ const Variants: React.FC = () => {
     try {
       setLoading(true);
       const res = await deleteVariant(id);
-      toast.success(res.message);
+      message.success(res.message);
       fetchVariants();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi khi xoá.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

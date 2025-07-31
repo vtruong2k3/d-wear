@@ -13,6 +13,7 @@ import {
   Typography,
   Divider,
   Switch,
+  message,
 } from "antd";
 
 import useFetchList from "../../../../hooks/useFetchList";
@@ -26,7 +27,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 import { useLoading } from "../../../../contexts/LoadingContext";
@@ -247,14 +248,14 @@ const Products: React.FC = () => {
     try {
       setLoading(true)
       const res = await restoreProduct(id)
-      toast.success(res.message || "Khôi phục thành công.");
+      message.success(res.message || "Khôi phục thành công.");
       refetch();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false)
     }
@@ -264,14 +265,14 @@ const Products: React.FC = () => {
     try {
       setLoading(true)
       const { data } = await axios.delete(`/api/product/${id}`);
-      toast.success(data.message || "Đã xoá vĩnh viễn.");
+      message.success(data.message || "Đã xoá vĩnh viễn.");
       refetch();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false)
     }
@@ -280,14 +281,14 @@ const Products: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       const data = await softDeleteProduct(id); // Gửi true rõ ràng
-      toast.success(data.message || "Đã xoá mềm sản phẩm.");
+      message.success(data.message || "Đã xoá mềm sản phẩm.");
       refetch();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     }
   };
 

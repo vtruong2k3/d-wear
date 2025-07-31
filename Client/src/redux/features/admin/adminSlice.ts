@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { AuthStateAdmin } from "../../../types/auth/IAuth";
 import { doLoginAdmin, fetchUserProfile } from "./thunks/authAdminThunk";
-import toast from "react-hot-toast";
+import { message } from "antd";
 
 // Lấy token từ localStorage
 const savedToken = localStorage.getItem("token");
@@ -27,7 +27,7 @@ const authAdminSlice = createSlice({
       state.error = null;
       state.loading = false;
       state.isInitialized = true; // 👈 Đánh dấu đã xử lý
-      toast.success("Đăng xuất thành công");
+      message.success("Đăng xuất thành công");
     },
   },
   extraReducers: (builder) => {
