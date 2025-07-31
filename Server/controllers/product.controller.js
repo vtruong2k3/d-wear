@@ -1,5 +1,9 @@
+const Brand = require("../models/brands");
+const Category = require("../models/categories");
 const Product = require("../models/products");
 const Variant = require("../models/variants");
+const removeVietnameseTones = require("../utils/search");
+const stringSimilarity = require("string-similarity");
 const {
   productValidate,
   variantValidate,
@@ -577,5 +581,52 @@ exports.getProductByCategoryWithVariants = async (req, res) => {
       message: "Lỗi server khi lấy sản phẩm",
       error: error.message,
     });
+  }
+};
+
+exports.searchProducts = async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    if (!keyword || keyword.trim() === "") {
+      return res
+        .status(400)
+        .json({ message: "Vui lòng nhập từ khóa tìm kiếm." });
+    }
+
+    const normalizedKeyword = removeVietnameseTones(
+      keyword.trim().toLowerCase()
+    );
+
+    const [categories, brands, products] = await Promise.all([
+      Category.find().select("_id category_name"),
+      Brand.find().select("_id brand_name"),
+      Product.find({ isDeleted: false })
+        .populate("category_id", "category_name")
+        .populate("brand_id", "brand_name"),
+    ]);
+
+    // Tìm theo tên, category, brand (gần đúng và không dấu)
+    const matchedProducts = products.filter((p) => {
+      const name = removeVietnameseTones(p.product_name.toLowerCase());
+      const category = removeVietnameseTones(
+        p.category_id?.category_name?.toLowerCase() || ""
+      );
+      const brand = removeVietnameseTones(
+        p.brand_id?.brand_name?.toLowerCase() || ""
+      );
+
+      const haystack = `${name} ${category} ${brand}`;
+      const similarity = stringSimilarity.compareTwoStrings(
+        normalizedKeyword,
+        haystack
+      );
+
+      return similarity > 0.3 || haystack.includes(normalizedKeyword);
+    });
+
+    res.json({ total: matchedProducts.length, products: matchedProducts });
+  } catch (error) {
+    console.error("Lỗi tìm kiếm:", error);
+    res.status(500).json({ message: "Lỗi server khi tìm kiếm sản phẩm." });
   }
 };

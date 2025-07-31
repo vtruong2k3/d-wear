@@ -40,6 +40,7 @@ productRouter.get(
   productControler.getProductByCategoryWithVariants
 );
 
+productRouter.get("/product/search", productControler.searchProducts);
 //  Lấy item rút gọn
 productRouter.get("/product/items", productControler.getAllProdutsItem);
 
