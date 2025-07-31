@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import toast from "react-hot-toast";
 
@@ -8,7 +8,7 @@ import apiServiceProduct from "../../../services/client/apiServiceProduct";
 import useAuth from "../../../hooks/Client/useAuth";
 import useFetchGetDataProduct from "../../../hooks/Client/useFetchGetDataProduct";
 import { addToCartThunk } from "../../../redux/features/client/thunks/cartThunk";
-import type { AppDispatch } from "../../../redux/store";
+import type { AppDispatch, RootState } from "../../../redux/store";
 import type { IProductDetail } from "../../../types/IProducts";
 import type { IVariantDetail } from "../../../types/IVariants";
 import '../../../styles/productDetail.css'
@@ -33,7 +33,7 @@ const DetailProduct = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const { requireAuth } = useAuth();
-
+  const { token, user } = useSelector((state: RootState) => state.authenSlice)
   const [dataDetail, setDataDetail] = useState<IProductDetail | null>(null);
   const [variants, setVariants] = useState<IVariantDetail[]>([]);
   const [reviews, setReviews] = useState<IReview[]>([]);
@@ -98,7 +98,9 @@ const DetailProduct = () => {
   }, [setLoading, id])
 
   useEffect(() => {
+
     getAllReview()
+
   }, [getAllReview])
   const checkReviewUser = useCallback(async () => {
     try {
@@ -114,10 +116,12 @@ const DetailProduct = () => {
   }, [id])
 
   useEffect(() => {
+    if (token && user) {
+      checkReviewUser()
+    }
 
-    checkReviewUser()
 
-  }, [checkReviewUser])
+  }, [checkReviewUser, token, user])
   const handleAddToCart = (variantId: string, quantity: number) => {
     requireAuth(() => {
       if (!dataDetail) return;

@@ -13,6 +13,7 @@ import apiServiceProduct from "../../../services/client/apiServiceProduct";
 
 import "../../../styles/activeMenu.css";
 import "../../../styles/Header.css";
+import type { SearchType } from "../../../types/IProducts";
 
 const Header = () => {
   const cartItemsCount = useSelector(
@@ -22,7 +23,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const [searchText, setSearchText] = useState("");
-  const [options, setOptions] = useState<any[]>([]);
+  const [options, setOptions] = useState<SearchType[]>([]);
 
   const listMenu = [
     { title: "Home", to: "/" },
@@ -51,7 +52,7 @@ const Header = () => {
               ),
               value: searchText,
             },
-            ...products.map((item: any) => ({
+            ...products.map((item: SearchType) => ({
               value: item.product_name,
               label: (
                 <div className="flex items-center gap-3 text-sm">
@@ -67,7 +68,7 @@ const Header = () => {
                 </div>
               ),
               productId: item._id,
-              slug: item.slug || item._id,
+              slug: item._id,
             }))
 
           ];
@@ -86,7 +87,7 @@ const Header = () => {
     return () => clearTimeout(delay);
   }, [searchText]);
 
-  const handleSelect = (value: string, option: any) => {
+  const handleSelect = (value: string, option: SearchType) => {
     if (option.productId) {
       navigate(`/product/${option.slug}`);
     } else {

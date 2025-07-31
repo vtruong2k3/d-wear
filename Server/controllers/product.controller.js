@@ -647,8 +647,6 @@ exports.searchProducts = async (req, res) => {
       image: normalizeImageUrl(p.imageUrls?.[0]),
     }));
 
-    console.log(" Kết quả tìm kiếm:", results);
-
     res.json({ total: results.length, products: results });
   } catch (error) {
     console.error(" Lỗi tìm kiếm:", error);

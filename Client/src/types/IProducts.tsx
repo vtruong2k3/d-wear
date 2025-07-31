@@ -103,3 +103,11 @@ export interface OrderStatusData {
   value: number;
   color: string;
 }
+
+export interface SearchType {
+  _id: string
+  product_name: string
+  image: string
+  productId: string
+  slug: string
+}
