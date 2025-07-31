@@ -4,6 +4,7 @@ const apiServiceProduct = {
   getAllProducts: async (params = {}) => {
     return await axios.get(`/api/product`, { params });
   },
+
   // Lấy chi tiết sản phẩm + biến thể
   getDetailProduct: async (_id: string | undefined) => {
     const res = await axios.get(`/api/product/${_id}`);
@@ -18,6 +19,11 @@ const apiServiceProduct = {
         exclude_id: excludeId,
       },
     });
+  },
+
+  // 🔍 Gợi ý tìm kiếm sản phẩm theo từ khóa
+  searchProducts: async (params: { keyword: string }) => {
+    return await axios.get(`/api/product/search`, { params });
   },
 };
 
