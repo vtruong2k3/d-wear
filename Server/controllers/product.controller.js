@@ -584,6 +584,53 @@ exports.getProductByCategoryWithVariants = async (req, res) => {
   }
 };
 
+// exports.searchProducts = async (req, res) => {
+//   try {
+//     const { keyword } = req.query;
+//     if (!keyword || keyword.trim() === "") {
+//       return res
+//         .status(400)
+//         .json({ message: "Vui lòng nhập từ khóa tìm kiếm." });
+//     }
+
+//     const normalizedKeyword = removeVietnameseTones(
+//       keyword.trim().toLowerCase()
+//     );
+
+//     const [categories, brands, products] = await Promise.all([
+//       Category.find().select("_id category_name"),
+//       Brand.find().select("_id brand_name"),
+//       Product.find({ isDeleted: false })
+//         .populate("category_id", "category_name")
+//         .populate("brand_id", "brand_name"),
+//     ]);
+
+//     // Tìm theo tên, category, brand (gần đúng và không dấu)
+//     const matchedProducts = products.filter((p) => {
+//       const name = removeVietnameseTones(p.product_name.toLowerCase());
+//       const category = removeVietnameseTones(
+//         p.category_id?.category_name?.toLowerCase() || ""
+//       );
+//       const brand = removeVietnameseTones(
+//         p.brand_id?.brand_name?.toLowerCase() || ""
+//       );
+
+//       const haystack = `${name} ${category} ${brand}`;
+//       const similarity = stringSimilarity.compareTwoStrings(
+//         normalizedKeyword,
+//         haystack
+//       );
+
+//       return similarity > 0.3 || haystack.includes(normalizedKeyword);
+//     });
+
+//     res.json({ total: matchedProducts.length, products: matchedProducts });
+//   } catch (error) {
+//     console.error("Lỗi tìm kiếm:", error);
+//     res.status(500).json({ message: "Lỗi server khi tìm kiếm sản phẩm." });
+//   }
+// };
+
 exports.searchProducts = async (req, res) => {
   try {
     const { keyword } = req.query;
@@ -601,11 +648,11 @@ exports.searchProducts = async (req, res) => {
       Category.find().select("_id category_name"),
       Brand.find().select("_id brand_name"),
       Product.find({ isDeleted: false })
+        .select("_id product_name imageUrls slug category_id brand_id")
         .populate("category_id", "category_name")
         .populate("brand_id", "brand_name"),
     ]);
 
-    // Tìm theo tên, category, brand (gần đúng và không dấu)
     const matchedProducts = products.filter((p) => {
       const name = removeVietnameseTones(p.product_name.toLowerCase());
       const category = removeVietnameseTones(
@@ -624,10 +671,35 @@ exports.searchProducts = async (req, res) => {
       return similarity > 0.3 || haystack.includes(normalizedKeyword);
     });
 
-    res.json({ total: matchedProducts.length, products: matchedProducts });
+    const BASE_URL = `${req.protocol}://${req.get("host")}`;
+
+    const normalizeImageUrl = (url) => {
+      if (!url || typeof url !== "string") return "";
+    
+      try {
+        const parsed = new URL(url);
+        const pathname = parsed.pathname.replace(/^\/+/, "");
+        return `${BASE_URL}/${pathname}`;
+      } catch {
+        // Nếu không phải URL đầy đủ
+        const cleaned = url.replace(/\\/g, "/").replace(/^\/+/, "");
+        return `${BASE_URL}/${cleaned}`;
+      }
+    };
+    
+
+    const results = matchedProducts.slice(0, 5).map((p) => ({
+      _id: p._id,
+      product_name: p.product_name,
+      slug: p.slug || p._id,
+      image: normalizeImageUrl(p.imageUrls?.[0]),
+    }));
+
+    console.log("🟢 Kết quả tìm kiếm:", results);
+
+    res.json({ total: results.length, products: results });
   } catch (error) {
-    console.error("Lỗi tìm kiếm:", error);
+    console.error("❌ Lỗi tìm kiếm:", error);
     res.status(500).json({ message: "Lỗi server khi tìm kiếm sản phẩm." });
   }
 };
-
