@@ -19,7 +19,7 @@ import { fetchUserProfile } from "../../../redux/features/client/thunks/authUser
 
 export default function AccountMenu() {
 
-  const user = useSelector((state: RootState) => state.authenSlice.user);
+  const { user, isLogin } = useSelector((state: RootState) => state.authenSlice);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -59,8 +59,12 @@ export default function AccountMenu() {
     dispatch(doLogout());
   };
   React.useEffect(() => {
-    dispatch(fetchUserProfile());
-  }, [dispatch]);
+
+    if (isLogin) {
+      dispatch(fetchUserProfile());
+    }
+
+  }, [dispatch, isLogin]);
   return (
     <React.Fragment>
       <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>

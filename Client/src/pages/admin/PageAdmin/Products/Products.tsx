@@ -30,17 +30,17 @@ import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
 
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 
 import { restoreProduct, softDeleteProduct } from "../../../../services/admin/productService";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { RollbackOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
-  const { setLoading } = useLoading();
+  const [loading, setLoading] = useState<boolean>(false)
   const [showHidden, setShowHidden] = useState(false);
   const [query, updateQuery] = useQuery({
     page: 1,
@@ -73,14 +73,18 @@ const Products: React.FC = () => {
     data: rawProducts = [],
     total,
     refetch,
-    loading
+
   } = useFetchList<IProduct>(
     showHidden ? "product/deleted" : "product",
     query,
     {}
   );
 
-
+  useEffect(() => {
+    if (loading) {
+      setLoading(false);
+    }
+  }, [rawProducts, loading]);
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
       const rawPath = item.imageUrls?.[0] ?? "";
@@ -392,6 +396,7 @@ const Products: React.FC = () => {
             onChange: (page, pageSize) => {
               setLoading(true); //  Bắt đầu loading
               updateQuery({ page, limit: pageSize });
+
             },
             onShowSizeChange: (_current, size) => {
               setLoading(true); //  Bắt đầu loading khi đổi pageSize

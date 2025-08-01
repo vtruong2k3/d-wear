@@ -92,7 +92,7 @@ export const authenSlice = createSlice({
         const { user } = action.payload;
 
         state.user = user;
-        state.isLogin = true;
+        state.isLogin = false;
         state.loading = false;
       })
       .addCase(doRegister.rejected, (state, action) => {

@@ -26,7 +26,7 @@ const authAdminSlice = createSlice({
       state.isLogin = false;
       state.error = null;
       state.loading = false;
-      state.isInitialized = true; // 👈 Đánh dấu đã xử lý
+      state.isInitialized = true; //  Đánh dấu đã xử lý
       message.success("Đăng xuất thành công");
     },
   },
@@ -61,14 +61,13 @@ const authAdminSlice = createSlice({
         state.user = action.payload;
         state.isLogin = true;
         state.loading = false;
-        state.isInitialized = true; // ✅ đánh dấu đã init
+        state.isInitialized = true; //  đánh dấu đã init
       })
       .addCase(fetchUserProfile.rejected, (state) => {
         state.user = null;
         state.isLogin = false;
         state.loading = false;
-        state.isInitialized = true; // ✅ đánh dấu đã init (dù fail)
-        // KHÔNG xoá token để tránh logout sớm
+        state.isInitialized = true;
       });
   },
 });

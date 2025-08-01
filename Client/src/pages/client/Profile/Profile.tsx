@@ -46,13 +46,13 @@ const { Option } = Select;
 
 const UserProfile = () => {
   const dispatch = useDispatch<AppDispatch>()
-  const user = useSelector((state: RootState) => state.authAdminSlice.user)
+  const user = useSelector((state: RootState) => state.authenSlice.user)
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [userData, setUserData] = useState<User | null>(user);
-
+  const { isLogin } = useSelector((state: RootState) => state.authenSlice);
   useEffect(() => {
     if (user) {
       setUserData(user);
@@ -60,8 +60,10 @@ const UserProfile = () => {
   }, [user]);
 
   useEffect(() => {
-    dispatch(fetchUserProfile());
-  }, [dispatch]);
+    if (isLogin) {
+      dispatch(fetchUserProfile());
+    }
+  }, [dispatch, isLogin]);
 
 
   const handleEdit = () => {

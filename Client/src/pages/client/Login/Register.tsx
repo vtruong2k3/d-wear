@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -38,16 +38,19 @@ const Register: React.FC = () => {
     try {
       setLoading(true);
       await dispatch(doRegister(data)).unwrap();
+
+      navigate("/");
+
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Đăng nhập thất bại!";
+        error instanceof Error ? error.message : "Đăng ký thất bại!";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   });
 
-  // ✅ Google login
+  //  Google login
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       if (!tokenResponse?.access_token) {
@@ -58,6 +61,9 @@ const Register: React.FC = () => {
       setLoading(true);
       try {
         await dispatch(doLoginWithGoogle({ accessToken: tokenResponse.access_token })).unwrap();
+        if (isLogin) {
+          navigate("/");
+        }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Đăng nhập thất bại";
@@ -74,11 +80,7 @@ const Register: React.FC = () => {
     flow: "implicit",
   });
 
-  useEffect(() => {
-    if (isLogin) {
-      navigate("/");
-    }
-  }, [isLogin, navigate]);
+
 
   return (
     <div className="pt-20 pb-10 bg-[#e5e5e5]">
