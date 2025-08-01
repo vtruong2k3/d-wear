@@ -27,7 +27,7 @@ import CustomersLineChart from './CustomersLineChart ';
 import OrdersTable from './OrdersTable';
 import TopProductsTable from './TopProductsTable';
 import type { ErrorType } from '../../../../types/error/IError';
-import { toast } from 'react-toastify';
+
 import type { Dayjs } from 'dayjs';
 import type { DailyStatItem, FilterByDateResponse, OrderItem, StatCardProps, SummaryResponse, TopProduct } from '../../../../types/static/IStatic';
 import { useLoading } from '../../../../contexts/LoadingContext';
@@ -76,7 +76,7 @@ const DailyStatistics = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       } finally {
         setLoading(false)
       }
@@ -230,12 +230,12 @@ const DailyStatistics = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       }
 
     } else if (statisticType === 'week') {
       if (!selectedWeek || !selectedYear) {
-        toast.warning('Vui lòng chọn tuần và năm!');
+        message.warning('Vui lòng chọn tuần và năm!');
         return;
       }
 
@@ -257,7 +257,7 @@ const DailyStatistics = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       }
 
     } else if (statisticType === 'year') {
@@ -297,7 +297,7 @@ const DailyStatistics = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       }
     } else {
       setFilteredData(null);
@@ -310,7 +310,7 @@ const DailyStatistics = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       }
 
       message.success('Đã chuyển về thống kê bình thường');

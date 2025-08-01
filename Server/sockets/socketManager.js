@@ -1,4 +1,4 @@
-const { Server } = require("socket.io"); // ✅ dùng CommonJS
+const { Server } = require("socket.io");
 let io;
 
 const initSocket = (httpServer) => {
@@ -12,7 +12,14 @@ const initSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
-    // Admin hoặc client join vào room cụ thể
+    // Khi admin kết nối, họ sẽ gửi sự kiện này để tham gia vào kênh chung
+    socket.on("adminJoin", (adminId) => {
+      socket.join("admin_room");
+      console.log(` Admin ${adminId} joined admin_room`);
+    });
+    // ------------------------------------
+
+    // Admin hoặc client join vào room chat cụ thể
     socket.on("joinRoom", (roomName) => {
       socket.join(roomName);
       console.log(`📥 Socket ${socket.id} joined room: ${roomName}`);
@@ -25,12 +32,6 @@ const initSocket = (httpServer) => {
 
     socket.on("disconnect", () => {
       console.log("❌ Socket disconnected:", socket.id);
-    });
-
-    // Debug test ping
-    socket.on("ping", (msg) => {
-      console.log("📡 Ping từ client:", msg);
-      socket.emit("pong", "Pong từ server");
     });
   });
 };

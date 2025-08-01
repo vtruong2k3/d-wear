@@ -16,6 +16,7 @@ const addressRouter = require("./address.routes");
 const statisticRouter = require("./statistics.routes");
 const userRouter = require("./user.routes");
 const reviewRouter = require("./review.routes");
+const messageRouter = require("./message.routes");
 
 const routerManager = express.Router();
 
@@ -36,5 +37,5 @@ routerManager.use("/api", addressRouter);
 routerManager.use("/api", statisticRouter);
 routerManager.use("/api", userRouter);
 routerManager.use("/api", reviewRouter);
-
+routerManager.use("/api", messageRouter);
 module.exports = routerManager;
