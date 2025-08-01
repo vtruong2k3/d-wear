@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     Table, Button, Space, Input, Card, Typography, Popconfirm,
     Tag,
+    message,
 } from 'antd';
 import {
     EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined,
@@ -16,8 +17,8 @@ import {
 } from '../../../../services/admin/sizeService';
 import type { SizeOption } from '../../../../types/size/ISize';
 import type { ErrorType } from '../../../../types/error/IError';
-import { toast } from 'react-toastify';
-import { useLoading } from '../../../../contexts/LoadingContext';
+
+
 
 const { Title } = Typography;
 
@@ -32,7 +33,7 @@ const SizeManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingSize, setEditingSize] = useState<SizeOption | null>(null);
-    const { setLoading } = useLoading()
+    const [loading, setLoading] = useState<boolean>(false);
     const fetchSizes = useCallback(async () => {
         try {
             setLoading(true)
@@ -49,7 +50,7 @@ const SizeManagement = () => {
                 (error as ErrorType).response?.data?.message ||
                 (error as ErrorType).message ||
                 'Đã xảy ra lỗi khi tải danh sách.';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -73,14 +74,14 @@ const SizeManagement = () => {
         try {
             setLoading(true)
             const res = await createSize(newSize.size_name);
-            toast.success(res.message);
+            message.success(res.message);
             fetchSizes();
             setIsAddModalOpen(false);
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message ||
                 'Lỗi khi thêm kích thước';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -99,7 +100,7 @@ const SizeManagement = () => {
             const res = await updateSize(updatedSize._id, {
                 size_name: updatedSize.size_name
             });
-            toast.success(res.message);
+            message.success(res.message);
             fetchSizes();
             setIsEditModalOpen(false);
             setEditingSize(null);
@@ -107,7 +108,7 @@ const SizeManagement = () => {
             const errorMessage =
                 (error as ErrorType).response?.data?.message ||
                 'Lỗi khi cập nhật kích thước';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -122,13 +123,13 @@ const SizeManagement = () => {
         try {
             setLoading(true)
             const res = await deleteSize(id);
-            toast.success(res.message);
+            message.success(res.message);
             fetchSizes();
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message ||
                 'Lỗi khi xóa kích thước';
-            toast.error(errorMessage);
+            message.error(errorMessage);
         } finally {
             setLoading(false)
         }
@@ -208,8 +209,10 @@ const SizeManagement = () => {
                 </div>
 
                 <Table
+                    loading={loading}
                     columns={columns}
                     dataSource={filteredSizes}
+
                     rowKey="_id"
                     pagination={{
                         current: currentPage,

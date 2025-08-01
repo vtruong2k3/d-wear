@@ -1,9 +1,9 @@
-import { Modal, Form, Input, Button, Space } from "antd";
+import { Modal, Form, Input, Button, Space, message } from "antd";
 import { useEffect } from "react";
 import { updateCategoryById } from "../../../../services/admin/categoryService";
 import type { ICategory } from "../../../../types/category/ICategory";
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 import { useLoading } from "../../../../contexts/LoadingContext";
 
 interface EditCategoryProps {
@@ -34,7 +34,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
     try {
       setLoading(true);
       const { data } = await updateCategoryById(category._id, values);
-      toast.success(data.message);
+      message.success(data.message);
       form.resetFields();
       onClose();
       onSuccess();
@@ -43,7 +43,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

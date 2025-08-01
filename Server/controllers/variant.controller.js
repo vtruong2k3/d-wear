@@ -1,18 +1,60 @@
+const Product = require("../models/products");
 const Variant = require("../models/variants");
 const variantValidate = require("../validate/variantValidate");
 
+const removeAccents = require("remove-accents");
+
 exports.getAllVariant = async (req, res) => {
   try {
-    const variants = await Variant.find().populate({
-      path: "product_id",
-      select: "product_name", // chỉ lấy tên sản phẩm
-    });
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const skip = (page - 1) * limit;
+
+    const keywords = removeAccents(search)
+      .toLowerCase()
+      .split(" ")
+      .filter(Boolean); // Loại bỏ khoảng trắng thừa
+
+    // Lấy danh sách sản phẩm để lọc theo tên không dấu
+    const allProducts = await Product.find().select("_id product_name");
+
+    // Lọc ra các product_id có tên phù hợp
+    const matchedProductIds = allProducts
+      .filter((product) => {
+        const name = removeAccents(product.product_name).toLowerCase();
+        return keywords.some((kw) => name.includes(kw));
+      })
+      .map((product) => product._id);
+
+    // Tạo bộ lọc
+    const variantFilter = {
+      isDelete: { $ne: true },
+      $or: [
+        { product_id: { $in: matchedProductIds } },
+        { color: { $regex: search, $options: "i" } },
+        { size: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    const total = await Variant.countDocuments(variantFilter);
+
+    const variants = await Variant.find(variantFilter)
+      .populate({
+        path: "product_id",
+        select: "product_name",
+      })
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
     res.status(200).json({
-      message: "Lấy tất cả sản phẩm thành công",
+      message: "Lấy danh sách biến thể thành công",
+      total,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / limit),
       variants,
     });
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       message: "Server Error",
       error: error.message,
     });
@@ -116,7 +158,7 @@ exports.createVariant = async (req, res) => {
 exports.updateVariant = async (req, res) => {
   const { id } = req.params;
 
-  // ✅ Chỉ gán image nếu có ảnh mới
+  //  Chỉ gán image nếu có ảnh mới
   if (req.files?.imageVariant && req.files.imageVariant.length > 0) {
     req.body.image = req.files.imageVariant.map((file) => file.path);
   } else {
@@ -207,6 +249,79 @@ exports.deleteIdProductVariant = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+exports.softDeleteVariant = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isdelete } = req.body; // lấy từ body
+    const isDeleteBool = isdelete === true || isdelete === "true";
+    const variant = await Variant.findByIdAndUpdate(
+      id,
+      { isDelete: isdelete },
+      { new: true }
+    );
+
+    if (!variant) {
+      return res.status(404).json({ message: "Không tìm thấy biến thể" });
+    }
+
+    const message = isDeleteBool
+      ? "Xoá mềm biến thể thành công"
+      : "Khôi phục biến thể thành công";
+
+    return res.status(200).json({
+      message,
+      variant,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Lỗi server khi cập nhật trạng thái biến thể",
+      error: error.message,
+    });
+  }
+};
+
+exports.getSoftDeletedVariants = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [variants, total] = await Promise.all([
+      Variant.find({ isDelete: true })
+        .populate({
+          path: "product_id",
+          select: "product_name", // chỉ lấy trường name từ product
+        })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
+
+      Variant.countDocuments({ isDelete: true }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    const formattedVariants = variants.map((v) => ({
+      ...v._doc,
+      product_name: v.product_id?.name || "Không xác định",
+    }));
+
+    return res.status(200).json({
+      message: "Danh sách biến thể đã xoá mềm",
+      page,
+      totalPages,
+      total,
+      variants: formattedVariants,
+    });
+  } catch (error) {
+    console.error("Lỗi getSoftDeletedVariants:", error);
+    return res.status(500).json({
+      message: "Lỗi server khi lấy biến thể đã xoá mềm",
       error: error.message,
     });
   }

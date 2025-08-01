@@ -12,6 +12,8 @@ import {
   Tag,
   Typography,
   Divider,
+  Switch,
+  message,
 } from "antd";
 
 import useFetchList from "../../../../hooks/useFetchList";
@@ -20,25 +22,29 @@ import type { ColumnsType } from "antd/es/table";
 import Search from "antd/es/input/Search";
 import type { DefaultOptionType } from "antd/es/select";
 import type { IProduct } from "../../../../types/IProducts";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-import axios from "axios";
+
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch, FaFilter } from "react-icons/fa";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { formatCurrency } from "../../../../utils/Format";
 
 
+import { restoreProduct, softDeleteProduct } from "../../../../services/admin/productService";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { RollbackOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 
 const Products: React.FC = () => {
-
   const navigate = useNavigate();
-
+  const [loading, setLoading] = useState<boolean>(false)
+  const [showHidden, setShowHidden] = useState(false);
   const [query, updateQuery] = useQuery({
     page: 1,
-    limit: 30,
+    limit: 10,
     sortBy: "createdAt",
     order: "desc",
     q: "",
@@ -64,11 +70,21 @@ const Products: React.FC = () => {
   ];
 
   const {
-    data: rawProducts,
-    loading,
+    data: rawProducts = [],
+    total,
     refetch,
-  } = useFetchList<IProduct>("product", query, {});
 
+  } = useFetchList<IProduct>(
+    showHidden ? "product/deleted" : "product",
+    query,
+    {}
+  );
+
+  useEffect(() => {
+    if (loading) {
+      setLoading(false);
+    }
+  }, [rawProducts, loading]);
   const products: IProduct[] =
     rawProducts?.map((item: any) => {
       const rawPath = item.imageUrls?.[0] ?? "";
@@ -87,73 +103,69 @@ const Products: React.FC = () => {
       };
     }) || [];
 
-
   const columns: ColumnsType<IProduct> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
       width: 80,
-
       align: "center",
-      render: (id) => <Tag color="blue">#{id}</Tag>,
-
+      render: (id) => (
+        <Link to={`/product/${id}`}>
+          <Tag color="blue">#{id}</Tag>
+        </Link>
+      ),
     },
     {
       title: "Sản phẩm",
       key: "product",
       width: 300,
       render: (_, record) => (
-
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: 60,
-              height: 60,
-              flexShrink: 0,
-              borderRadius: 8,
-              border: "1px solid #f0f0f0",
-              overflow: "hidden", //k tràn ảnh
-              backgroundColor: "#fff",
-            }}
-          >
-            <img
-              src={record.thumbnail}
-              alt="product"
+        <Link to={`/product/${record._id}`}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
+                width: 60,
+                height: 60,
+                flexShrink: 0,
+                borderRadius: 8,
+                border: "1px solid #f0f0f0",
+                overflow: "hidden",
+                backgroundColor: "#fff",
               }}
-            />
-          </div>
-          <div>
-            <div style={{ fontWeight: "600", color: "#262626" }}>
-              {record.title}
+            >
+              <img
+                src={record.thumbnail}
+                alt="product"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
             </div>
-            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
-
-              {record.brand}
+            <div>
+              <div style={{ fontWeight: "600", color: "#262626" }}>
+                {record.title}
+              </div>
+              <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+                {record.brand}
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
       ),
     },
-
-
-
     {
       title: "Giá",
       dataIndex: "price",
       key: "price",
       width: 150,
-
       align: "right",
       render: (price) => (
         <span style={{ fontWeight: "600", color: "#52c41a", fontSize: "16px" }}>
           {typeof price === "number" ? formatCurrency(price) : "N/A"}
-
         </span>
       ),
     },
@@ -163,58 +175,124 @@ const Products: React.FC = () => {
       key: "category",
       width: 150,
       render: (category) => (
-
         <Tag color="geekblue" style={{ borderRadius: "12px" }}>
           {category}
         </Tag>
       ),
-
     },
     {
       title: "Thao tác",
       key: "action",
-      width: 120,
-
+      width: 160,
       align: "center",
-
       render: (_, record: any) => (
         <Space size="small">
-          <Button
-            type="text"
-            icon={<FaPen />}
-            onClick={() => navigate(`/admin/products/edit/${record.id}`)}
+          {!showHidden ? (
+            <>
+              <Button
+                type="text"
+                icon={<FaPen />}
+                onClick={() => navigate(`/admin/products/edit/${record.id}`)}
+                style={{ color: "#1890ff" }}
+                title="Chỉnh sửa"
+              />
+              <Popconfirm
+                title="Xác nhận xoá mềm"
+                description="Bạn có chắc muốn xoá sản phẩm này?"
+                onConfirm={() => handleDelete(record.id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+              >
+                <Button type="text" danger icon={<MdDelete />} title="Xoá mềm" />
+              </Popconfirm>
+            </>
+          ) : (
+            <Space size="small">
+              {/* Nút khôi phục */}
+              <Popconfirm
+                title="Khôi phục sản phẩm này?"
+                onConfirm={() => handleRestore(record._id)}
+                okText="Khôi phục"
+                cancelText="Huỷ"
+              >
+                <Button
+                  icon={<RollbackOutlined />}
+                  type="default"
+                  title="Khôi phục"
+                  style={{ border: "none" }}
+                />
+              </Popconfirm>
 
-            style={{ color: "#1890ff" }}
+              {/* Nút xoá vĩnh viễn */}
+              <Popconfirm
+                title="Xác nhận xoá vĩnh viễn"
+                description="Hành động này sẽ xoá vĩnh viễn sản phẩm. Không thể khôi phục."
+                onConfirm={() => handleHardDelete(record.id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={<MdDelete />}
+                  title="Xoá"
 
-            title="Chỉnh sửa"
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc muốn xoá sản phẩm này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button type="text" danger icon={<MdDelete />} title="Xóa" />
+                />
+              </Popconfirm>
+            </Space>
 
-          </Popconfirm>
+          )}
         </Space>
       ),
     },
   ];
 
 
-  const handleDelete = async (id: number) => {
+  const handleRestore = async (id: string) => {
     try {
-      const { data } = await axios.delete(`/api/product/${id}`);
-      toast.success(data.message);
+      setLoading(true)
+      const res = await restoreProduct(id)
+      message.success(res.message || "Khôi phục thành công.");
       refetch();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
+  };
+
+  const handleHardDelete = async (id: string) => {
+    try {
+      setLoading(true)
+      const { data } = await axios.delete(`/api/product/${id}`);
+      message.success(data.message || "Đã xoá vĩnh viễn.");
+      refetch();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      message.error(errorMessage);
+    } finally {
+      setLoading(false)
+    }
+  };
+  //xóa mềm
+  const handleDelete = async (id: string) => {
+    try {
+      const data = await softDeleteProduct(id); // Gửi true rõ ràng
+      message.success(data.message || "Đã xoá mềm sản phẩm.");
+      refetch();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      message.error(errorMessage);
     }
   };
 
@@ -236,19 +314,32 @@ const Products: React.FC = () => {
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         }}
       >
-        <Title
-          level={2}
-          style={{
-            textAlign: "center",
-            margin: "0 0 24px 0",
-            color: "#262626",
-          }}
-        >
-          📦 Danh sách sản phẩm
-        </Title>
+        <div className="flex justify-between items-center mb-6">
+          <Title
+            level={2}
+            style={{
+              textAlign: "center",
+              margin: "0 0 24px 0",
+              color: "#262626",
+
+            }}
+          >
+            Danh sách sản phẩm
+          </Title>
+          <Switch
+            checked={showHidden}
+            onChange={(checked) => {
+              setShowHidden(checked);
+              updateQuery({ page: 1 });
+            }}
+
+            checkedChildren="Đã xoá"
+            unCheckedChildren="Hoạt động"
+          />
+
+        </div>
 
         <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
-
           <Col flex="auto">
             <Space size="middle" wrap>
               <Search
@@ -262,14 +353,11 @@ const Products: React.FC = () => {
               <Select
                 placeholder="Sắp xếp theo"
                 style={{ minWidth: 180 }}
-
                 size="large"
                 onChange={handleSort}
                 options={sortOptions}
                 suffixIcon={<FaFilter />}
-
                 allowClear
-
               />
             </Space>
           </Col>
@@ -280,10 +368,8 @@ const Products: React.FC = () => {
               icon={<MdAdd />}
               onClick={() => navigate("/admin/products/add")}
               style={{
-
                 borderRadius: 8,
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.3)",
-
               }}
             >
               Thêm sản phẩm
@@ -291,29 +377,35 @@ const Products: React.FC = () => {
           </Col>
         </Row>
 
-
         <Divider />
 
-
         <Table
-          loading={loading}
           dataSource={products}
-
           rowKey={(record) => record.id || record._id || record.title}
-
           columns={columns}
+          loading={loading}
           pagination={{
-            pageSize: 10,
+            current: query.page,
+            pageSize: query.limit,
+            total: total || 0,
             showSizeChanger: true,
             showQuickJumper: true,
+            pageSizeOptions: ["10", "20", "30", "50", "100"],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} của ${total} sản phẩm`,
+            onChange: (page, pageSize) => {
+              setLoading(true); //  Bắt đầu loading
+              updateQuery({ page, limit: pageSize });
 
+            },
+            onShowSizeChange: (_current, size) => {
+              setLoading(true); //  Bắt đầu loading khi đổi pageSize
+              updateQuery({ page: 1, limit: size });
+            },
             style: { marginTop: 16 },
           }}
           style={{ background: "white", borderRadius: 8 }}
           scroll={{ x: 800 }}
-
           size="middle"
         />
       </Card>
@@ -321,6 +413,4 @@ const Products: React.FC = () => {
   );
 };
 
-
 export default Products;
-

@@ -3,9 +3,15 @@ import type {
   GetOrdersResponse,
   OrderDetailResponse,
 } from "../../types/order/IOrder";
-
-export const fetchGetAllOrder = async (): Promise<GetOrdersResponse> => {
-  const res = await axios.get("/api/orders");
+interface GetOrdersParams {
+  page?: number;
+  limit?: number;
+  q?: string;
+}
+export const fetchGetAllOrder = async (
+  params: GetOrdersParams = {}
+): Promise<GetOrdersResponse> => {
+  const res = await axios.get("/api/orders", { params });
   return res.data;
 };
 export const fetchGetOrderDetail = async (

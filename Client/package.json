@@ -24,6 +24,7 @@
     "firebase": "^11.10.0",
     "json-server": "^1.0.0-beta.3",
     "lucide-react": "^0.517.0",
+    "query-string": "^9.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.58.0",
@@ -35,12 +36,14 @@
     "recharts": "^3.0.0",
     "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.10",
+    "uuid": "^11.1.0",
     "yup": "^1.6.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@types/google.accounts": "^0.0.17",
     "@types/node": "^24.0.10",
+    "@types/query-string": "^6.2.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",

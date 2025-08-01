@@ -1,5 +1,3 @@
-
-
 import {
   Button,
   Card,
@@ -15,16 +13,20 @@ import {
   List,
   Form,
   Select,
-
   Radio,
   Checkbox,
+  message,
 } from "antd";
-import { ArrowLeftOutlined, CheckOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  CheckOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../redux/store";
-import AddAddressModal from '../../../components/Client/Address/AddressModal';
+import AddAddressModal from "../../../components/Client/Address/AddressModal";
 import { useCallback } from "react";
 import { fetCheckVoucher } from "../../../services/client/apiVoucherService";
 import type { ErrorType } from "../../../types/error/IError";
@@ -32,10 +34,20 @@ import { createOrder } from "../../../services/client/orderAPI";
 import type { OrderData } from "../../../types/order/IOrder";
 import type { IVoucher } from "../../../types/voucher/IVoucher";
 import toast from "react-hot-toast";
-
+import {
+  getProvinces,
+  getDistricts,
+  getWards,
+  calculateShippingFee,
+} from "../../../services/client/ghnService";
+import {
+  getUserAddresses,
+  addUserAddress,
+} from "../../../services/client/addressService";
 import { removeOrderedItems } from "../../../redux/features/client/cartSlice";
 import { initiateMomoPayment } from "../../../services/client/momoService";
-import type { District, Province, SavedAddress, Ward } from "../../../types/address/IAddress";
+import type { SavedAddress, District, Province, RawProvince, RawWard, Ward } from "../../../types/address/IAddress";
+
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -48,10 +60,11 @@ export type VoucherPreview = Pick<
 
 // Interface cho địa chỉ đã lưu
 
-
 const Checkout = () => {
   const location = useLocation();
-  const [selectedItems] = useState<string[]>(() => location.state?.selectedItems || []);
+  const [selectedItems] = useState<string[]>(
+    () => location.state?.selectedItems || []
+  );
 
   const dispatch = useDispatch<AppDispatch>();
   const cartItems = useSelector(
@@ -67,114 +80,104 @@ const Checkout = () => {
   // const [addAddressForm] = Form.useForm();
 
   // State cho địa chỉ
-  const [addressType, setAddressType] = useState<'saved' | 'manual'>('saved');
+  const [addressType, setAddressType] = useState<"saved" | "manual">("saved");
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
-  const [isAddAddressModalVisible, setIsAddAddressModalVisible] = useState(false);
+  const [isAddAddressModalVisible, setIsAddAddressModalVisible] =
+    useState(false);
 
   // State cho tỉnh/thành phố, quận/huyện, phường/xã (chỉ cho địa chỉ nhập tay)
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<string>("");
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedProvince, setSelectedProvince] = useState<number | undefined>();
+  const [selectedDistrict, setSelectedDistrict] = useState<number | undefined>();
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [shippingFee, setShippingFee] = useState<number>(0);
-
   const [note, setNote] = useState("");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load dữ liệu địa điểm khi component mount
+
   useEffect(() => {
-    // Dữ liệu mẫu cho tỉnh/thành phố
-    const mockProvinces: Province[] = [
-      { id: "HCM", name: "TP.Hồ Chí Minh", shippingFee: 25000 },
-      { id: "HN", name: "Hà Nội", shippingFee: 30000 },
-      { id: "DN", name: "Đà Nẵng", shippingFee: 35000 },
-      { id: "CT", name: "Cần Thơ", shippingFee: 40000 },
-      { id: "HP", name: "Hải Phòng", shippingFee: 35000 },
-      { id: "BD", name: "Bình Dương", shippingFee: 25000 },
-      { id: "DN2", name: "Đồng Nai", shippingFee: 30000 },
-    ];
+    const fetchData = async () => {
+      try {
+        // Lấy danh sách tỉnh và chuẩn hóa ID
+        const provinceRes = await getProvinces();
+        const rawProvinces = provinceRes.data?.provinces ?? [];
+        const normalizedProvinces = rawProvinces.map((item: RawProvince) => ({
+          id: String(item.ProvinceID),
+          name: item.ProvinceName,
+          shippingFee: item.shippingFee || 25000,
+          ...item,
+        }));
 
-    const mockDistricts: District[] = [
-      // TP.HCM
-      { id: "Q1", name: "Quận 1", provinceId: "HCM" },
-      { id: "Q2", name: "Quận 2", provinceId: "HCM" },
-      { id: "Q3", name: "Quận 3", provinceId: "HCM" },
-      { id: "Q7", name: "Quận 7", provinceId: "HCM" },
-      { id: "TD", name: "Quận Thủ Đức", provinceId: "HCM" },
-      // Hà Nội
-      { id: "HK", name: "Quận Hoàn Kiếm", provinceId: "HN" },
-      { id: "BD_HN", name: "Quận Ba Đình", provinceId: "HN" },
-      { id: "CG", name: "Quận Cầu Giấy", provinceId: "HN" },
-    ];
+        setProvinces(normalizedProvinces);
 
-    const mockWards: Ward[] = [
-      // Quận 1
-      { id: "P_BNT", name: "Phường Bến Nghé", districtId: "Q1" },
-      { id: "P_BT", name: "Phường Bến Thành", districtId: "Q1" },
-      { id: "P_CML", name: "Phường Cầu Ông Lãnh", districtId: "Q1" },
-      // Quận 2
-      { id: "P_T", name: "Phường Thảo Điền", districtId: "Q2" },
-      { id: "P_AD", name: "Phường An Phú", districtId: "Q2" },
-    ];
+        // Lấy danh sách địa chỉ người dùng
+        const addressRes = await getUserAddresses();
+        const addresses = addressRes.data.address ?? [];
 
-    setProvinces(mockProvinces);
-    setDistricts(mockDistricts);
-    setWards(mockWards);
+        if (!Array.isArray(addresses)) {
+          console.error("❌ Dữ liệu address không phải mảng:", addressRes.data);
+          return;
+        }
 
-    // Load địa chỉ đã lưu
-    const mockAddresses: SavedAddress[] = [
-      {
-        id: "1",
-        name: "Nguyễn Văn A",
-        phone: "0123456789",
-        provinceId: "HCM",
-        provinceName: "TP.Hồ Chí Minh",
-        districtId: "Q1",
-        districtName: "Quận 1",
-        wardId: "P_BNT",
-        wardName: "Phường Bến Nghé",
-        detailAddress: "123 Đường Nguyễn Huệ",
-        fullAddress: "123 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.Hồ Chí Minh",
-        isDefault: true,
-      },
-      {
-        id: "2",
-        name: "Nguyễn Thị B",
-        phone: "0987654321",
-        provinceId: "HN",
-        provinceName: "Hà Nội",
-        districtId: "HK",
-        districtName: "Quận Hoàn Kiếm",
-        wardId: "P_BT",
-        wardName: "Phường Bến Thành",
-        detailAddress: "456 Phố Hàng Bạc",
-        fullAddress: "456 Phố Hàng Bạc, Phường Bến Thành, Quận Hoàn Kiếm, Hà Nội",
-      },
-    ];
+        setSavedAddresses(addresses);
 
-    setSavedAddresses(mockAddresses);
+        // Tìm địa chỉ mặc định
+        const defaultAddress = addresses.find((addr) => addr.isDefault);
 
-    // Tự động chọn địa chỉ mặc định nếu có
-    const defaultAddress = mockAddresses.find(addr => addr.isDefault);
-    if (defaultAddress) {
-      setSelectedAddressId(defaultAddress.id);
-      // Tính phí ship cho địa chỉ mặc định
-      const province = mockProvinces.find(p => p.id === defaultAddress.provinceId);
-      if (province) {
-        setShippingFee(province.shippingFee);
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress._id);
+          form.setFieldsValue({
+            name: defaultAddress.name,
+            phone: defaultAddress.phone,
+            address: defaultAddress.fullAddress,
+          });
+
+          // Load quận và phường tương ứng
+          const districtRes = await getDistricts(defaultAddress.provinceId);
+          setDistricts(districtRes.data?.districts || []);
+
+          const wardRes = await getWards(defaultAddress.districtId);
+          setWards(wardRes.data?.wards || []);
+
+          // ✅ Gọi API tính phí ship theo địa chỉ mặc định
+          const payload = {
+            to_district_id: Number(defaultAddress.districtId),
+            to_ward_code: defaultAddress.wardId,
+            weight: 1000,
+            length: 20,
+            width: 15,
+            height: 10,
+            service_type_id: 1,
+          };
+
+          try {
+            const res = await calculateShippingFee(payload);
+            const totalFee = res?.data?.fee?.total;
+
+            if (typeof totalFee === "number" && totalFee > 0) {
+              setShippingFee(totalFee);
+            } else {
+              setShippingFee(25000);
+            }
+          } catch (err) {
+            console.error("❌ Lỗi khi tính phí ship mặc định:", err);
+            setShippingFee(25000);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi tải dữ liệu:", error);
       }
-      // Fill thông tin vào form
-      form.setFieldsValue({
-        name: defaultAddress.name,
-        phone: defaultAddress.phone,
-        address: defaultAddress.fullAddress,
-      });
+    };
+
+    if (user?._id) {
+      fetchData();
     }
-  }, [form]);
+  }, [form, user]);
+
 
   // Memo lấy các sản phẩm được chọn
   const itemsToCheckout = useMemo(() => {
@@ -190,124 +193,254 @@ const Checkout = () => {
   }, [itemsToCheckout]);
 
   // Xử lý khi thay đổi loại địa chỉ
-  const handleAddressTypeChange = (type: 'saved' | 'manual') => {
+  const handleAddressTypeChange = (type: "saved" | "manual") => {
     setAddressType(type);
 
-    if (type === 'manual') {
+    if (type === "manual") {
       // Reset tất cả state liên quan đến địa chỉ đã lưu
       setSelectedAddressId("");
-      form.resetFields(['name', 'phone', 'address']);
-      setSelectedProvince("");
-      setSelectedDistrict("");
+      form.resetFields(["name", "phone", "address"]);
+      setSelectedProvince(undefined);
+      setSelectedDistrict(undefined);
       setSelectedWard("");
       setShippingFee(0);
     } else {
       // Reset state địa chỉ nhập tay
-      setSelectedProvince("");
-      setSelectedDistrict("");
+      setSelectedProvince(undefined);
+      setSelectedDistrict(undefined);
       setSelectedWard("");
 
       // Nếu có địa chỉ mặc định thì tự động chọn
-      const defaultAddress = savedAddresses.find(addr => addr.isDefault);
+      const defaultAddress = savedAddresses.find((addr) => addr.isDefault);
       if (defaultAddress) {
         handleAddressSelect(defaultAddress.id);
       } else {
         // Nếu không có địa chỉ mặc định, reset form
-        form.resetFields(['name', 'phone', 'address']);
+        form.resetFields(["name", "phone", "address"]);
         setShippingFee(0);
       }
     }
   };
 
   // Xử lý khi chọn địa chỉ từ dropdown
-  const handleAddressSelect = (addressId: string) => {
+  const handleAddressSelect = async (addressId: string) => {
     setSelectedAddressId(addressId);
-    const selectedAddress = savedAddresses.find(addr => addr.id === addressId);
-    if (selectedAddress) {
-      form.setFieldsValue({
-        name: selectedAddress.name,
-        phone: selectedAddress.phone,
-        address: selectedAddress.fullAddress,
-      });
-      // Tính phí ship
-      const province = provinces.find(p => p.id === selectedAddress.provinceId);
-      if (province) {
-        setShippingFee(province.shippingFee);
+
+    const selectedAddress = savedAddresses.find(
+      (addr) => addr._id === addressId || addr.id === addressId
+    );
+
+    if (!selectedAddress) {
+      console.warn("⚠️ Không tìm thấy địa chỉ phù hợp");
+      return;
+    }
+
+    form.setFieldsValue({
+      name: selectedAddress.name,
+      phone: selectedAddress.phone,
+      address: selectedAddress.fullAddress,
+    });
+
+    try {
+      const payload = {
+        to_district_id: Number(selectedAddress.districtId),
+        to_ward_code: selectedAddress.wardId,
+        weight: 1000,
+        length: 20,
+        width: 15,
+        height: 10,
+        service_type_id: 1,
+      };
+
+
+      const res = await calculateShippingFee(payload);
+
+
+      //  Sửa đường dẫn dữ liệu đúng
+      const totalFee = res?.data?.fee?.total;
+
+      if (typeof totalFee === "number" && totalFee > 0) {
+        setShippingFee(totalFee);
+        console.log(" Phí ship GHN set:", totalFee);
+      } else {
+        console.warn(" Phí ship không hợp lệ, dùng fallback");
+        setShippingFee(25000);
       }
+
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+      setShippingFee(25000);
     }
   };
 
+
+
   // Xử lý khi chọn tỉnh/thành phố (cho địa chỉ nhập tay)
-  const handleProvinceChange = (provinceId: string) => {
+  const handleProvinceChange = async (provinceId: number) => {
     setSelectedProvince(provinceId);
-    setSelectedDistrict("");
+    setSelectedDistrict(undefined);
     setSelectedWard("");
+    form.setFieldValue("address", "");
 
-    // Reset địa chỉ đầy đủ
-    form.setFieldValue('address', '');
-
-    // Tính phí ship
-    const province = provinces.find(p => p.id === provinceId);
-    if (province) {
-      setShippingFee(province.shippingFee);
+    try {
+      const res = await getDistricts(provinceId);
+      console.log("res.data từ getDistricts:", res.data); // 👈 thêm dòng này
+      setDistricts(Array.isArray(res.data.districts) ? res.data.districts : []); // 👈 sửa dòng này
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
   // Xử lý khi chọn quận/huyện
-  const handleDistrictChange = (districtId: string) => {
-    setSelectedDistrict(districtId);
+  const handleDistrictChange = async (districtId: number) => {
+    setSelectedDistrict(Number(districtId));
     setSelectedWard("");
-    // Reset địa chỉ đầy đủ
-    form.setFieldValue('address', '');
+    form.setFieldValue("address", "");
+
+    try {
+      const res = await getWards(districtId);
+      console.log("res.data từ getWards:", res.data);
+
+      if (!Array.isArray(res.data.wards)) {
+        console.warn(
+          " Wards không phải mảng! res.data.wards =",
+          res.data.wards
+        );
+      }
+
+      const formattedWards =
+        res.data.wards?.map((w: RawWard) => ({
+          wardId: w.WardCode,
+          wardName: w.WardName,
+          districtId: w.DistrictID,
+        })) || [];
+
+      setWards(formattedWards);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+    }
   };
 
   // Xử lý khi chọn phường/xã
-  const handleWardChange = (wardId: string) => {
+  const handleWardChange = async (wardId: string) => {
     setSelectedWard(wardId);
+
     // Cập nhật địa chỉ đầy đủ
     updateFullAddress(wardId);
-  };
 
-  // Cập nhật địa chỉ đầy đủ (cho địa chỉ nhập tay)
-  const updateFullAddress = (wardId?: string) => {
-    const detailAddress = form.getFieldValue('detailAddress') || '';
-    const currentWardId = wardId || selectedWard;
+    if (selectedDistrict && wardId) {
+      try {
+        const feeRes = await calculateShippingFee({
+          to_district_id: Number(selectedDistrict),
+          to_ward_code: wardId,
+          weight: 1000, // Giả sử sản phẩm nặng 1kg
+          length: 20, // cm
+          width: 15,
+          height: 10,
+          service_type_id: 2, // Loại dịch vụ vận chuyển
+        });
 
-    if (selectedProvince && selectedDistrict && currentWardId && detailAddress) {
-      const province = provinces.find(p => p.id === selectedProvince);
-      const district = districts.find(d => d.id === selectedDistrict);
-      const ward = wards.find(w => w.id === currentWardId);
-
-      if (province && district && ward) {
-        const fullAddress = `${detailAddress}, ${ward.name}, ${district.name}, ${province.name}`;
-        form.setFieldValue('address', fullAddress);
+        setShippingFee(feeRes.data.fee.total);
+      } catch (error) {
+        const errorMessage =
+          (error as ErrorType).response?.data?.message ||
+          (error as ErrorType).message ||
+          "Đã xảy ra lỗi, vui lòng thử lại.";
+        toast.error(errorMessage);
+        setShippingFee(0);
       }
     }
   };
 
-  // Xử lý thêm địa chỉ mới
-  const handleAddNewAddress = (newAddress: SavedAddress) => {
+  // Cập nhật địa chỉ đầy đủ (cho địa chỉ nhập tay)
+  const updateFullAddress = (wardId?: string) => {
+    const detailAddress = form.getFieldValue("detailAddress") || "";
+    const currentWardId = wardId || selectedWard;
+
+    if (
+      selectedProvince &&
+      selectedDistrict &&
+      currentWardId &&
+      detailAddress
+    ) {
+      const province = provinces.find(
+        (p) => String(p.ProvinceID) === String(selectedProvince)
+      );
+      const district = districts.find(
+        (d) => String(d.DistrictID) === String(selectedDistrict)
+      );
+      const ward = wards.find(
+        (w) => String(w.wardId) === String(currentWardId)
+      );
+
+      if (province && district && ward) {
+        const fullAddress = `${detailAddress}, ${ward.wardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+        form.setFieldValue("address", fullAddress);
+      }
+    }
+  };
+
+
+  const handleAddNewAddress = async (newAddress: SavedAddress) => {
     // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
     let updatedAddresses = [...savedAddresses];
     if (newAddress.isDefault) {
-      updatedAddresses = updatedAddresses.map(addr => ({ ...addr, isDefault: false }));
+      updatedAddresses = updatedAddresses.map((addr) => ({
+        ...addr,
+        isDefault: false,
+      }));
     }
     updatedAddresses.push(newAddress);
 
     setSavedAddresses(updatedAddresses);
 
     // Tự động chọn địa chỉ vừa thêm
-    setSelectedAddressId(newAddress.id);
+    setSelectedAddressId(newAddress.id || newAddress._id);
     form.setFieldsValue({
       name: newAddress.name,
       phone: newAddress.phone,
       address: newAddress.fullAddress,
     });
 
-    // Tính phí ship
-    const province = provinces.find(p => p.id === newAddress.provinceId);
-    if (province) {
-      setShippingFee(province.shippingFee);
+    //  Gọi API GHN để tính phí ship
+    const payload = {
+      to_district_id: Number(newAddress.districtId),
+      to_ward_code: newAddress.wardId,
+      weight: 1000,
+      length: 20,
+      width: 15,
+      height: 10,
+      service_type_id: 1,
+    };
+
+    try {
+      const res = await calculateShippingFee(payload);
+      const totalFee = res?.data?.fee?.total;
+
+      if (typeof totalFee === "number" && totalFee > 0) {
+        setShippingFee(totalFee);
+      } else {
+        setShippingFee(25000); // fallback nếu API trả về phí không hợp lệ
+      }
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
+      setShippingFee(25000); // fallback
     }
 
     // Đóng modal
@@ -387,7 +520,7 @@ const Checkout = () => {
 
   // Validation trước khi submit
   const validateAddressData = () => {
-    if (addressType === 'saved') {
+    if (addressType === "saved") {
       if (!selectedAddressId) {
         toast.error("Vui lòng chọn địa chỉ giao hàng");
         return false;
@@ -397,8 +530,8 @@ const Checkout = () => {
         toast.error("Vui lòng chọn đầy đủ thông tin địa chỉ");
         return false;
       }
-      const detailAddress = form.getFieldValue('detailAddress');
-      if (!detailAddress || detailAddress.trim() === '') {
+      const detailAddress = form.getFieldValue("detailAddress");
+      if (!detailAddress || detailAddress.trim() === "") {
         toast.error("Vui lòng nhập địa chỉ chi tiết");
         return false;
       }
@@ -470,7 +603,6 @@ const Checkout = () => {
         window.location.href = payUrl;
         return;
       }
-
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -479,6 +611,49 @@ const Checkout = () => {
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveManualAddress = async () => {
+    try {
+      const values = await form.validateFields(); // ✅ Bắt buộc dùng cái này
+
+      const province = provinces.find(
+        (p) => p.ProvinceID === Number(selectedProvince)
+      );
+      const district = districts.find((d) => d.DistrictID === selectedDistrict);
+
+      const ward = wards.find((w) => w.wardId === selectedWard);
+
+      if (!province || !district || !ward) {
+        message.warning("Vui lòng chọn đầy đủ Tỉnh/TP, Quận/Huyện, Phường/Xã.");
+        return;
+      }
+
+      const addressData = {
+        name: values.name,
+        phone: values.phone,
+        provinceId: Number(selectedProvince), // 👈 ép sang số
+        provinceName: province.ProvinceName,
+        districtId: Number(selectedDistrict), // 👈 ép sang số
+        districtName: district.DistrictName,
+        wardId: Number(selectedWard), // 👈 ép sang số
+        wardName: ward.wardName,
+        detailAddress: values.detailAddress || "",
+        fullAddress: values.address || "",
+        isDefault: false,
+      };
+
+      console.log("Data gửi lên server:", addressData);
+
+      await addUserAddress(addressData);
+      toast.success("Đã lưu địa chỉ thành công.");
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      toast.error(errorMessage);
     }
   };
 
@@ -501,7 +676,7 @@ const Checkout = () => {
               <Radio.Group
                 value={addressType}
                 onChange={(e) => handleAddressTypeChange(e.target.value)}
-                style={{ marginTop: 8, display: 'block' }}
+                style={{ marginTop: 8, display: "block" }}
               >
                 <Radio value="saved">Chọn từ địa chỉ đã lưu</Radio>
                 <Radio value="manual">Nhập địa chỉ mới</Radio>
@@ -509,10 +684,10 @@ const Checkout = () => {
             </div>
 
             {/* Phần chọn địa chỉ đã lưu */}
-            {addressType === 'saved' && (
+            {addressType === "saved" && (
               <div style={{ marginBottom: 20 }}>
                 <Text strong>Địa chỉ giao hàng:</Text>
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                   <Select
                     style={{ flex: 1 }}
                     placeholder="Chọn địa chỉ đã lưu"
@@ -521,35 +696,56 @@ const Checkout = () => {
                     allowClear
                     onClear={() => {
                       setSelectedAddressId("");
-                      form.resetFields(['name', 'phone', 'address']);
+                      form.resetFields(["name", "phone", "address"]);
                       setShippingFee(0);
                     }}
                     optionLabelProp="label"
                   >
-                    {savedAddresses.map((address) => (
-                      <Option
-                        key={address.id}
-                        value={address.id}
-                        label={`${address.name} - ${address.phone}`}
-                      >
-                        <div style={{ padding: '4px 0', lineHeight: '1.4' }}>
-                          <div style={{ marginBottom: '4px' }}>
-                            <Text strong>{address.name}</Text>
-                            {address.isDefault && <Tag color="blue" style={{ marginLeft: 8 }}>Mặc định</Tag>}
-                          </div>
-                          <div style={{ marginBottom: '2px' }}>
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {address.phone}
-                            </Text>
-                          </div>
-                          <div>
-                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', wordBreak: 'break-word' }}>
-                              {address.fullAddress}
-                            </Text>
-                          </div>
-                        </div>
-                      </Option>
-                    ))}
+                    {Array.isArray(savedAddresses) &&
+                      savedAddresses.map((address, index) => {
+                        const id =
+                          address._id ?? address.id ?? `address-${index}`; // bảo đảm không null
+                        return (
+                          <Option
+                            key={id}
+                            value={id}
+                            label={`${address.name} - ${address.phone}`}
+                          >
+                            <div
+                              style={{ padding: "4px 0", lineHeight: "1.4" }}
+                            >
+                              <div style={{ marginBottom: "4px" }}>
+                                <Text strong>{address.name}</Text>
+                                {address.isDefault && (
+                                  <Tag color="blue" style={{ marginLeft: 8 }}>
+                                    Mặc định
+                                  </Tag>
+                                )}
+                              </div>
+                              <div style={{ marginBottom: "2px" }}>
+                                <Text
+                                  type="secondary"
+                                  style={{ fontSize: "12px" }}
+                                >
+                                  {address.phone}
+                                </Text>
+                              </div>
+                              <div>
+                                <Text
+                                  type="secondary"
+                                  style={{
+                                    fontSize: "12px",
+                                    display: "block",
+                                    wordBreak: "break-word",
+                                  }}
+                                >
+                                  {address.fullAddress}
+                                </Text>
+                              </div>
+                            </div>
+                          </Option>
+                        );
+                      })}
                   </Select>
                   <Button
                     icon={<PlusOutlined />}
@@ -569,7 +765,7 @@ const Checkout = () => {
             )}
 
             {/* Phần nhập địa chỉ thủ công */}
-            {addressType === 'manual' && (
+            {addressType === "manual" && (
               <div style={{ marginBottom: 20 }}>
                 <Text strong>Nhập địa chỉ giao hàng:</Text>
 
@@ -577,67 +773,92 @@ const Checkout = () => {
                 <Row gutter={[8, 8]} style={{ marginTop: 12 }}>
                   <Col span={8}>
                     <Select
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       placeholder="Chọn Tỉnh/Thành phố"
                       value={selectedProvince || undefined}
-                      onChange={handleProvinceChange}
+                      onChange={(value) => {
+                        handleProvinceChange(value); // gọi hàm gốc
+                        updateFullAddress(); //  tự động cập nhật địa chỉ
+                      }}
                       allowClear
                       onClear={() => {
-                        setSelectedProvince("");
-                        setSelectedDistrict("");
+                        setSelectedProvince(undefined);
+                        setSelectedDistrict(undefined);
                         setSelectedWard("");
                         setShippingFee(0);
-                        form.setFieldValue('address', '');
+                        form.setFieldValue("address", "");
                       }}
                     >
-                      {provinces.map((province) => (
-                        <Option key={province.id} value={province.id}>
-                          {province.name} (Phí ship: {formatCurrency(province.shippingFee)})
-                        </Option>
-                      ))}
+                      {provinces.map((province) => {
+                        const id = province.ProvinceID;
+                        const name = province.ProvinceName;
+
+                        return (
+                          <Select.Option key={id} value={id}>
+                            {name}
+                          </Select.Option>
+                        );
+                      })}
                     </Select>
                   </Col>
                   <Col span={8}>
                     <Select
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       placeholder="Chọn Quận/Huyện"
                       value={selectedDistrict || undefined}
-                      onChange={handleDistrictChange}
+                      onChange={(value) => {
+                        handleDistrictChange(Number(value)); // gọi hàm gốc
+                        updateFullAddress(); //  cập nhật địa chỉ đầy đủ
+                      }}
                       disabled={!selectedProvince}
                       allowClear
                       onClear={() => {
-                        setSelectedDistrict("");
+                        setSelectedDistrict(undefined);
                         setSelectedWard("");
-                        form.setFieldValue('address', '');
+                        form.setFieldValue("address", "");
                       }}
                     >
-                      {districts
-                        .filter(d => d.provinceId === selectedProvince)
+                      {(Array.isArray(districts) ? districts : [])
+                        .filter(
+                          (district) => district.ProvinceID === selectedProvince
+                        )
+
+
+
                         .map((district) => (
-                          <Option key={district.id} value={district.id}>
-                            {district.name}
-                          </Option>
+                          <Select.Option
+                            key={district.DistrictID}
+                            value={district.DistrictID}
+                          >
+                            {district.DistrictName}
+                          </Select.Option>
                         ))}
                     </Select>
                   </Col>
                   <Col span={8}>
                     <Select
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       placeholder="Chọn Phường/Xã"
                       value={selectedWard || undefined}
-                      onChange={handleWardChange}
+                      onChange={(value) => {
+                        handleWardChange(value); // gọi hàm cập nhật selectedWard
+                        updateFullAddress(value); // cập nhật địa chỉ đầy đủ với ward mới chọn
+                      }}
                       disabled={!selectedDistrict}
                       allowClear
                       onClear={() => {
                         setSelectedWard("");
-                        form.setFieldValue('address', '');
+                        form.setFieldValue("address", "");
                       }}
                     >
                       {wards
-                        .filter(w => w.districtId === selectedDistrict)
+                        .filter((w) => w.districtId === Number(selectedDistrict))
+
+
+
                         .map((ward) => (
-                          <Option key={ward.id} value={ward.id}>
-                            {ward.name}
+                          <Option key={ward.wardId} value={ward.wardId}>
+                            {ward.wardName}
                           </Option>
                         ))}
                     </Select>
@@ -646,14 +867,28 @@ const Checkout = () => {
 
                 {/* Địa chỉ chi tiết */}
                 <div style={{ marginTop: 12 }}>
-                  <Input
-                    placeholder="Nhập số nhà, tên đường"
-                    value={form.getFieldValue('detailAddress')}
-                    onChange={(e) => {
-                      form.setFieldValue('detailAddress', e.target.value);
-                      updateFullAddress();
-                    }}
-                  />
+                  <Form form={form} layout="vertical">
+                    {/* Địa chỉ chi tiết */}
+                    <Form.Item
+                      name="detailAddress"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Vui lòng nhập địa chỉ chi tiết",
+                        },
+                      ]}
+                      style={{ marginTop: 12 }}
+                    >
+                      <Input
+                        placeholder="Nhập số nhà, tên đường"
+                        value={form.getFieldValue("detailAddress")}
+                        onChange={(e) => {
+                          form.setFieldValue("detailAddress", e.target.value);
+                          updateFullAddress();
+                        }}
+                      />
+                    </Form.Item>
+                  </Form>
                 </div>
 
                 {shippingFee > 0 && (
@@ -703,18 +938,25 @@ const Checkout = () => {
               >
                 <TextArea
                   rows={2}
-                  placeholder={addressType === 'manual' ?
-                    "Địa chỉ đầy đủ sẽ được tự động tạo khi bạn chọn đủ thông tin" :
-                    "Địa chỉ giao hàng"
+                  placeholder={
+                    addressType === "manual"
+                      ? "Địa chỉ đầy đủ sẽ được tự động tạo khi bạn chọn đủ thông tin"
+                      : "Địa chỉ giao hàng"
                   }
-                  disabled={addressType === 'manual'}
+                  disabled={addressType === "manual"}
                 />
               </Form.Item>
 
               {/* Checkbox để lưu địa chỉ khi nhập tay */}
-              {addressType === 'manual' && (
+              {addressType === "manual" && (
                 <Form.Item name="saveAddress" valuePropName="checked">
-                  <Checkbox>
+                  <Checkbox
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleSaveManualAddress();
+                      }
+                    }}
+                  >
                     Lưu địa chỉ này để sử dụng cho lần sau
                   </Checkbox>
                 </Form.Item>
@@ -840,6 +1082,7 @@ const Checkout = () => {
               </Button>
 
               <Button
+
                 type="primary"
                 size="large"
                 block
@@ -848,8 +1091,10 @@ const Checkout = () => {
                 loading={isLoading}
                 disabled={
                   shippingFee === 0 ||
-                  (addressType === 'saved' && !selectedAddressId) ||
-                  (addressType === 'manual' && (!selectedProvince || !selectedDistrict || !selectedWard))
+                  (addressType === "saved" && !selectedAddressId) ||
+                  (addressType === "manual" &&
+                    (!selectedProvince || !selectedDistrict || !selectedWard)) ||
+                  (isOverFiveProducts && paymentMethodValue !== "momo")
                 }
               >
                 {paymentMethodValue === "cod"
@@ -861,25 +1106,34 @@ const Checkout = () => {
 
               {/* Thông báo lỗi khi chưa đủ thông tin */}
               {shippingFee === 0 && (
-                <Text type="warning" style={{ fontSize: '12px', textAlign: 'center' }}>
-                  {addressType === 'saved'
+                <Text
+                  type="warning"
+                  style={{ fontSize: "12px", textAlign: "center" }}
+                >
+                  {addressType === "saved"
                     ? "Vui lòng chọn địa chỉ giao hàng"
-                    : "Vui lòng chọn đầy đủ thông tin địa chỉ để tính phí vận chuyển"
-                  }
+                    : "Vui lòng chọn đầy đủ thông tin địa chỉ để tính phí vận chuyển"}
                 </Text>
               )}
 
-              {addressType === 'saved' && !selectedAddressId && (
-                <Text type="warning" style={{ fontSize: '12px', textAlign: 'center' }}>
+              {addressType === "saved" && !selectedAddressId && (
+                <Text
+                  type="warning"
+                  style={{ fontSize: "12px", textAlign: "center" }}
+                >
                   Vui lòng chọn địa chỉ giao hàng từ danh sách
                 </Text>
               )}
 
-              {addressType === 'manual' && (!selectedProvince || !selectedDistrict || !selectedWard) && (
-                <Text type="warning" style={{ fontSize: '12px', textAlign: 'center' }}>
-                  Vui lòng chọn đầy đủ: Tỉnh/Thành phố, Quận/Huyện, Phường/Xã
-                </Text>
-              )}
+              {addressType === "manual" &&
+                (!selectedProvince || !selectedDistrict || !selectedWard) && (
+                  <Text
+                    type="warning"
+                    style={{ fontSize: "12px", textAlign: "center" }}
+                  >
+                    Vui lòng chọn đầy đủ: Tỉnh/Thành phố, Quận/Huyện, Phường/Xã
+                  </Text>
+                )}
             </Space>
           </Card>
 
@@ -920,7 +1174,6 @@ const Checkout = () => {
 
       {/* Modal thêm địa chỉ mới */}
 
-
       <AddAddressModal
         visible={isAddAddressModalVisible}
         onCancel={() => setIsAddAddressModalVisible(false)}
@@ -930,7 +1183,6 @@ const Checkout = () => {
         wards={wards}
         savedAddresses={savedAddresses}
       />
-
     </div>
   );
 };

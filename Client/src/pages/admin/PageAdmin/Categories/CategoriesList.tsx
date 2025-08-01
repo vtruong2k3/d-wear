@@ -11,19 +11,20 @@ import {
   Divider,
   Input,
   Tag,
+  message,
 
 } from "antd";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaPen, FaSearch } from "react-icons/fa";
 
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import AddCategory from "./AddCategory";
 import EditCategory from "./EditCatgory";
 import { fetchGetAllCategory, deleteCategoryById } from "../../../../services/admin/categoryService";
 import type { ICategory } from "../../../../types/category/ICategory";
 import type { ColumnsType } from "antd/es/table";
 import type { ErrorType } from "../../../../types/error/IError";
-import { toast } from "react-toastify";
+
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -32,7 +33,7 @@ const CategoriesList: React.FC = () => {
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [searchText, setSearchText] = useState("");
-  const { setLoading } = useLoading();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
@@ -48,7 +49,7 @@ const CategoriesList: React.FC = () => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -61,14 +62,14 @@ const CategoriesList: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       const { data } = await deleteCategoryById(id);
-      toast.success(data.message)
+      message.success(data.message)
       fetchCategories();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     }
   };
 
@@ -143,7 +144,7 @@ const CategoriesList: React.FC = () => {
         </Row>
         <Divider />
         <Table
-          loading={false}
+          loading={loading}
           dataSource={filteredCategories}
           rowKey="_id"
           columns={columns}

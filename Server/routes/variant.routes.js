@@ -1,36 +1,46 @@
 const express = require("express");
 const variantRouter = express.Router();
-const variantControlller = require("../controllers/variant.controller");
+const variantController = require("../controllers/variant.controller");
 const upload = require("../middlewares/uploadProduct.middleware");
 const authAdminMiddelware = require("../middlewares/authAdmin.middleware");
 
 variantRouter.get(
   "/variant",
   authAdminMiddelware,
-  variantControlller.getAllVariant
+  variantController.getAllVariant
 );
-variantRouter.get("/variant/:id", variantControlller.getIdVariant);
+// hiển thị xoá mềm
 variantRouter.get(
-  "/variant/product/:id",
-  variantControlller.getIdProductVariant
+  "/variant/soft-delete",
+  variantController.getSoftDeletedVariants
 );
 
+variantRouter.get(
+  "/variant/product/:id",
+  variantController.getIdProductVariant
+);
+variantRouter.get("/variant/:id", variantController.getIdVariant);
 variantRouter.post(
   "/variant",
   upload.fields([{ name: "imageVariant", maxCount: 5 }]),
-  variantControlller.createVariant
+  variantController.createVariant
 );
 
 variantRouter.put(
   "/variant/:id",
   upload.fields([{ name: "imageVariant", maxCount: 5 }]),
-  variantControlller.updateVariant
+  variantController.updateVariant
 );
 
-variantRouter.delete("/variant/:id", variantControlller.deleteVariant);
+variantRouter.delete("/variant/:id", variantController.deleteVariant);
 variantRouter.delete(
   "/variant/product/:id",
-  variantControlller.deleteIdProductVariant
+  variantController.deleteIdProductVariant
+);
+// xoá mềm
+variantRouter.put(
+  "/variant/:id/soft-delete",
+  variantController.softDeleteVariant
 );
 
 module.exports = variantRouter;

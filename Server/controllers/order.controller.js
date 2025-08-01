@@ -10,6 +10,7 @@ const Variant = require("../models/variants");
 const { createOrderSchema } = require("../validate/orderValidate");
 const sendOrderCancellationEmail = require("../utils/sendOrderCancellationEmail");
 const sendOrderStatusUpdateEmail = require("../utils/updateSendEmail");
+const Review = require("../models/reviews");
 exports.cancelOrder = async (req, res) => {
   try {
     const order_id = req.params.id;
@@ -123,7 +124,6 @@ exports.updateOrderStatus = async (req, res) => {
 
     const currentStatus = order.status;
 
-    //  Các trạng thái được phép chuyển tiếp
     const validTransitions = {
       pending: ["processing", "cancelled"],
       processing: ["shipped", "cancelled"],
@@ -140,14 +140,22 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    //  Cập nhật trạng thái
-    order.status = newStatus;
-    await order.save();
+    // Nếu là "delivered", cập nhật cả paymentStatus
+    const updateFields = {
+      status: newStatus,
+    };
+    if (newStatus === "delivered") {
+      updateFields.paymentStatus = "paid";
+    }
 
-    //  Gửi email cập nhật trạng thái
-    const email = order.email;
-    await sendOrderStatusUpdateEmail(email, order);
-    //  Gửi socket để client cập nhật real-time
+    const updatedOrder = await Order.findByIdAndUpdate(id, updateFields, {
+      new: true,
+    });
+
+    // Gửi email cập nhật trạng thái
+    await sendOrderStatusUpdateEmail(updatedOrder.email, updatedOrder);
+
+    // Gửi socket thông báo
     const io = getIO();
     io.to(id).emit("orderStatusUpdate", {
       orderId: id,
@@ -161,7 +169,7 @@ exports.updateOrderStatus = async (req, res) => {
       status: newStatus,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi cập nhật trạng thái:", error.message);
+    console.error(" Lỗi khi cập nhật trạng thái:", error.message);
     return res.status(500).json({
       message: "Lỗi server",
       error: error.message,
@@ -171,20 +179,48 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.getAllOrder = async (req, res) => {
   try {
-    const result = await Order.find().sort({ createdAt: -1 }).lean();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const keyword = req.query.q?.trim() || "";
+
+    // Tạo điều kiện tìm kiếm nếu có keyword
+    const filter = keyword
+      ? {
+          $or: [
+            { orderCode: { $regex: keyword, $options: "i" } },
+            { "shippingAddress.fullName": { $regex: keyword, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // Tổng số đơn hàng thỏa điều kiện
+    const total = await Order.countDocuments(filter);
+
+    // Lấy danh sách đơn hàng có phân trang và sắp xếp
+    const orders = await Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     return res.status(200).json({
-      message: "Lấy tất cả đơn hàng thành công",
-      orders: result,
+      message: "Lấy danh sách đơn hàng thành công",
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      orders,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi lấy tất cả đơn hàng:", error.message);
+    console.error(" Lỗi khi lấy tất cả đơn hàng:", error.message);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
     });
   }
 };
+
 exports.getOrderById = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -482,5 +518,61 @@ exports.createOrder = async (req, res) => {
       message: "Server Error",
       error: error.message,
     });
+  }
+};
+
+exports.getUserProductOrdersForReview = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const { productId } = req.params;
+
+    // 1. Lấy các đơn hàng đã giao thành công của user
+    const deliveredOrders = await Order.find({ user_id, status: "delivered" });
+    const deliveredOrderIds = deliveredOrders.map((order) => order._id);
+
+    if (deliveredOrderIds.length === 0) {
+      return res.json({
+        canReview: false,
+        order_id: null,
+      });
+    }
+
+    // 2. Lấy các OrderItem chứa productId trong các đơn hàng đã giao
+    const relatedOrderItems = await OrderItem.find({
+      order_id: { $in: deliveredOrderIds },
+      product_id: productId,
+    });
+
+    if (relatedOrderItems.length === 0) {
+      return res.json({
+        canReview: false,
+        order_id: null,
+      });
+    }
+
+    const orderIdsWithProduct = relatedOrderItems.map((item) =>
+      item.order_id.toString()
+    );
+
+    // 3. Tìm các review đã viết theo từng đơn hàng cho sản phẩm đó
+    const existingReviews = await Review.find({
+      user_id,
+      product_id: productId,
+      order_id: { $in: orderIdsWithProduct },
+    });
+
+    const reviewedOrderIds = existingReviews.map((r) => r.order_id.toString());
+
+    // 4. Lọc ra các đơn chưa review sản phẩm này
+    const notYetReviewedOrderIds = orderIdsWithProduct.filter(
+      (id) => !reviewedOrderIds.includes(id)
+    );
+
+    return res.json({
+      canReview: notYetReviewedOrderIds.length > 0,
+      order_id: notYetReviewedOrderIds[0] || null,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };

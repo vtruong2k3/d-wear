@@ -1,109 +1,132 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Button,
   Card,
   Image,
   Input,
   Popconfirm,
+  Switch,
   Table,
   Tag,
   Typography,
+  Space,
+  message,
 } from "antd";
 import {
   DeleteOutlined,
   SearchOutlined,
   PlusOutlined,
   EditOutlined,
+  RollbackOutlined,
 } from "@ant-design/icons";
 import type { IVariants } from "../../../../types/IVariants";
-import { toast } from "react-toastify";
+
 import {
   deleteVariant,
   getAllVariants,
+  getSoftDeletedVariants,
   softDeleteVariant,
+  restoreVariant,
 } from "../../../../services/admin/variantServices";
 import type { ErrorType } from "../../../../types/error/IError";
-import { useLoading } from "../../../../contexts/LoadingContext";
+
 import { formatCurrency } from "../../../../utils/Format";
+
 const { Title } = Typography;
 
 const Variants: React.FC = () => {
   const [variants, setVariants] = useState<IVariants[]>([]);
   const [searchText, setSearchText] = useState("");
-  const { setLoading } = useLoading();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [showHidden, setShowHidden] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchVariants = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getAllVariants();
-      setVariants(data);
+      let res;
+      if (showHidden) {
+        res = await getSoftDeletedVariants(currentPage, pageSize, searchText);
+      } else {
+        res = await getAllVariants(currentPage, pageSize, searchText);
+      }
+      setVariants(res.data);
+      setTotalItems(res.total);
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, currentPage, pageSize, searchText, showHidden]);
 
   useEffect(() => {
     fetchVariants();
   }, [fetchVariants]);
-  //xóa cứng
-  const handleDelete = async (id: string) => {
-    try {
-      setLoading(true);
-      await deleteVariant(id);
-      setVariants((prev) => prev.filter((v) => v._id !== id));
-      toast.success("Xóa biến thể thành công!");
-    } catch (error) {
-      const errorMessage =
-        (error as ErrorType).response?.data?.message ||
-        (error as ErrorType).message ||
-        "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-  //xoá mềm
+
   const handleSoftDelete = async (id: string) => {
     try {
       setLoading(true);
-      await softDeleteVariant(id);
-      toast.success("Đã xoá mềm biến thể!");
+      const res = await softDeleteVariant(id);
+      message.success(res.message);
       fetchVariants();
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
-        "Lỗi xoá mềm biến thể.";
-      toast.error(errorMessage);
+        "Đã xảy ra lỗi khi ẩn.";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-  const filteredVariants = variants.filter((variant) => {
-    const name = variant.product_id?.product_name || "";
-    return (
-      name.toLowerCase().includes(searchText.toLowerCase()) ||
-      variant.size.toLowerCase().includes(searchText.toLowerCase()) ||
-      variant.color.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
+
+  const handleRestore = async (id: string) => {
+    try {
+      setLoading(true);
+      const res = await restoreVariant(id);
+      message.success(res.message);
+      fetchVariants();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi khi khôi phục.";
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      setLoading(true);
+      const res = await deleteVariant(id);
+      message.success(res.message);
+      fetchVariants();
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi khi xoá.";
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     { title: "ID", dataIndex: "_id", key: "_id", width: 80 },
     {
       title: "Tên sản phẩm",
       key: "product_name",
-      render: (_: IVariants, record: IVariants) => {
-        return (
-          record.product_id?.product_name || <Tag color="red">Không có</Tag>
-        );
-      },
+      render: (_: IVariants, record: IVariants) =>
+        record.product_id?.product_name || <Tag color="red">Không có</Tag>,
     },
     {
       title: "Kích thước",
@@ -134,7 +157,7 @@ const Variants: React.FC = () => {
       key: "image",
       render: (images: string[] = []) => (
         <div className="flex gap-1">
-          {images?.slice(0, 2).map((img, index) => (
+          {images.slice(0, 2).map((img, index) => (
             <Image
               key={index}
               width={40}
@@ -155,39 +178,61 @@ const Variants: React.FC = () => {
       title: "Thao tác",
       key: "actions",
       render: (_: IVariants, record: IVariants) => (
-        <>
-          <Button style={{ marginRight: "20px" }} icon={<EditOutlined />} />
-          <Popconfirm
-            title="Xác nhận xóa"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+        <Space>
+          {!showHidden ? (
+            <>
+              <Button icon={<EditOutlined />} />
 
-          {/*  Thêm nút xoá mềm */}
-          <Popconfirm
-            title="Xác nhận xoá mềm biến thể?"
-            onConfirm={() => handleSoftDelete(record._id)}
-            okText="Xoá mềm"
-            cancelText="Huỷ"
-          >
-            <Button style={{ marginLeft: 10 }} type="default">
-              Xoá mềm
-            </Button>
-          </Popconfirm>
-        </>
+              <Popconfirm
+                title="Xác nhận xoá mềm sản phẩm"
+                onConfirm={() => handleSoftDelete(record._id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+                okButtonProps={{ danger: true }}
+              >
+                <Button danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </>
+          ) : (
+            <>
+              <Popconfirm
+                title="Khôi phục biến thể này?"
+                onConfirm={() => handleRestore(record._id)}
+                okText="Khôi phục"
+                cancelText="Huỷ"
+              >
+                <Button icon={<RollbackOutlined />} type="primary"></Button>
+              </Popconfirm>
+              <Popconfirm
+                title="Xoá vĩnh viễn biến thể này?"
+                onConfirm={() => handleDelete(record._id)}
+                okText="Xoá"
+                cancelText="Huỷ"
+                okButtonProps={{ danger: true }}
+              >
+                <Button danger icon={<DeleteOutlined />}></Button>
+              </Popconfirm>
+            </>
+          )}
+        </Space>
       ),
     },
   ];
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <Title level={2} className="mb-6 text-center">
-        Quản Lý Biến Thể Sản Phẩm
-      </Title>
+      <div className="flex justify-between items-center mb-6">
+        <Title level={2}>Quản Lý Biến Thể Sản Phẩm</Title>
+        <Switch
+          checked={showHidden}
+          onChange={(checked) => {
+            setShowHidden(checked);
+            setCurrentPage(1);
+          }}
+          checkedChildren="Đã xoá"
+          unCheckedChildren="Hoạt động"
+        />
+      </div>
 
       <Card
         title="Danh Sách Biến Thể"
@@ -197,7 +242,10 @@ const Variants: React.FC = () => {
               placeholder="Tìm kiếm..."
               prefix={<SearchOutlined />}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-64"
             />
             <Button type="primary" icon={<PlusOutlined />}>
@@ -207,10 +255,25 @@ const Variants: React.FC = () => {
         }
       >
         <Table
+          loading={loading}
           columns={columns}
-          dataSource={filteredVariants}
+          dataSource={variants}
           rowKey="_id"
-          pagination={{ pageSize: 8 }}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalItems,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            pageSizeOptions: ["10", "20", "30", "50", "100"],
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} biến thể`,
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
+            style: { marginTop: 16 },
+          }}
           scroll={{ x: 1000 }}
         />
       </Card>

@@ -29,4 +29,21 @@ statisticRouter.get(
 // Lọc thống kê theo khoảng ngày do người dùng chọn (gửi ngày bắt đầu và kết thúc từ frontend)
 statisticRouter.post("/statistics/filter", statisticController.filterByDate);
 
+//  Thống kê theo năm
+statisticRouter.get(
+  "/statistics/by-year/:year",
+  statisticController.summaryByYear
+);
+
+//  (Tùy chọn) Thống kê theo tuần
+statisticRouter.post(
+  "/statistics/by-week/:year/:week",
+  statisticController.summaryByWeek
+);
+
+statisticRouter.post(
+  "/statistics/top-products-by-date",
+
+  statisticController.getTopProductsByDate
+);
 module.exports = statisticRouter;

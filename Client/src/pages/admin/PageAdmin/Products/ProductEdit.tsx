@@ -12,14 +12,15 @@ import {
   Upload,
   Modal,
   type UploadFile,
+  message,
 } from "antd";
 import { PlusOutlined, UploadOutlined, EyeOutlined } from "@ant-design/icons";
-import type { CurrentImage, IProducts } from "../../../../types/IProducts";
+import type { CurrentImage, IProductAdd } from "../../../../types/IProducts";
 import type { Category } from "../../../../types/IProducts";
 import type { Brand } from "../../../../types/IProducts";
 import "../../../../styles/addProduct.css";
 import type { UploadChangeParam } from "antd/es/upload";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -100,37 +101,7 @@ const ProductEdit = () => {
     fetchSelectOptions();
   }, []);
 
-  //variant
-  // const validateVariants = () => {
-  //   const errors: { [index: number]: string[] } = {};
-  //   let isValid = true;
 
-  //   variants.forEach((variant, idx) => {
-  //     const errs: string[] = [];
-  //     if (!variant.size) errs.push("size");
-  //     if (!variant.color) errs.push("color");
-  //     if (
-  //       variant.price === null ||
-  //       variant.price === undefined ||
-  //       variant.price <= 0
-  //     )
-  //       errs.push("price");
-  //     if (
-  //       variant.stock === null ||
-  //       variant.stock === undefined ||
-  //       variant.stock < 0
-  //     )
-  //       errs.push("stock");
-
-  //     if (errs.length > 0) {
-  //       errors[idx] = errs;
-  //       isValid = false;
-  //     }
-  //   });
-
-  //   setVariantErrors(errors);
-  //   return isValid;
-  // };
   // Validate ảnh sản phẩm
   const beforeUploadProductImage = (file: File) => {
     const isValidType =
@@ -139,13 +110,13 @@ const ProductEdit = () => {
       file.type === "image/webp";
 
     if (!isValidType) {
-      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      message.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
       return Upload.LIST_IGNORE;
     }
 
     const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
-      toast.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
+      message.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
       return Upload.LIST_IGNORE;
     }
 
@@ -157,16 +128,17 @@ const ProductEdit = () => {
     const isValidType =
       file.type === "image/jpeg" ||
       file.type === "image/png" ||
-      file.type === "image/webp";
+      file.type === "image/webp" ||
+      file.type === "image/avif";
 
     if (!isValidType) {
-      toast.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
+      message.error("Chỉ cho phép ảnh JPEG, PNG hoặc WEBP!");
       return Upload.LIST_IGNORE;
     }
 
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
-      toast.error("Ảnh biến thể phải nhỏ hơn 5MB!");
+      message.error("Ảnh biến thể phải nhỏ hơn 5MB!");
       return Upload.LIST_IGNORE;
     }
 
@@ -237,7 +209,7 @@ const ProductEdit = () => {
           (error as ErrorType).response?.data?.message ||
           (error as ErrorType).message ||
           "Đã xảy ra lỗi, vui lòng thử lại.";
-        toast.error(errorMessage);
+        message.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -246,13 +218,13 @@ const ProductEdit = () => {
     if (brands.length > 0 && categories.length > 0 && id) {
       fetchProduct();
     }
-  }, [brands, categories, id, form]);
+  }, [brands, categories, id, form, setLoading]);
 
 
-  //hàm xử lí submit
-  const onFinish = async (values: IProducts) => {
+
+  const onFinish = async (values: IProductAdd) => {
     try {
-      // ✅ Validate biến thể giống ProductAdd
+      //  Validate biến thể giống ProductAdd
       const errors: { [index: number]: string[] } = {};
       let isValid = true;
 
@@ -282,7 +254,7 @@ const ProductEdit = () => {
 
       if (!isValid) {
         setVariantErrors(errors);
-        toast.error(
+        message.error(
           "Vui lòng nhập đầy đủ và hợp lệ thông tin cho các biến thể!"
         );
         return;
@@ -292,7 +264,7 @@ const ProductEdit = () => {
 
       const formData = new FormData();
 
-      // ✅ Thông tin cơ bản
+      //  Thông tin cơ bản
       formData.append("product_name", values.product_name);
       formData.append("description", values.description);
       formData.append("basePrice", String(values.basePrice));
@@ -301,19 +273,19 @@ const ProductEdit = () => {
       formData.append("gender", values.gender);
       formData.append("material", values.material);
 
-      // ✅ Ảnh hiện tại
+      //  Ảnh hiện tại
       currentImages.forEach((img) => {
         formData.append("existingImageUrls", img.url);
       });
 
-      // ✅ Ảnh mới được upload
+      //  Ảnh mới được upload
       imageList.forEach((file) => {
         if (file.originFileObj) {
           formData.append("productImage", file.originFileObj);
         }
       });
 
-      // ✅ Biến thể (JSON)
+      //  Biến thể (JSON)
       const plainVariants = variants.map((v) => {
         const oldImages = v.image
           .filter((img) => {
@@ -333,34 +305,32 @@ const ProductEdit = () => {
           color: v.color,
           stock: v.stock,
           price: v.price,
-          image: oldImages, // ✅ string[]
+          image: oldImages,
         };
       });
 
       formData.append("variants", JSON.stringify(plainVariants));
 
-
-
-      // ✅ Ảnh biến thể
-      variants.forEach((variant) => {
+      //  Ảnh biến thể MỚI - quan trọng: gửi kèm index
+      variants.forEach((variant, idx) => {
         variant.image.forEach((imgFile) => {
           if (imgFile.originFileObj) {
-            formData.append("imageVariant", imgFile.originFileObj);
+            formData.append(`imageVariant_${idx}[]`, imgFile.originFileObj);
           }
         });
       });
 
-      // ✅ PUT request
-      const data = await updateProduct(id, formData)
+      //  PUT request
+      const data = await updateProduct(id, formData);
 
-      toast.success(data.message);
+      message.success(data.message);
       navigate("/admin/products");
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -368,7 +338,7 @@ const ProductEdit = () => {
 
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
-      toast.warning("Chỉ được tải tối đa 8 ảnh!");
+      message.warning("Chỉ được tải tối đa 8 ảnh!");
       return;
     }
 

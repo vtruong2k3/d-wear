@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../redux/store";
 
 import useAuth from "../../../hooks/Client/useAuth";
 import { useNavigate } from "react-router-dom";
-import { deleteCartItemThunk, getCartThunk, updateCartQuantityThunk } from "../../../redux/features/client/thunks/cartThunk";
+import { deleteCartItemThunk, updateCartQuantityThunk } from "../../../redux/features/client/thunks/cartThunk";
 import { formatCurrency } from "../../../utils/Format";
 import type { ICartItem } from "../../../types/cart/ICart";
 import toast from "react-hot-toast";
@@ -17,9 +17,6 @@ const ShoppingCart = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    dispatch(getCartThunk());
-  }, [dispatch])
 
   const selectedTotal = useMemo(() => {
     return cartItems

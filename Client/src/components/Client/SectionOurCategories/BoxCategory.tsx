@@ -1,20 +1,27 @@
 import React from "react";
-import { avatarFake } from "../../../utils/constants/mockData";
 
-// Định nghĩa kiểu cho props
 interface BoxCategoryProps {
-  data: { name: string };
+  data: {
+    name: string;
+    image: string;
+  };
   idx: number;
   type: number;
 }
 
-const BoxCategory: React.FC<BoxCategoryProps> = ({ data, idx, type }) => {
+const BoxCategory: React.FC<BoxCategoryProps> = ({ data, type }) => {
   if (!data) return null;
 
   return type === 1 ? (
     <li className="mt-6 md:mt-0">
       <div className="rounded-[20px] overflow-hidden relative group">
-        <img className="image" src={avatarFake[idx]} alt="" />
+        <div className="w-full h-96  lg:h-[560px] overflow-hidden">
+          <img
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            src={data.image}
+            alt={data.name}
+          />
+        </div>
         <a
           href="#none"
           className="absolute group-hover:bottom-10 left-1/2 -translate-x-1/2 -bottom-10 mt-8 h-9 bg-white px-7 inline-flex items-center font-semibold text-black rounded-full text-[15px] hover:bg-black hover:text-white transition-all duration-300"
@@ -25,11 +32,17 @@ const BoxCategory: React.FC<BoxCategoryProps> = ({ data, idx, type }) => {
     </li>
   ) : (
     <li className="mt-6 md:mt-0">
-      <a href="#none">
+      <a href="#none" className="block group">
         <div className="rounded-lg overflow-hidden">
-          <img className="image" src={avatarFake[idx]} alt="" />
+          <div className="w-full h-80 lg:h-[420px] overflow-hidden">
+            <img
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              src={data.image}
+              alt={data.name}
+            />
+          </div>
         </div>
-        <h3 className="mt-4 font-semibold">{data.name}</h3>
+        <h3 className="mt-4 font-semibold text-center lg:text-left">{data.name}</h3>
       </a>
     </li>
   );

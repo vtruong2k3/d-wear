@@ -15,3 +15,8 @@ export const loginAPI = async (payload: LoginFormData) => {
   const res = await axios.post("/api/auth/login", payload);
   return res.data;
 };
+
+export const getUserInfo = async () => {
+  const res = await axios.get("/api/auth/info");
+  return res.data;
+};

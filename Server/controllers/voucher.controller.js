@@ -1,8 +1,8 @@
 const Voucher = require("../models/vouchers");
 const voucherValidate = require("../validate/voucherValidate");
 const dayjs = require("dayjs");
-const utc = require("dayjs/plugin/utc"); // ✅ Cần khai báo plugin utc
-const timezone = require("dayjs/plugin/timezone"); // ✅ Và timezone
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);

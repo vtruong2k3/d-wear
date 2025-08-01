@@ -2,7 +2,7 @@ import { Modal, Form, Input, message } from "antd";
 import { useEffect } from "react";
 import { fetchCreateBrand } from "../../../../services/admin/brandService"; // service đã tách
 import type { FC } from "react";
-import { toast } from "react-toastify";
+
 import type { ErrorType } from "../../../../types/error/IError";
 import { useLoading } from "../../../../contexts/LoadingContext";
 
@@ -29,7 +29,7 @@ const AddBrand: FC<AddBrandProps> = ({ visible, onClose, onSuccess }) => {
         (error as ErrorType).response?.data?.message ||
         (error as ErrorType).message ||
         "Đã xảy ra lỗi, vui lòng thử lại.";
-      toast.error(errorMessage);
+      message.error(errorMessage);
     } finally {
       setLoading(false)
     }

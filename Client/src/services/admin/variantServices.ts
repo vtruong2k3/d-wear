@@ -1,22 +1,34 @@
 import axios from "axios";
 import type { IVariants } from "../../types/IVariants";
 
-export const getAllVariants = async (): Promise<IVariants[]> => {
-  const res = await axios.get(`/api/variant`);
+// getAllVariants.ts
+export const getAllVariants = async (
+  page: number,
+  limit: number,
+  search: string
+): Promise<{ data: IVariants[]; total: number }> => {
+  const res = await axios.get(`/api/variant`, {
+    params: { page, limit, search },
+  });
+
   const variants = Array.isArray(res.data?.variants) ? res.data.variants : [];
 
-  return variants.map((v: IVariants) => ({
-    ...v,
-    id: v._id,
-    image: Array.isArray(v.image)
-      ? v.image.map((img: string) =>
-          img.startsWith("http")
-            ? img
-            : `http://localhost:5000/${img.replace(/\\/g, "/")}`
-        )
-      : [],
-  }));
+  return {
+    total: res.data.total || 0,
+    data: variants.map((v: IVariants) => ({
+      ...v,
+      id: v._id,
+      image: Array.isArray(v.image)
+        ? v.image.map((img: string) =>
+            img.startsWith("http")
+              ? img
+              : `http://localhost:5000/${img.replace(/\\/g, "/")}`
+          )
+        : [],
+    })),
+  };
 };
+
 // variantServices.ts
 // export const createVariant = async (
 //   data: VariantFormValues,
@@ -73,7 +85,42 @@ export const deleteVariant = async (id: string | number) => {
   const res = await axios.delete(`/api/variant/${id}`);
   return res.data;
 };
-// Xoá mềm biến thể
+// xoá mềm biến thể
 export const softDeleteVariant = async (id: string) => {
-  return axios.patch(`/api/variant/soft-delete/${id}`);
+  const res = await axios.put(`/api/variant/${id}/soft-delete`, {
+    isdelete: true,
+  });
+  return res.data;
+};
+export const restoreVariant = async (id: string) => {
+  const res = await axios.put(`/api/variant/${id}/soft-delete`, {
+    isdelete: false,
+  });
+  return res.data;
+};
+export const getSoftDeletedVariants = async (
+  page: number,
+  limit: number,
+  q: string = ""
+): Promise<{ data: IVariants[]; total: number }> => {
+  const res = await axios.get("/api/variant/soft-delete", {
+    params: { page, limit, q },
+  });
+
+  const variants = Array.isArray(res.data?.variants) ? res.data.variants : [];
+
+  return {
+    total: res.data.total || 0,
+    data: variants.map((v: IVariants) => ({
+      ...v,
+      id: v._id,
+      image: Array.isArray(v.image)
+        ? v.image.map((img: string) =>
+            img.startsWith("http")
+              ? img
+              : `http://localhost:5000/${img.replace(/\\/g, "/")}`
+          )
+        : [],
+    })),
+  };
 };
