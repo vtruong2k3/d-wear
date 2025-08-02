@@ -11,6 +11,7 @@ import PaymentResult from "../../pages/client/Order/PaymentResult";
 import OrdersPage from "../../pages/client/Order/OrdersPage";
 import OrderDetailPage from "../../pages/client/Order/OrderDetailPage";
 import AddressManagement from "../../pages/client/Address/AddressManagerModal";
+import AboutPage from "../../pages/client/About/About";
 const clientRoutes = [
   {
     path: "/",
@@ -20,7 +21,10 @@ const clientRoutes = [
         path: "",
         element: <Home />,
       },
-
+      {
+        path: "/about",
+        element: <AboutPage />,
+      },
       {
         path: "/product",
         element: <ListProduct />,
