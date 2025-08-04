@@ -119,7 +119,8 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
                             name="discountValue"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập giá trị giảm!' },
-                                { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' }
+                                { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' },
+                                { type: 'number', min: 100, message: 'Giá trị phải nhỏ hơn 100!' }
                             ]}
                         >
                             <InputNumber<number>
@@ -142,7 +143,9 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
                             label="Đơn Hàng Tối Thiểu"
                             name="minOrderValue"
                             rules={[
-                                { type: 'number', min: 0, message: 'Giá trị phải lớn hơn hoặc bằng 0!' }
+                                { required: true, message: 'Vui lòng nhập giá trị đơn hàng tối thiểu!' },
+                                { type: 'number', min: 10000, message: 'Giá trị phải lớn hơn hoặc bằng 10.000đ!' },
+
                             ]}
                         >
                             <InputNumber<number>
@@ -163,7 +166,8 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
                             label="Giảm Giá Tối Đa"
                             name="maxDiscountValue"
                             rules={[
-                                { type: 'number', min: 0, message: 'Giá trị phải lớn hơn hoặc bằng 0!' }
+                                { required: true, message: 'Vui lòng nhập giá trị đơn hàng tối đa!' },
+                                { type: 'number', min: 10000, message: 'Giá trị phải lớn hơn hoặc bằng 10.000đ!' }
                             ]}
                         >
                             <InputNumber<number>

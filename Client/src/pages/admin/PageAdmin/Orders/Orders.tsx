@@ -11,8 +11,7 @@ import {
 } from "antd";
 import {
   EyeOutlined,
-  DeleteOutlined,
-  RollbackOutlined,
+
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import type { IOrder } from "../../../../types/order/IOrder";
@@ -24,6 +23,7 @@ import socket from "../../../../sockets/socket";
 
 import type { ErrorType } from "../../../../types/error/IError";
 import { getPaymentStatusLabel, getStatusLabel, paymentColor } from "../../../../utils/Status";
+import Title from "antd/es/typography/Title";
 
 
 const { Option } = Select;
@@ -45,7 +45,7 @@ const OrderList = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<IOrder[]>([]);
   const [hiddenOrders, setHiddenOrders] = useState<string[]>([]);
-  const [showHidden, setShowHidden] = useState(false);
+
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [dateFilter, setDateFilter] = useState<string>("");
   const [sortTotal, setSortTotal] = useState<string>("");
@@ -61,7 +61,7 @@ const OrderList = () => {
       const hidden = JSON.parse(localStorage.getItem("hiddenOrders") || "[]");
       setHiddenOrders(hidden);
       setOrders(all);
-      filterOrders(all, hidden);
+      filterOrders(all);
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -135,12 +135,10 @@ const OrderList = () => {
 
 
 
-  const filterOrders = useCallback((data: IOrder[], hidden: string[]) => {
+  const filterOrders = useCallback((data: IOrder[]) => {
     let filtered = [...data];
 
-    filtered = showHidden
-      ? filtered.filter((o) => hidden.includes(o._id))
-      : filtered.filter((o) => !hidden.includes(o._id));
+
 
     if (statusFilter) {
       const normalized = normalizeString(statusFilter);
@@ -163,31 +161,13 @@ const OrderList = () => {
 
     setFilteredOrders(filtered);
     setCurrentPage(1);
-  }, [showHidden, statusFilter, dateFilter, sortTotal]);
+  }, [statusFilter, dateFilter, sortTotal]);
 
   useEffect(() => {
-    filterOrders(orders, hiddenOrders);
+    filterOrders(orders);
   }, [orders, hiddenOrders, filterOrders]);
 
-  const handleHide = (id: string) => {
-    if (hiddenOrders.includes(id)) {
-      message.info("Đơn hàng này đã được ẩn trước đó.");
-      return;
-    }
 
-    const updated = [...hiddenOrders, id];
-    setHiddenOrders(updated);
-    localStorage.setItem("hiddenOrders", JSON.stringify(updated));
-    message.success("Đã ẩn đơn hàng");
-  };
-
-
-  const handleRestore = (id: string) => {
-    const updated = hiddenOrders.filter((i) => i !== id);
-    setHiddenOrders(updated);
-    localStorage.setItem("hiddenOrders", JSON.stringify(updated));
-    message.success("Đã khôi phục đơn hàng");
-  };
 
   // Hàm xử lý thay đổi trạng thái đơn hàng
   const handleStatusChange = async (orderId: string, newStatus: IOrder["status"]) => {
@@ -218,7 +198,6 @@ const OrderList = () => {
 
 
 
-  // Hàm lấy label cho trạng thái đơn hàng
 
 
 
@@ -325,7 +304,7 @@ const OrderList = () => {
     {
       title: "Hành động",
       render: (record: IOrder) => {
-        const isHidden = hiddenOrders.includes(String(record._id));
+
         return (
           <>
             <Link to={`/admin/orders/${record._id}`}>
@@ -339,29 +318,6 @@ const OrderList = () => {
               </Button>
             </Link>
 
-            {/* Nếu không phải danh sách đơn đã ẩn và đơn chưa bị ẩn mới hiện nút Ẩn */}
-            {!showHidden && !isHidden && (
-              <Button
-                icon={<DeleteOutlined />}
-                onClick={() => handleHide(record._id)}
-                danger
-                size="small"
-              >
-                Ẩn
-              </Button>
-            )}
-
-            {/* Nếu đang xem danh sách đơn đã ẩn thì hiện nút Khôi phục */}
-            {showHidden && isHidden && (
-              <Button
-                icon={<RollbackOutlined />}
-                onClick={() => handleRestore(record._id)}
-                type="dashed"
-                size="small"
-              >
-                Khôi phục
-              </Button>
-            )}
           </>
         );
       },
@@ -371,7 +327,18 @@ const OrderList = () => {
 
   return (
     <div>
-      <h2>📦 Danh sách đơn hàng</h2>
+      <Title
+        level={2}
+        style={{
+          textAlign: "center",
+          margin: "0 0 24px 0",
+          color: "#262626",
+
+        }}
+      >
+        Danh sách đơn hàng
+      </Title>
+      {/* <h2 className="text-3xl !p-3">Danh sách đơn hàng</h2> */}
       <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
         <Select
           placeholder="Lọc theo trạng thái đơn"
@@ -408,9 +375,7 @@ const OrderList = () => {
           <Option value="high-to-low">Cao → Thấp</Option>
         </Select>
 
-        <Button type="default" onClick={() => setShowHidden(!showHidden)}>
-          {showHidden ? " Danh sách chính" : " Đơn đã ẩn"}
-        </Button>
+
       </div>
 
       <Table<IOrder>

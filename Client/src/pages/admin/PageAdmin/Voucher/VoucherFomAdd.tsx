@@ -111,7 +111,8 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }: AddVoucherFormProps) => {
                             name="discountValue"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập giá trị giảm!' },
-                                { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' }
+                                { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' },
+                                { type: 'number', max: 100, message: 'Giá trị phải nhỏ hơn 100!' }
                             ]}
                         >
                             <InputNumber<number>
@@ -134,11 +135,12 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }: AddVoucherFormProps) => {
                             label="Đơn Hàng Tối Thiểu"
                             name="minOrderValue"
                             rules={[
-                                { type: 'number', min: 0, message: 'Giá trị phải lớn hơn hoặc bằng 0!' }
+                                { required: true, message: 'Vui lòng nhập giá trị!' },
+                                { type: 'number', min: 10000, message: 'Giá trị phải lớn hơn hoặc bằng 10.000đ!' }
                             ]}
                         >
                             <InputNumber<number>
-                                placeholder="0 = Không giới hạn"
+                                placeholder="Nhạp giá trị"
                                 className="w-full"
                                 min={0}
                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -155,11 +157,12 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }: AddVoucherFormProps) => {
                             label="Giảm Giá Tối Đa"
                             name="maxDiscountValue"
                             rules={[
-                                { type: 'number', min: 0, message: 'Giá trị phải lớn hơn hoặc bằng 0!' }
+                                { required: true, message: 'Vui lòng nhập giá trị!' },
+                                { type: 'number', min: 10000, message: 'Giá trị phải lớn hơn  10.000đ!' }
                             ]}
                         >
                             <InputNumber<number>
-                                placeholder="0 = Không giới hạn"
+                                placeholder="Nhập gia trị"
                                 className="w-full"
                                 min={0}
                                 formatter={(value) =>
@@ -178,6 +181,7 @@ const AddVoucherForm = ({ open, onCancel, onSubmit }: AddVoucherFormProps) => {
                             label="Số User Tối Đa"
                             name="maxUser"
                             rules={[
+                                { required: true, message: 'Vui lòng nhập giá trị!' },
                                 { type: 'number', min: 1, message: 'Số lượng phải lớn hơn 0!' }
                             ]}
                         >

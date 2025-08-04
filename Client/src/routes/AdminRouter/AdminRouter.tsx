@@ -15,6 +15,7 @@ import Sizes from "../../pages/admin/PageAdmin/Size/Size";
 import Color from "../../pages/admin/PageAdmin/Color/Color";
 import UsersList from "../../pages/admin/PageAdmin/Users/UsersList";
 import Messenger from "../../pages/admin/PageAdmin/Messenger/Messenger";
+import Review from "../../pages/admin/PageAdmin/Reivew/Review";
 const adminRouter = [
   {
     path: "/admin",
@@ -34,6 +35,7 @@ const adminRouter = [
       { path: "color", element: <Color /> },
       { path: "users", element: <UsersList /> },
       { path: "messenger", element: <Messenger /> },
+      { path: "review", element: <Review /> },
     ],
   },
   { path: "/admin/login", element: <LoginAdmin /> },

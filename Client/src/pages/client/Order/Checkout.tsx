@@ -20,6 +20,7 @@ import {
 import {
   ArrowLeftOutlined,
   CheckOutlined,
+  ExclamationCircleOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -509,8 +510,7 @@ const Checkout = () => {
   }, [selectedVoucher, rawTotal]);
 
   const finalTotal = rawTotal - discount + shippingFee;
-  const isOverFiveProducts =
-    itemsToCheckout.reduce((sum, item) => sum + item.quantity, 0) > 4;
+
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("vi-VN", {
@@ -633,11 +633,11 @@ const Checkout = () => {
       const addressData = {
         name: values.name,
         phone: values.phone,
-        provinceId: Number(selectedProvince), // 👈 ép sang số
+        provinceId: Number(selectedProvince), //  ép sang số
         provinceName: province.ProvinceName,
-        districtId: Number(selectedDistrict), // 👈 ép sang số
+        districtId: Number(selectedDistrict), //  ép sang số
         districtName: district.DistrictName,
-        wardId: Number(selectedWard), // 👈 ép sang số
+        wardId: Number(selectedWard), //  ép sang số
         wardName: ward.wardName,
         detailAddress: values.detailAddress || "",
         fullAddress: values.address || "",
@@ -1056,18 +1056,24 @@ const Checkout = () => {
                 </Descriptions.Item>
               </Descriptions>
 
-              {isOverFiveProducts && (
+              {finalTotal >= 2000000 && (
                 <Text type="warning">
-                  Đơn hàng có hơn 5 sản phẩm. Vui lòng thanh toán qua VNPay.
+                  <ExclamationCircleOutlined style={{ marginRight: 6 }} />
+                  Đơn hàng lớn hơn 2 triệu vui lòng thanh toán bằng momo hoặc vnpay.
                 </Text>
               )}
-
+              {finalTotal < 0 && (
+                <Text type="warning">
+                  <ExclamationCircleOutlined style={{ marginRight: 6 }} />
+                  Giá trị đơn hàng không hợp lệ.
+                </Text>
+              )}
               <Button
                 type={paymentMethodValue === "cod" ? "primary" : "default"}
                 size="large"
                 block
                 onClick={() => setPaymentMethod("cod")}
-                disabled={isOverFiveProducts}
+                disabled={finalTotal >= 2000000 || finalTotal < 0}
               >
                 Thanh toán khi nhận hàng (COD)
               </Button>
@@ -1077,6 +1083,7 @@ const Checkout = () => {
                 size="large"
                 block
                 onClick={() => setPaymentMethod("momo")}
+                disabled={finalTotal < 0}
               >
                 Thanh toán online với MoMo
               </Button>
@@ -1094,7 +1101,8 @@ const Checkout = () => {
                   (addressType === "saved" && !selectedAddressId) ||
                   (addressType === "manual" &&
                     (!selectedProvince || !selectedDistrict || !selectedWard)) ||
-                  (isOverFiveProducts && paymentMethodValue !== "momo")
+                  (finalTotal >= 2000000 && paymentMethodValue !== "momo") ||
+                  finalTotal < 0
                 }
               >
                 {paymentMethodValue === "cod"

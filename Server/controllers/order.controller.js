@@ -400,6 +400,11 @@ exports.createOrder = async (req, res) => {
 
     const finalAmount = total - discount + shippingFee;
 
+    if (finalAmount < 0) {
+      return res.status(400).json({
+        message: "Giá trị đơn hàng không hợp lệ.",
+      });
+    }
     // Tạo đơn hàng
     const newOrder = await Order.create({
       user_id: userId,
