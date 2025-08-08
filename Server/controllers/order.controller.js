@@ -12,6 +12,109 @@ const sendOrderCancellationEmail = require("../utils/sendOrderCancellationEmail"
 const sendOrderStatusUpdateEmail = require("../utils/updateSendEmail");
 const Review = require("../models/reviews");
 const User = require("../models/users");
+
+exports.adminCancelOrder = async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const { reason } = req.body;
+
+    // Lấy thông tin đơn hàng
+    const order = await Order.findById(order_id).lean();
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
+
+    // Nếu đơn hàng đã giao hoặc đã huỷ thì không cho huỷ nữa
+    if (["delivered", "cancelled"].includes(order.status)) {
+      return res.status(400).json({
+        message: "Đơn hàng này không thể huỷ",
+      });
+    }
+
+    // Cập nhật trạng thái đơn hàng
+    const updatedOrder = await Order.findByIdAndUpdate(
+      order_id,
+      {
+        status: "cancelled",
+        cancellationReason: reason || "Admin huỷ đơn hàng",
+      },
+      { new: true }
+    ).lean();
+
+    // Lấy danh sách sản phẩm từ OrderItem
+    const orderItems = await OrderItem.find({ order_id })
+      .populate("product_id", "product_name")
+      .populate("variant_id", "size color image")
+      .lean();
+
+    // Chuẩn hoá danh sách item
+    const items = orderItems.map((item) => {
+      const variant = item.variant_id;
+      const product = item.product_id;
+
+      const rawImage = Array.isArray(variant?.image)
+        ? variant.image[0]
+        : variant?.image;
+      const imagePath = rawImage?.replace(/\\/g, "/");
+      const fullImageUrl = imagePath
+        ? `https://a85ff2e29d03.ngrok-free.app/${imagePath}`
+        : "";
+
+      return {
+        name: product?.product_name || "Sản phẩm",
+        image: fullImageUrl,
+        color: variant?.color || "-",
+        size: variant?.size || "-",
+        quantity: item.quantity,
+        price: item.price,
+      };
+    });
+
+    // Emit socket để client cập nhật real-time
+    const io = getIO();
+    io.to(order_id).emit("cancelOrder", {
+      orderId: order_id,
+      order_code: updatedOrder.order_code,
+      status: updatedOrder.status,
+      cancellationReason: updatedOrder.cancellationReason,
+      updatedAt: updatedOrder.updatedAt,
+    });
+
+    // Gửi email thông báo cho khách hàng
+    const email =
+      order.email ||
+      (order.user_id &&
+        (await User.findById(order.user_id).select("email")).email);
+    if (email) {
+      try {
+        await sendOrderCancellationEmail(email, {
+          ...updatedOrder,
+          items,
+          receiverName: order.receiverName,
+          phone: order.phone,
+          shippingAddress: order.shippingAddress,
+          paymentMethod: order.paymentMethod,
+          finalAmount: order.finalAmount,
+          createdAt: order.createdAt,
+        });
+      } catch (mailErr) {
+        console.error("Lỗi khi gửi email huỷ đơn hàng:", mailErr.message);
+      }
+    }
+
+    res.status(200).json({
+      message: "Admin huỷ đơn hàng thành công",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Lỗi khi admin huỷ đơn hàng:", error.message);
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
 exports.cancelOrder = async (req, res) => {
   try {
     const order_id = req.params.id;
@@ -73,6 +176,7 @@ exports.cancelOrder = async (req, res) => {
     const io = getIO();
     io.to(order_id).emit("cancelOrder", {
       orderId: order_id,
+      order_code: updatedOrder.order_code,
       status: updatedOrder.status,
       cancellationReason: updatedOrder.cancellationReason,
       updatedAt: updatedOrder.updatedAt,

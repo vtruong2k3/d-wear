@@ -46,3 +46,12 @@ export const updateOrderStatus = async (orderId: string, newStatus: string) => {
   );
   return res.data;
 };
+export const cancelOrderAdmin = async (
+  id: string | undefined,
+  reason: string
+) => {
+  const response = await axios.post(`/api/admin/orders/${id}/cancel`, {
+    reason,
+  });
+  return response.data;
+};

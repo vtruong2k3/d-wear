@@ -23,6 +23,11 @@ orderRouter.post(
   authUserMiddelware,
   orderController.cancelOrder
 );
+orderRouter.post(
+  "/admin/orders/:id/cancel",
+  authAdminMiddelware,
+  orderController.adminCancelOrder
+);
 
 // kiểm tra xem đơn hàng giao thành công chưa để cho binhf luận
 orderRouter.get(
