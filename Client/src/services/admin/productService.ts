@@ -1,9 +1,10 @@
 import axios from "axios";
+import type { ProductDetailResponse } from "../../types/IProducts";
 
-export const getDetailProduct = async (_id: string | undefined) => {
-  const res = await axios.get(`/api/product/${_id}`);
-  return res.data;
-};
+// export const getDetailProduct = async (_id: string | undefined) => {
+//   const res = await axios.get(`/api/product/${_id}`);
+//   return res.data;
+// };
 export const updateProduct = async (
   id: string | undefined,
   formData: FormData
@@ -29,7 +30,7 @@ export const createProduct = async (formData: FormData) => {
 //xóa mềm
 export const softDeleteProduct = async (id: string) => {
   const { data } = await axios.put(`/api/product/${id}/soft-delete`, {
-    isDeleted: true, 
+    isDeleted: true,
   });
   return data;
 };
@@ -47,3 +48,13 @@ export const getDeletedProducts = async (params = {}) => {
   return data;
 };
 
+export const getDetailProduct = async (
+  id: string | undefined,
+  limit: number,
+  page: number
+): Promise<ProductDetailResponse> => {
+  const res = await axios.get(`/api/product/${id}`, {
+    params: { limit, page },
+  });
+  return res.data;
+};

@@ -252,7 +252,7 @@ const OrderDetail = () => {
     );
   }
 
-  const { order, orderItems } = data;
+  const { order, orderItems, user } = data;
 
   return (
     <div style={{ padding: 24 }}>
@@ -261,21 +261,46 @@ const OrderDetail = () => {
 
         <Row gutter={24}>
           <Col xs={24} md={12}>
-            <Descriptions title="Thông tin người nhận" bordered size="small" column={1}>
-              <Descriptions.Item label="Tên">{order.receiverName}</Descriptions.Item>
-              <Descriptions.Item label="SĐT">{order.phone}</Descriptions.Item>
-              <Descriptions.Item label="Email">{order.email}</Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ">{order.shippingAddress}</Descriptions.Item>
-            </Descriptions>
+            {/* Thông tin đặt và người nhận nằm dọc bên trái */}
+            <Row gutter={[0, 10]} >
+              <Col span={24}>
+                <Descriptions title="Thông tin người đặt" bordered size="small" column={1}>
+                  <Descriptions.Item label="Tên">{user.username}</Descriptions.Item>
+                  <Descriptions.Item label="SĐT">{user.phone}</Descriptions.Item>
+                  <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+
+                </Descriptions>
+              </Col>
+              <Col span={24}>
+                <Descriptions title="Thông tin người nhận" bordered size="small" column={1}>
+                  <Descriptions.Item label="Tên">{order.receiverName}</Descriptions.Item>
+                  <Descriptions.Item label="SĐT">{order.phone}</Descriptions.Item>
+                  <Descriptions.Item label="Email">{order.email}</Descriptions.Item>
+                  <Descriptions.Item label="Địa chỉ">{order.shippingAddress}</Descriptions.Item>
+                </Descriptions>
+              </Col>
+            </Row>
           </Col>
 
           <Col xs={24} md={12}>
+            {/* Thông tin đơn hàng nằm bên phải */}
             <Descriptions title="Thông tin đơn hàng" bordered size="small" column={1}>
+              <Descriptions.Item label="Mã đơn hàng">
+                <span style={{ fontWeight: "bold" }}>{order.order_code}</span>
+              </Descriptions.Item>
               <Descriptions.Item label="Ngày đặt">
                 {new Date(order.createdAt).toLocaleDateString()}
               </Descriptions.Item>
-              <Descriptions.Item label="Phương thức thanh toán"><Tag color={paymentMethodColor[order.paymentMethod]}>{getPaymentMethodLabel(order.paymentMethod)}</Tag></Descriptions.Item>
-              <Descriptions.Item label="Trạng thái thanh toán"><Tag color={paymentColor[order.paymentStatus]}>{getPaymentStatusLabel(order.paymentStatus)}</Tag></Descriptions.Item>
+              <Descriptions.Item label="Phương thức thanh toán">
+                <Tag color={paymentMethodColor[order.paymentMethod]}>
+                  {getPaymentMethodLabel(order.paymentMethod)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái thanh toán">
+                <Tag color={paymentColor[order.paymentStatus]}>
+                  {getPaymentStatusLabel(order.paymentStatus)}
+                </Tag>
+              </Descriptions.Item>
               <Descriptions.Item label="Trạng thái đơn hàng">
                 <Select
                   value={order.status}
@@ -284,42 +309,28 @@ const OrderDetail = () => {
                   size="small"
                   bordered={false}
                 >
-                  <Option
-                    value="pending"
-                    disabled={["shipped", "delivered", "cancelled"].includes(order.status)}
-                  >
+                  <Option value="pending" disabled={["shipped", "delivered", "cancelled"].includes(order.status)}>
                     <span style={{ color: "#d9d9d9" }}>Chờ xử lý</span>
                   </Option>
-
-                  <Option
-                    value="processing"
-                    disabled={["shipped", "delivered", "cancelled"].includes(order.status)}
-                  >
+                  <Option value="processing" disabled={["shipped", "delivered", "cancelled"].includes(order.status)}>
                     <span style={{ color: "#fa8c16" }}>Đang xử lý</span>
                   </Option>
-
-                  <Option value="shipped"
-                    disabled={["delivered", "cancelled"].includes(order.status)}>
+                  <Option value="shipped" disabled={["delivered", "cancelled"].includes(order.status)}>
                     <span style={{ color: "#52c41a" }}>Đang giao hàng</span>
                   </Option>
-
-                  <Option value="delivered"
-                    disabled={["cancelled"].includes(order.status)}>
+                  <Option value="delivered" disabled={["cancelled"].includes(order.status)}>
                     <span style={{ color: "#1890ff" }}>Đã giao</span>
                   </Option>
-
-                  <Option
-                    value="cancelled"
-                    disabled={["processing", "shipped", "delivered", "cancelled"].includes(order.status)}
-                  >
+                  <Option value="cancelled" disabled={["processing", "shipped", "delivered", "cancelled"].includes(order.status)}>
                     <span style={{ color: "#ff4d4f" }}>Đã hủy</span>
                   </Option>
                 </Select>
-
               </Descriptions.Item>
               <Descriptions.Item label="Tổng tiền">{formatCurrency(order.total)}</Descriptions.Item>
               <Descriptions.Item label="Giảm giá">{formatCurrency(order.discount)}</Descriptions.Item>
-              <Descriptions.Item label="Phí vận chuyển">{order.shippingFee ? formatCurrency(order.shippingFee) : "Miễn phí"}</Descriptions.Item>
+              <Descriptions.Item label="Phí vận chuyển">
+                {order.shippingFee ? formatCurrency(order.shippingFee) : "Miễn phí"}
+              </Descriptions.Item>
               <Descriptions.Item label="Thành tiền">{formatCurrency(order.finalAmount)}</Descriptions.Item>
 
               {order.status === "cancelled" && order.cancellationReason && (
@@ -330,6 +341,7 @@ const OrderDetail = () => {
             </Descriptions>
           </Col>
         </Row>
+
 
         <Card
           title="Danh sách sản phẩm"

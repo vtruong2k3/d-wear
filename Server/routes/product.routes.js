@@ -52,6 +52,7 @@ productRouter.get(
   "/product/related/:categoryId",
   productController.getProductRelated
 );
+
 //  Xoá mềm
 productRouter.put(
   "/product/:id/soft-delete",
@@ -59,6 +60,10 @@ productRouter.put(
 );
 
 //  Rồi mới đến /product/:id
-productRouter.get("/product/:id", productController.getProductWithVariantsById);
+productRouter.get(
+  "/product/item/:id",
+  productController.getProductWithVariantsById
+);
+productRouter.get("/product/:id", productController.getDetailProductAdmin);
 
 module.exports = productRouter;

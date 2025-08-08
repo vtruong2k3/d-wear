@@ -1,6 +1,6 @@
 const OrderItem = require("../models/orderItems");
 const Order = require("../models/orders");
-const axios = require("axios");
+const dayjs = require("dayjs");
 const { getIO } = require("../sockets/socketManager");
 const Voucher = require("../models/vouchers");
 const sendOrderConfirmationEmail = require("../utils/sendEmail");
@@ -11,6 +11,7 @@ const { createOrderSchema } = require("../validate/orderValidate");
 const sendOrderCancellationEmail = require("../utils/sendOrderCancellationEmail");
 const sendOrderStatusUpdateEmail = require("../utils/updateSendEmail");
 const Review = require("../models/reviews");
+const User = require("../models/users");
 exports.cancelOrder = async (req, res) => {
   try {
     const order_id = req.params.id;
@@ -182,24 +183,53 @@ exports.getAllOrder = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+
     const keyword = req.query.q?.trim() || "";
+    const status = req.query.status || "";
+    const date = req.query.date || "";
+    const sortQuery = req.query.sort || "";
 
-    // Tạo điều kiện tìm kiếm nếu có keyword
-    const filter = keyword
-      ? {
-          $or: [
-            { orderCode: { $regex: keyword, $options: "i" } },
-            { "shippingAddress.fullName": { $regex: keyword, $options: "i" } },
-          ],
-        }
-      : {};
+    const filter = {};
+    console.log("timkiem", keyword);
 
-    // Tổng số đơn hàng thỏa điều kiện
+    // Tìm kiếm theo mã đơn hàng hoặc tên người nhận
+    if (keyword) {
+      filter.$or = [
+        { order_code: { $regex: keyword, $options: "i" } },
+        { receiverName: { $regex: keyword, $options: "i" } },
+        { phone: { $regex: keyword, $options: "i" } },
+        { email: { $regex: keyword, $options: "i" } },
+      ];
+    }
+
+    // Lọc theo trạng thái đơn hàng
+    if (status) {
+      filter.status = status;
+    }
+
+    // Lọc theo ngày tạo đơn hàng
+    if (date) {
+      const parsedDate = dayjs(date, "DD/MM/YYYY");
+      const startOfDay = parsedDate.startOf("day").toDate();
+      const endOfDay = parsedDate.endOf("day").toDate();
+
+      filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    // Sắp xếp
+    let sort = { createdAt: -1 }; // mặc định: mới nhất
+    if (sortQuery === "low-to-high") {
+      sort = { finalAmount: 1 };
+    } else if (sortQuery === "high-to-low") {
+      sort = { finalAmount: -1 };
+    }
+
+    // Đếm tổng số đơn hàng
     const total = await Order.countDocuments(filter);
 
-    // Lấy danh sách đơn hàng có phân trang và sắp xếp
+    // Lấy danh sách đơn hàng
     const orders = await Order.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean();
@@ -213,9 +243,9 @@ exports.getAllOrder = async (req, res) => {
       orders,
     });
   } catch (error) {
-    console.error(" Lỗi khi lấy tất cả đơn hàng:", error.message);
+    console.error("Lỗi khi lấy tất cả đơn hàng:", error);
     return res.status(500).json({
-      message: "Server Error",
+      message: "Lỗi server",
       error: error.message,
     });
   }
@@ -264,6 +294,7 @@ exports.getOrderByIdAdmin = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
+    const user = await User.findById(order.user_id);
 
     // Lấy chi tiết sản phẩm trong đơn
     const orderItems = await OrderItem.find({ order_id: orderId }).lean();
@@ -272,6 +303,7 @@ exports.getOrderByIdAdmin = async (req, res) => {
       message: "Lấy chi tiết đơn hàng thành công",
       order,
       orderItems,
+      user,
     });
   } catch (error) {
     console.error("❌ Lỗi getOrderById:", error.message);

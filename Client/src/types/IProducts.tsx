@@ -25,6 +25,7 @@ export interface IProducts {
   gender: string;
   material: string;
   variants?: IVariants[] | undefined;
+  isDeleted: boolean
   createdAt: string;
   updatedAt: string;
 
@@ -110,4 +111,12 @@ export interface SearchType {
   image: string
   productId: string
   slug: string
+}
+export interface ProductDetailResponse {
+  product: IProducts;
+  variants: IVariants[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }

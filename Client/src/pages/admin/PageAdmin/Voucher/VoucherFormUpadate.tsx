@@ -115,27 +115,61 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
                 <Row gutter={16}>
                     <Col span={12}>
                         <Form.Item
-                            label="Giá Trị Giảm"
-                            name="discountValue"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập giá trị giảm!' },
-                                { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' },
-                                { type: 'number', min: 100, message: 'Giá trị phải nhỏ hơn 100!' }
-                            ]}
+                            noStyle
+                            shouldUpdate={(prev, current) => prev.discountType !== current.discountType}
                         >
-                            <InputNumber<number>
-                                placeholder="Nhập giá trị giảm"
-                                className="w-full"
-                                min={1}
-                                formatter={(value) =>
-                                    form.getFieldValue('discountType') === 'percentage'
-                                        ? `${value}%`
-                                        : `${value}`?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                }
-                                parser={(value) => (value ? parseInt(value.replace(/[^\d]/g, ''), 10) : 0)}
-                            />
+                            {({ getFieldValue }) => {
+                                const discountType = getFieldValue('discountType');
 
+                                if (discountType === 'percentage') {
+                                    // Form sửa dành cho phần trăm
+                                    return (
+                                        <Form.Item
+                                            label="Giá Trị Giảm"
+                                            name="discountValue"
+                                            rules={[
+                                                { required: true, message: 'Vui lòng nhập giá trị giảm!' },
+                                                { type: 'number', min: 1, message: 'Giá trị phải lớn hơn 0!' },
+                                                { type: 'number', max: 100, message: 'Giá trị phải nhỏ hơn 100!' }
+                                            ]}
+                                        >
+                                            <InputNumber<number>
+                                                placeholder="Nhập giá trị giảm"
+                                                className="w-full"
+                                                min={1}
+                                                formatter={(value) => `${value ?? ''}%`}
+                                                parser={(value) => parseInt(value?.replace(/[^\d]/g, '') || '0', 10)}
+                                            />
+                                        </Form.Item>
+                                    );
+                                }
+
+                                // Form sửa dành cho số cố định VNĐ
+                                return (
+                                    <Form.Item
+                                        label="Giá Trị Giảm"
+                                        name="discountValue"
+                                        rules={[
+                                            { required: true, message: 'Vui lòng nhập giá trị giảm!' },
+                                            { type: 'number', min: 1000, message: 'Giá trị phải lớn hơn 1000đ!' }
+                                        ]}
+                                    >
+                                        <InputNumber<number>
+                                            placeholder="Nhập giá trị giảm"
+                                            className="w-full"
+                                            min={1000}
+                                            formatter={(value) =>
+                                                value !== undefined
+                                                    ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                                    : ''
+                                            }
+                                            parser={(value) => parseInt(value?.replace(/[^\d]/g, '') || '0', 10)}
+                                        />
+                                    </Form.Item>
+                                );
+                            }}
                         </Form.Item>
+
                     </Col>
 
                     <Col span={12}>
@@ -144,7 +178,7 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
                             name="minOrderValue"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập giá trị đơn hàng tối thiểu!' },
-                                { type: 'number', min: 10000, message: 'Giá trị phải lớn hơn hoặc bằng 10.000đ!' },
+                                { type: 'number', min: 1000, message: 'Giá trị phải lớn hơn hoặc bằng 1000đ!' },
 
                             ]}
                         >
@@ -167,7 +201,7 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
                             name="maxDiscountValue"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập giá trị đơn hàng tối đa!' },
-                                { type: 'number', min: 10000, message: 'Giá trị phải lớn hơn hoặc bằng 10.000đ!' }
+                                { type: 'number', min: 1000, message: 'Giá trị phải lớn hơn hoặc bằng 1000đ!' }
                             ]}
                         >
                             <InputNumber<number>

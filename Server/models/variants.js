@@ -29,7 +29,7 @@ const variantSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
-    isDelete: { type: Boolean, default: false }, //sửa từ isDeleted thành isDelete cho phù hợp với variant.controller
+    isDeleted: { type: Boolean, default: false }, //sửa từ isDeleted thành isDelete cho phù hợp với variant.controller
   },
   {
     timestamps: true,

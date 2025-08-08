@@ -35,7 +35,7 @@ import { formatCurrency } from "../../../../utils/Format";
 import { restoreProduct, softDeleteProduct } from "../../../../services/admin/productService";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { RollbackOutlined } from "@ant-design/icons";
+import { EyeOutlined, RollbackOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 
 const Products: React.FC = () => {
@@ -189,6 +189,11 @@ const Products: React.FC = () => {
         <Space size="small">
           {!showHidden ? (
             <>
+              <Link to={`/admin/products/${record._id}`}>
+                <Button icon={<EyeOutlined />} type="primary" size="small">
+                  Xem
+                </Button>
+              </Link>
               <Button
                 type="text"
                 icon={<FaPen />}

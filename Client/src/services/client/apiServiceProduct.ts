@@ -7,7 +7,7 @@ const apiServiceProduct = {
 
   // Lấy chi tiết sản phẩm + biến thể
   getDetailProduct: async (_id: string | undefined) => {
-    const res = await axios.get(`/api/product/${_id}`);
+    const res = await axios.get(`/api/product/item/${_id}`);
     return res; // trả về cả status + data
   },
 

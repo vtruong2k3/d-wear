@@ -3,17 +3,22 @@ import type {
   GetOrdersResponse,
   OrderDetailResponse,
 } from "../../types/order/IOrder";
-interface GetOrdersParams {
+export interface GetOrdersParams {
   page?: number;
   limit?: number;
   q?: string;
+  status?: string;
+  date?: string; // YYYY-MM-DD
+  sort?: string; // "low-to-high" | "high-to-low" | ""
 }
+
 export const fetchGetAllOrder = async (
   params: GetOrdersParams = {}
 ): Promise<GetOrdersResponse> => {
   const res = await axios.get("/api/orders", { params });
   return res.data;
 };
+
 export const fetchGetOrderDetail = async (
   id: string | undefined
 ): Promise<OrderDetailResponse> => {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Button, Space, Tag, Rate, Image, Modal, Input, message, Popconfirm, Select, DatePicker, Card, Row, Col } from 'antd';
+import { Table, Button, Space, Tag, Rate, Modal, Input, message, Popconfirm, Select, DatePicker, Card, Row, Col, Tooltip } from 'antd';
 import { EyeOutlined, DeleteOutlined, EyeInvisibleOutlined, FilterOutlined, ClearOutlined } from '@ant-design/icons';
 import ReviewDetailModal from './ReviewDetail';
 import dayjs from 'dayjs';
@@ -285,19 +285,23 @@ const ReviewManagement = () => {
                 </Tag>
             )
         },
+        // {
+        //     title: 'Hữu ích',
+        //     dataIndex: 'helpful',
+        //     key: 'helpful',
+        //     width: 80,
+        //     render: (helpful) => <span className="text-green-600 font-medium">{helpful}</span>
+        // },
         {
-            title: 'Hữu ích',
-            dataIndex: 'helpful',
-            key: 'helpful',
-            width: 80,
-            render: (helpful) => <span className="text-green-600 font-medium">{helpful}</span>
-        },
-        {
-            title: 'Phản hồi',
-            key: 'replies',
-            width: 80,
+            title: 'Thời gian',
+            key: 'createdAt',
+            width: 120,
             render: (_, record) => (
-                <span className="text-blue-600 font-medium">{record.replies.length}</span>
+                <Tooltip title={dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss')}>
+                    <span className="text-blue-600 font-medium">
+                        {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm:ss')}
+                    </span>
+                </Tooltip>
             )
         },
         {
@@ -315,14 +319,29 @@ const ReviewManagement = () => {
                     >
                         Chi tiết
                     </Button>
-                    <Button
-                        icon={record.is_approved ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                        size="small"
-                        onClick={() => handleToggleApproval(record.id)}
-                        className={record.is_approved ? 'text-orange-600 !border-orange-600' : 'text-green-600 !border-green-600'}
-                    >
-                        {record.is_approved ? 'Ẩn' : 'Hiện'}
-                    </Button>
+                    <Tooltip title={record.is_approved ? 'Ẩn nội dung này' : 'Hiển thị nội dung này'}>
+                        <Popconfirm
+                            title={record.is_approved ? 'Bạn chắc chắn muốn ẩn nội dung này?' : 'Bạn chắc chắn muốn hiển thị nội dung này?'}
+                            onConfirm={() => handleToggleApproval(record.id)}
+                            okText="Có"
+                            cancelText="Không"
+                        >
+                            <Button
+                                type="default"
+                                icon={record.is_approved ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                                size="small"
+                                className={
+                                    record.is_approved
+                                        ? '!text-orange-600 !border-orange-600'
+                                        : '!text-green-600 !border-green-600'
+                                }
+                            >
+                                {record.is_approved ? 'Ẩn' : 'Hiện'}
+                            </Button>
+                        </Popconfirm>
+                    </Tooltip>
+
+
                     <Popconfirm
                         title="Xóa bình luận"
                         description="Bạn có chắc chắn muốn xóa bình luận này?"

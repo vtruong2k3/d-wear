@@ -30,7 +30,7 @@ const VoucherManagement = () => {
     const [loading, setLoading] = useState<boolean>(false);
 
     const getAllVoucher = useCallback(
-        async (page = 1, limit = 10) => {
+        async (page: number, limit: number) => {
             setLoading(true);
             try {
                 const res = await fetchGetAllVouchers(page, limit);
@@ -57,7 +57,7 @@ const VoucherManagement = () => {
 
 
     const handlePageChange = (page: number) => {
-        getAllVoucher(page); // gọi lại khi chuyển trang
+        getAllVoucher(page, limit); // gọi lại khi chuyển trang
     };
     const handlePageSizeChange = (_: number, newSize: number) => {
         setLimit(newSize);
