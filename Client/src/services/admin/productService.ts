@@ -1,10 +1,10 @@
 import axios from "axios";
 import type { ProductDetailResponse } from "../../types/IProducts";
 
-// export const getDetailProduct = async (_id: string | undefined) => {
-//   const res = await axios.get(`/api/product/${_id}`);
-//   return res.data;
-// };
+export const getDetailProduct = async (_id: string | undefined) => {
+  const res = await axios.get(`/api/product/${_id}`);
+  return res.data;
+};
 export const updateProduct = async (
   id: string | undefined,
   formData: FormData
@@ -48,7 +48,7 @@ export const getDeletedProducts = async (params = {}) => {
   return data;
 };
 
-export const getDetailProduct = async (
+export const getDetailProductAdmin = async (
   id: string | undefined,
   limit: number,
   page: number

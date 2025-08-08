@@ -21,7 +21,7 @@ import type { IProducts } from '../../../../types/IProducts';
 import type { IVariants } from '../../../../types/IVariants';
 import type { ErrorType } from '../../../../types/error/IError';
 import { useParams } from 'react-router-dom';
-import { getDetailProduct } from '../../../../services/admin/productService';
+import { getDetailProductAdmin } from '../../../../services/admin/productService';
 import { formatCurrency, formatDate } from '../../../../utils/Format';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -60,7 +60,7 @@ const AdminProductDetail = () => {
     const loadDetailProduct = useCallback(async () => {
         try {
             setLoading(true)
-            const res = await getDetailProduct(id, limit, page)
+            const res = await getDetailProductAdmin(id, limit, page)
             console.log("data:", res)
             setProduct(res.product)
             setVariant(res.variants)
@@ -165,7 +165,7 @@ const AdminProductDetail = () => {
             {/* Header */}
             <div className="bg-white shadow-sm  !border-b !border-gray-50 px-6 py-4">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center  space-x-4">
                         <Button
                             type="text"
                             icon={<ArrowLeftOutlined />}
@@ -175,8 +175,9 @@ const AdminProductDetail = () => {
                             Quay lại danh sách
                         </Button>
                         <Divider type="vertical" className="h-6" />
-                        <h1 className="text-xl font-semibold text-gray-900">Chi tiết sản phẩm</h1>
+
                     </div>
+                    <h1 className="text-xl font-sans text-gray-900 !m-0">Chi tiết sản phẩm</h1>
                 </div>
             </div>
 

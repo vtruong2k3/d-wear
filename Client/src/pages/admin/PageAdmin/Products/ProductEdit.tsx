@@ -178,7 +178,7 @@ const ProductEdit = () => {
           })
         );
 
-        // ✅ Set biến thể và giữ _id
+        //  Set biến thể và giữ _id
         setVariants(
           (product.variants || []).map((variant: IVariants, index: number) => ({
             _id: variant._id,
@@ -197,7 +197,7 @@ const ProductEdit = () => {
                 uid: `variant-${index}-${i}`,
                 name: fileName,
                 url: fullUrl,
-                rawFileName: fileName, // 💥 rất quan trọng!
+                rawFileName: fileName,
               };
             }),
           }))
