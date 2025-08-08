@@ -88,13 +88,13 @@ export const deleteVariant = async (id: string | number) => {
 // xoá mềm biến thể
 export const softDeleteVariant = async (id: string) => {
   const res = await axios.put(`/api/variant/${id}/soft-delete`, {
-    isdelete: true,
+    isDeleted: true,
   });
   return res.data;
 };
 export const restoreVariant = async (id: string) => {
   const res = await axios.put(`/api/variant/${id}/soft-delete`, {
-    isdelete: false,
+    isDeleted: false,
   });
   return res.data;
 };

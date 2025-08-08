@@ -109,7 +109,7 @@ const OrdersPage = () => {
 
         const updatedOrder = updated.find(order => order._id === orderId);
         if (updatedOrder) {
-          toast.success(`Đơn hàng đã bị hủy: ${updatedOrder.order_code}`);
+          toast.error(`Đơn hàng đã bị hủy: ${updatedOrder.order_code}`);
         }
 
         return updated;
@@ -131,7 +131,7 @@ const OrdersPage = () => {
     // Nhận đơn hàng mới
     socket.on("newOrder", ({ orders: newOrder }) => {
       setOrders((prev) => [newOrder, ...prev]); // thêm vào đầu danh sách
-      toast.success("📦 Có đơn hàng mới!");
+      toast.success(" Có đơn hàng mới!");
     });
 
     return () => {

@@ -1,3 +1,6 @@
+import type { UserType } from "../IUser";
+
+
 export interface IOrder {
     _id: string;
     order_code: string;
@@ -56,6 +59,7 @@ export interface OrderDetailResponse {
     message: string
     order: IOrder;
     orderItems: OrderItem[];
+    user: UserType
 }
 
 export interface OrderItems {
@@ -84,5 +88,10 @@ export interface checkOrderReviewType {
 }
 
 export interface GetOrdersResponse {
+    message: string;
     orders: IOrder[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 }

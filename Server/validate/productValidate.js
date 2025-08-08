@@ -195,11 +195,14 @@ const variantValidate = {
       "any.required": "Thiếu product_id",
       "string.empty": "Product ID không được để trống",
     }),
-    size: Joi.string().valid("XS", "S", "M", "L", "XL", "XXL").required().messages({
-      "any.only": "Size không hợp lệ",
-      "any.required": "Size là bắt buộc",
-      "string.empty": "Size không được để trống",
-    }),
+    size: Joi.string()
+      .valid("XS", "S", "M", "L", "XL", "XXL")
+      .required()
+      .messages({
+        "any.only": "Size không hợp lệ",
+        "any.required": "Size là bắt buộc",
+        "string.empty": "Size không được để trống",
+      }),
     color: Joi.string().required().messages({
       "any.required": "Màu là bắt buộc",
       "string.empty": "Màu không được để trống",
@@ -218,9 +221,7 @@ const variantValidate = {
       "array.base": "Ảnh phải là một mảng đường dẫn",
       "string.base": "Ảnh phải là đường dẫn dạng chuỗi",
     }),
-  })
-  .unknown(true) // 👈 Cho phép tồn tại các field ngoài định nghĩa như _id
-  
+  }).unknown(true), // Cho phép tồn tại các field ngoài định nghĩa như _id
 };
 
 module.exports = {

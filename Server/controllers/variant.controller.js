@@ -27,7 +27,7 @@ exports.getAllVariant = async (req, res) => {
 
     // Tạo bộ lọc
     const variantFilter = {
-      isDelete: { $ne: true },
+      isDeleted: { $ne: true },
       $or: [
         { product_id: { $in: matchedProductIds } },
         { color: { $regex: search, $options: "i" } },
@@ -257,11 +257,12 @@ exports.deleteIdProductVariant = async (req, res) => {
 exports.softDeleteVariant = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isdelete } = req.body; // lấy từ body
-    const isDeleteBool = isdelete === true || isdelete === "true";
+    const { isDeleted } = req.body;
+    // lấy từ body
+    const isDeleteBool = isDeleted === true || isDeleted === "true";
     const variant = await Variant.findByIdAndUpdate(
       id,
-      { isDelete: isdelete },
+      { isDeleted: isDeleted },
       { new: true }
     );
 
@@ -292,7 +293,7 @@ exports.getSoftDeletedVariants = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [variants, total] = await Promise.all([
-      Variant.find({ isDelete: true })
+      Variant.find({ isDeleted: true })
         .populate({
           path: "product_id",
           select: "product_name", // chỉ lấy trường name từ product

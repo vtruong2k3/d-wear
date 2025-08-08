@@ -4,8 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
     DashboardOutlined,
     ShoppingCartOutlined,
-    UserOutlined,
-    BarChartOutlined,
+
     SettingOutlined,
     ProductOutlined,
     TeamOutlined,
@@ -15,6 +14,8 @@ import {
     AppstoreOutlined,
     ColumnWidthOutlined,
     BgColorsOutlined,
+    CommentOutlined,
+    MessageOutlined,
 
 } from '@ant-design/icons';
 interface SidebarProps {
@@ -95,13 +96,13 @@ const AsideAdmin = ({ collapsed }: SidebarProps) => {
         {
 
             key: '/admin/messenger',
-            icon: <UserOutlined />,
+            icon: <MessageOutlined />,
             label: <Link to="/admin/messenger">Tin nhắn</Link>,
         },
         {
-            key: '/admin/reports',
-            icon: <BarChartOutlined />,
-            label: <Link to="/admin/reports">Báo cáo</Link>,
+            key: '/admin/review',
+            icon: <CommentOutlined />,
+            label: <Link to="/admin/review">Bình luận</Link>,
         },
         {
             key: '/admin/settings',

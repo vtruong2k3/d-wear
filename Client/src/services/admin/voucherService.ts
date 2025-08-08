@@ -6,8 +6,8 @@ import {
 } from "../../types/voucher/IVoucher";
 
 export const fetchGetAllVouchers = async (
-  page = 1,
-  limit = 10
+  page: number,
+  limit: number
 ): Promise<VoucherResponse> => {
   const res = await axios.get<VoucherResponse>("/api/voucher", {
     params: { page, limit },

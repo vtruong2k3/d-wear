@@ -11,6 +11,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  AlertTriangle,
+  DollarSign,
 } from "lucide-react";
 import type { OrderDetailResponse } from "../../../types/order/IOrder";
 
@@ -147,6 +149,7 @@ const OrderDetailPage = () => {
             }
             : prev
         );
+        toast.error(`Đơn hàng ${data.order_code} đã bị huỷ vì lí do: ${data.cancellationReason}`)
       }
     });
 
@@ -185,6 +188,58 @@ const OrderDetailPage = () => {
         return "Ví VNPAY";
       default:
         return "Không xác định";
+    }
+  };
+
+  const getPaymentStatus = (paymentStatus: string, paymentMethod: string) => {
+    if (paymentMethod === "cod") {
+      // COD payment status logic
+      switch (paymentStatus) {
+        case "paid":
+          return {
+            label: "Đã thanh toán",
+            color: "bg-green-100 text-green-800",
+            icon: <CheckCircle className="w-4 h-4" />
+          };
+        case "pending":
+        case "unpaid":
+        default:
+          return {
+            label: "Thanh toán khi nhận hàng",
+            color: "bg-yellow-100 text-yellow-800",
+            icon: <Clock className="w-4 h-4" />
+          };
+      }
+    } else {
+      // Online payment status logic
+      switch (paymentStatus) {
+        case "paid":
+        case "completed":
+          return {
+            label: "Đã thanh toán",
+            color: "bg-green-100 text-green-800",
+            icon: <CheckCircle className="w-4 h-4" />
+          };
+        case "pending":
+          return {
+            label: "Đang xử lý thanh toán",
+            color: "bg-yellow-100 text-yellow-800",
+            icon: <Clock className="w-4 h-4" />
+          };
+        case "failed":
+          return {
+            label: "Thanh toán thất bại",
+            color: "bg-red-100 text-red-800",
+            icon: <XCircle className="w-4 h-4" />
+          };
+        case "unpaid":
+        default:
+          return {
+            label: "Chưa thanh toán",
+            color: "bg-red-100 text-red-800",
+            icon: <XCircle className="w-4 h-4" />
+          };
+      }
     }
   };
 
@@ -375,7 +430,7 @@ const OrderDetailPage = () => {
                 </h2>
                 <p className="text-gray-600">
                   Mã đơn hàng:{" "}
-                  <span className="font-medium">{order.order.order_code}</span>
+                  <span className="font-bold ">{order.order.order_code}</span>
                 </p>
               </div>
               <div
@@ -387,8 +442,8 @@ const OrderDetailPage = () => {
                 </span>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* className="grid grid-cols-1 md:grid-cols-3 gap-6" */}
+            <div className="flex gap-50">
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 text-gray-400 mr-3" />
                 <div>
@@ -400,6 +455,7 @@ const OrderDetailPage = () => {
                   </p>
                 </div>
               </div>
+
               <div className="flex items-center">
                 <CreditCard className="w-5 h-5 text-gray-400 mr-3" />
                 <div>
@@ -411,8 +467,43 @@ const OrderDetailPage = () => {
                   </p>
                 </div>
               </div>
+              <div className="flex items-center">
+                <DollarSign className="w-5 h-5 text-gray-400 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-500">Trạng thái thanh toán</p>
+                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${getPaymentStatus(order.order.paymentStatus || 'unpaid', order.order.paymentMethod).color}`}>
+                    {getPaymentStatus(order.order.paymentStatus || 'unpaid', order.order.paymentMethod).icon}
+                    <span className="ml-1">
+                      {getPaymentStatus(order.order.paymentStatus || 'unpaid', order.order.paymentMethod).label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
+
+          {/* Cancel Reason - Only show if order is cancelled and has cancel reason */}
+          {order.order.status === "cancelled" && order.order.cancellationReason && (
+            <div className="bg-red-50 !border !border-red-200 rounded-xl p-6">
+              <div className="flex items-start">
+                <AlertTriangle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">
+                    Lý do hủy đơn hàng
+                  </h3>
+                  <p className="text-red-700 bg-red-100 p-4 rounded-lg">
+                    {order.order.cancellationReason}
+                  </p>
+                  {order.order.cancellationReason && (
+                    <p className="text-sm text-red-600 mt-2">
+                      Đã hủy vào: {new Date(order.order.updatedAt).toLocaleDateString("vi-VN")} lúc {new Date(order.order.updatedAt).toLocaleTimeString("vi-VN")}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Order Items - Full Width */}
           <div className="bg-white rounded-xl shadow-sm p-6">
