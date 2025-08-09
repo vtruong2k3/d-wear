@@ -12,6 +12,8 @@ import OrdersPage from "../../pages/client/Order/OrdersPage";
 import OrderDetailPage from "../../pages/client/Order/OrderDetailPage";
 import AddressManagement from "../../pages/client/Address/AddressManagerModal";
 import AboutPage from "../../pages/client/About/About";
+import BlogPage from "../../pages/client/Blog/BlogPage";
+
 const clientRoutes = [
   {
     path: "/",
@@ -26,10 +28,13 @@ const clientRoutes = [
         element: <AboutPage />,
       },
       {
+        path: "/blog", // ✅ Route trang Blog
+        element: <BlogPage />,
+      },
+      {
         path: "/product",
         element: <ListProduct />,
       },
-
       {
         path: "product/:id",
         element: <DetailProduct />,
@@ -64,7 +69,6 @@ const clientRoutes = [
       },
       {
         path: "/login",
-
         element: <Login />,
       },
       {
