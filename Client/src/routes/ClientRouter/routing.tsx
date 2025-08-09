@@ -13,7 +13,7 @@ import OrderDetailPage from "../../pages/client/Order/OrderDetailPage";
 import AddressManagement from "../../pages/client/Address/AddressManagerModal";
 import AboutPage from "../../pages/client/About/About";
 import BlogPage from "../../pages/client/Blog/BlogPage";
-
+import Contact from "../../pages/client/Contact/Contract";
 const clientRoutes = [
   {
     path: "/",
@@ -28,8 +28,12 @@ const clientRoutes = [
         element: <AboutPage />,
       },
       {
-        path: "/blog", // ✅ Route trang Blog
+        path: "/blog",
         element: <BlogPage />,
+      },
+      {
+        path: "/contact",
+        element: <Contact />,
       },
       {
         path: "/product",
