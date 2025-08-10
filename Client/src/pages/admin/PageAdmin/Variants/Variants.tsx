@@ -121,7 +121,15 @@ const Variants: React.FC = () => {
   };
 
   const columns = [
-    { title: "ID", dataIndex: "_id", key: "_id", width: 80 },
+    {
+      title: "ID",
+      dataIndex: "_id",
+      key: "_id",
+      width: 80,
+      render: (_: unknown, __: unknown, index: number) => (
+        <Tag color="blue">#{index + 1}</Tag>
+      )
+    },
     {
       title: "Tên sản phẩm",
       key: "product_name",

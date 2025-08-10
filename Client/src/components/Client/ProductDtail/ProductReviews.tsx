@@ -451,14 +451,58 @@ const ProductReviews: React.FC<Props> = ({ initialReviews, productId, chechShowF
                                                     </div>
                                                 )}
 
+                                                {/* Hiển thị phản hồi */}
+                                                {review.replies && review.replies.length > 0 && (
+                                                    <div className="mb-4 space-y-3">
+                                                        {review.replies.map((reply, replyIndex) => (
+                                                            <div key={reply._id || replyIndex} className="ml-4 border-l-2 border-blue-200 pl-4 bg-blue-50 rounded-r-lg p-3">
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-100 flex-shrink-0">
+                                                                        <img
+                                                                            src={
+                                                                                reply.user_id.avatar
+                                                                                    ? `http://localhost:5000${reply.user_id.avatar}`
+                                                                                    : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"
+                                                                            }
+                                                                            alt={reply.user_id.username}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <span className="font-semibold text-blue-700 text-sm">
+                                                                                {reply.user_id.username}
+                                                                            </span>
+                                                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                                                                                Quản trị viên
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                {formatDate(reply.createdAt)}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-gray-700 text-sm leading-relaxed">
+                                                                            {reply.comment}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
                                                 <div className="flex items-center gap-4 text-sm text-gray-500">
                                                     <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
                                                         <ThumbsUp className="w-4 h-4" />
-                                                        Hữu ích (0)
+                                                        Hữu ích ({review.helpful || 0})
                                                     </button>
                                                     <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
                                                         <MessageCircle className="w-4 h-4" />
                                                         Trả lời
+                                                        {review.replies && review.replies.length > 0 && (
+                                                            <span className="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full ml-1">
+                                                                {review.replies.length}
+                                                            </span>
+                                                        )}
                                                     </button>
                                                     <button className="flex items-center gap-1 hover:text-red-600 transition-colors">
                                                         <Flag className="w-4 h-4" />

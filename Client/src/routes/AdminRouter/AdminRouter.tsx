@@ -17,6 +17,7 @@ import UsersList from "../../pages/admin/PageAdmin/Users/UsersList";
 import Messenger from "../../pages/admin/PageAdmin/Messenger/Messenger";
 import Review from "../../pages/admin/PageAdmin/Reivew/Review";
 import ProductDetailAdmin from "../../pages/admin/PageAdmin/Products/ProductDetalAdmin"
+
 const adminRouter = [
   {
     path: "/admin",
@@ -37,6 +38,7 @@ const adminRouter = [
       { path: "users", element: <UsersList /> },
       { path: "messenger", element: <Messenger /> },
       { path: "review", element: <Review /> },
+
       { path: "products/:id", element: <ProductDetailAdmin /> },
     ],
   },

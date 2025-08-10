@@ -110,11 +110,9 @@ const Products: React.FC = () => {
       key: "id",
       width: 80,
       align: "center",
-      render: (id) => (
-        <Link to={`/product/${id}`}>
-          <Tag color="blue">#{id}</Tag>
-        </Link>
-      ),
+      render: (_: any, __: any, index: number) => (
+        <Tag color="blue">#{index + 1}</Tag>
+      )
     },
     {
       title: "Sản phẩm",
@@ -191,7 +189,7 @@ const Products: React.FC = () => {
             <>
               <Link to={`/admin/products/${record._id}`}>
                 <Button icon={<EyeOutlined />} type="primary" size="small">
-                  Xem
+
                 </Button>
               </Link>
               <Button

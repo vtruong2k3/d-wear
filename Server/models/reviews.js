@@ -48,8 +48,15 @@ const reviewSchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+reviewSchema.virtual("replies", {
+  ref: "reviewreplies", // Tên model sẽ liên kết đến
+  localField: "_id", // Trường trong Review Schema (hiện tại)
+  foreignField: "review_id", // Trường trong ReviewReply Schema
+});
 
 // Mỗi người chỉ được đánh giá 1 sản phẩm duy nhất trong 1 đơn hàng
 reviewSchema.index(
