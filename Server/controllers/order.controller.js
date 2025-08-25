@@ -144,7 +144,7 @@ exports.cancelOrder = async (req, res) => {
       { new: true }
     ).lean();
 
-    // 🔍 Lấy danh sách sản phẩm từ OrderItem
+    //  Lấy danh sách sản phẩm từ OrderItem
     const orderItems = await OrderItem.find({ order_id })
       .populate("product_id", "product_name")
       .populate("variant_id", "size color image")
@@ -184,7 +184,7 @@ exports.cancelOrder = async (req, res) => {
 
     const email = order.email || req.user.email;
 
-    // 📨 Gửi email huỷ đơn hàng
+    //  Gửi email huỷ đơn hàng
     try {
       await sendOrderCancellationEmail(email, {
         ...updatedOrder,
@@ -381,7 +381,7 @@ exports.getOrderById = async (req, res) => {
       orderItems,
     });
   } catch (error) {
-    console.error("❌ Lỗi getOrderById:", error.message);
+    console.error(" Lỗi getOrderById:", error.message);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
@@ -410,7 +410,7 @@ exports.getOrderByIdAdmin = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("❌ Lỗi getOrderById:", error.message);
+    console.error(" Lỗi getOrderById:", error.message);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
@@ -434,7 +434,7 @@ exports.getAllByIdUser = async (req, res) => {
       orders: result,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi tạo đơn hàng:", error.message);
+    console.error(" Lỗi khi tạo đơn hàng:", error.message);
     return res.status(500).json({
       message: "Server Error",
       error: error.message,
@@ -534,13 +534,8 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    const finalAmount = total - discount + shippingFee;
+    const finalAmount = Math.max(0, total - discount + shippingFee);
 
-    if (finalAmount < 0) {
-      return res.status(400).json({
-        message: "Giá trị đơn hàng không hợp lệ.",
-      });
-    }
     // Tạo đơn hàng
     const newOrder = await Order.create({
       user_id: userId,

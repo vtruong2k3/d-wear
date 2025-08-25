@@ -120,7 +120,7 @@ const BrandList = () => {
   return (
     <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
       <Card >
-        <Title level={2}>📌 Danh sách Brand</Title>
+        <Title level={2}> Danh sách Brand</Title>
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col flex="auto">
             <Search

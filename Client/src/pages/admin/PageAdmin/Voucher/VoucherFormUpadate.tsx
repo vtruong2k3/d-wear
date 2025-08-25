@@ -40,7 +40,9 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
         try {
             const values = await form.validateFields();
             const [startDate, endDate] = values.dateRange;
-
+            if (values.discountType === 'fixed') {
+                values.maxDiscountValue = 0;
+            }
             const formattedValues = {
                 ...values,
                 startDate: startDate.format('YYYY-MM-DD'),
@@ -196,22 +198,29 @@ const EditVoucherForm = ({ open, onCancel, onSubmit, editingVoucher }: EditVouch
 
                 <Row gutter={16}>
                     <Col span={12}>
-                        <Form.Item
-                            label="Giảm Giá Tối Đa"
-                            name="maxDiscountValue"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập giá trị đơn hàng tối đa!' },
-                                { type: 'number', min: 1000, message: 'Giá trị phải lớn hơn hoặc bằng 1000đ!' }
-                            ]}
-                        >
-                            <InputNumber<number>
-                                className="w-full"
-                                min={0}
-                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={(value) => (value ? parseInt(value.replace(/[^\d]/g, ''), 10) : 0)}
-                            />
+                        <Form.Item noStyle shouldUpdate={(prev, cur) => prev.discountType !== cur.discountType}>
+                            {({ getFieldValue }) =>
+                                getFieldValue("discountType") === "percentage" ? (
+                                    <Form.Item
+                                        label="Giảm Giá Tối Đa"
+                                        name="maxDiscountValue"
+                                        rules={[
+                                            { required: true, message: 'Vui lòng nhập giá trị đơn hàng tối đa!' },
+                                            { type: 'number', min: 1000, message: 'Giá trị phải lớn hơn hoặc bằng 1000đ!' }
+                                        ]}
+                                    >
+                                        <InputNumber<number>
+                                            className="w-full"
+                                            min={0}
+                                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                            parser={(value) => (value ? parseInt(value.replace(/[^\d]/g, ''), 10) : 0)}
+                                        />
+                                    </Form.Item>
+                                ) : null
+                            }
                         </Form.Item>
                     </Col>
+
 
                     <Col span={12}>
                         <Form.Item

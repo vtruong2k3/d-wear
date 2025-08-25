@@ -121,7 +121,7 @@ const CategoriesList: React.FC = () => {
     <div style={{ padding: "24px", minHeight: "100vh" }} className="bg-gray-50">
       <Card>
         <Title level={2} style={{ textAlign: "center" }}>
-          📂 Danh sách danh mục
+          Danh sách danh mục
         </Title>
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col flex="auto">

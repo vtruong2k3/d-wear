@@ -185,7 +185,7 @@ const ColorManagement = () => {
         <div className="p-6 bg-gray-50 min-h-screen">
             <Card>
                 <div className="mb-6">
-                    <Title level={2} className="text-purple-600 mb-4">🎨 Danh Sách Màu Sắc</Title>
+                    <Title level={2} className="text-purple-600 mb-4"> Danh Sách Màu Sắc</Title>
 
                     <div className="flex justify-between items-center mb-4">
                         <Input

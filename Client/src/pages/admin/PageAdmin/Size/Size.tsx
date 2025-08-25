@@ -185,7 +185,7 @@ const SizeManagement = () => {
         <div className="p-6 bg-gray-50 min-h-screen">
             <Card>
                 <div className="mb-6">
-                    <Title level={2} className="text-blue-600 mb-4">📏 Danh Sách Size</Title>
+                    <Title level={2} className="text-blue-600 mb-4">Danh Sách Size</Title>
 
                     <div className="flex justify-between items-center mb-4">
                         <Input

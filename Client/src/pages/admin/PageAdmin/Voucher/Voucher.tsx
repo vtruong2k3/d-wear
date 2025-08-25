@@ -8,6 +8,8 @@ import { formatCurrency, formatDate } from '../../../../utils/Format';
 import type { IVoucher } from '../../../../types/voucher/IVoucher';
 import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/admin/voucherService';
 import type { ErrorType } from '../../../../types/error/IError';
+import Title from 'antd/es/typography/Title';
+
 
 
 
@@ -95,7 +97,7 @@ const VoucherManagement = () => {
         try {
             setLoading(true)
             const { message: msg, voucher } = await fetchCreateVoucher(values);
-            setVouchers([...vouchers, voucher]);
+            setVouchers(prev => [voucher, ...prev]);
             setIsAddModalOpen(false);
             message.success(msg);
         } catch (error) {
@@ -204,7 +206,7 @@ const VoucherManagement = () => {
             title: 'Giảm Tối Đa',
             dataIndex: 'maxDiscountValue',
             key: 'maxDiscountValue',
-            render: (value: number) => value > 0 ? formatCurrency(value) : 'Không giới hạn'
+            render: (value: number) => value > 0 ? formatCurrency(value) : formatCurrency(0)
         },
         {
             title: 'Số User Tối Đa',
@@ -273,7 +275,7 @@ const VoucherManagement = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="bg-white rounded-lg shadow-sm p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-2xl font-bold text-gray-900">Quản Lý Voucher</h1>
+                        <Title level={2}>Danh sách Voucher</Title>
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}

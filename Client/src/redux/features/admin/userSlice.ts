@@ -6,7 +6,7 @@ import {
 
 import type { IAddress } from "../../../types/address/IAddress";
 import type { UserType } from "../../../types/IUser";
-import { fetchUsers, getUserDetail } from "./thunks/userAdminThunk";
+import { getUserDetail } from "./thunks/userAdminThunk";
 
 interface UserState {
   users: UserType[];
@@ -67,21 +67,6 @@ const userSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch Users
-      .addCase(fetchUsers.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.loading = false;
-        state.users = action.payload.users;
-        state.total = action.payload.total;
-        state.currentPage = action.payload.currentPage;
-        state.totalPages = action.payload.totalPages;
-      })
-      .addCase(fetchUsers.rejected, (state) => {
-        state.loading = false;
-      })
-
-      // Fetch User Addresses
       .addCase(getUserDetail.pending, (state) => {
         state.loading = true;
       })

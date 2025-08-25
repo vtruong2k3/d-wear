@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import type { ErrorType } from '../../../../types/error/IError';
 import { fetchApproved, fetchGetReviewAdmin, fetchReplyComment, type TypeParams } from '../../../../services/admin/reviewService';
 import type { IReviewReplyUI, IReviews, TypeStatus } from '../../../../types/IReview';
+import Title from 'antd/es/typography/Title';
 
 const { TextArea, Search } = Input;
 const { Option } = Select;
@@ -343,7 +344,7 @@ const ReviewManagement = () => {
         <div className="p-6 bg-gray-50 min-h-screen">
             <div className="bg-white rounded-lg shadow-sm">
                 <div className="p-6 !border-b !border-gray-200">
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý bình luận</h1>
+                    <Title level={2}>Quản lý bình luận</Title>
                     <p className="text-gray-600 mt-1">Quản lý tất cả bình luận và đánh giá của khách hàng</p>
                 </div>
 
