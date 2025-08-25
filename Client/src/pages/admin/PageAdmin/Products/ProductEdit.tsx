@@ -489,7 +489,10 @@ const ProductEdit = () => {
                       </span>
                     }
                     name="basePrice"
-                    rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
+                    rules={[
+                      { required: true, message: "Vui lòng nhập giá!" },
+                      { min: 1000, message: "Số tiền phỉa lớn hơn 1000đ" }
+                    ]}
                   >
                     <InputNumber<number>
                       min={0}

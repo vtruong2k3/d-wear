@@ -36,7 +36,7 @@ const DetailProduct = () => {
   const { token, user } = useSelector((state: RootState) => state.authenSlice)
   const [dataDetail, setDataDetail] = useState<IProductDetail | null>(null);
   const [variants, setVariants] = useState<IVariantDetail[]>([]);
-  const [reviews, setReviews] = useState<IReview[]>([]);
+  const [review, setReviews] = useState<IReview[]>([]);
   const { setLoading } = useLoading();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [checkReview, setCheckRivew] = useState<checkOrderReviewType>()
@@ -86,6 +86,7 @@ const DetailProduct = () => {
     try {
       setLoading(true)
       const res = await fetcheGetRivew(id)
+      console.log("review", res)
       setReviews(res)
     } catch (error) {
       const errorMessage =
@@ -158,9 +159,9 @@ const DetailProduct = () => {
   };
 
   const averageRating = (() => {
-    if (reviews.length === 0) return "0.0";
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return (sum / reviews.length).toFixed(1);
+    if (review.length === 0) return "0.0";
+    const sum = review.reduce((acc, review) => acc + review.rating, 0);
+    return (sum / review.length).toFixed(1);
   })();
 
   return (
@@ -184,14 +185,14 @@ const DetailProduct = () => {
               product={dataDetail}
               variants={variants}
               averageRating={averageRating}
-              reviewCount={reviews.length}
+              reviewCount={review.length}
               onAddToCart={handleAddToCart}
               onSelectImage={setSelectedImage}
             />
           </div>
 
           <ProductReviews
-            initialReviews={reviews}
+            initialReviews={review}
             productId={dataDetail._id}
             chechShowFormReview={checkReview}
           />

@@ -10,6 +10,12 @@ userRouter.put(
   upload.single("avatar"),
   userController.updateUserProfile
 );
-userRouter.get("/users", authAdminMiddelware, userController.getAllUsers);
+userRouter.post("/users", upload.single("avatar"), userController.createUser);
+userRouter.put(
+  "/users/:id",
+  upload.single("avatar"),
+  userController.updateUser
+);
+userRouter.get("/users", authAdminMiddelware, userController.getUsers);
 userRouter.get("/users/:id", authAdminMiddelware, userController.getUserById);
 module.exports = userRouter;

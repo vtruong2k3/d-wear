@@ -7,7 +7,7 @@ import {
   SwapOutlined,
   StarFilled
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, Button, Tooltip } from "antd";
 import { Grow } from "@mui/material";
 import Skeleton from "@mui/material/Skeleton";
@@ -179,15 +179,17 @@ const BoxProduct: React.FC<BoxProductProps> = memo(({ item }) => {
 
                 {/* Quick Add to Cart - Bottom Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <Button
-                    type="primary"
-                    block
-                    icon={<ShoppingCartOutlined />}
-                    className="bg-white text-black border-0 hover:bg-gray-100 font-medium rounded-lg h-10"
-                    onClick={handleAddToCart}
-                  >
-                    Thêm vào giỏ hàng
-                  </Button>
+                  <Link to={`/product/${item._id}`}>
+                    <Button
+                      type="primary"
+                      block
+                      icon={<ShoppingCartOutlined />}
+                      className="!bg-white text-black !border-0 hover:!bg-black font-medium rounded-lg h-10"
+                      onClick={handleAddToCart}
+                    >
+                      Thêm vào giỏ hàng
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>

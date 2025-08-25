@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const userShema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -17,5 +17,11 @@ const userShema = new mongoose.Schema(
     versionKey: false,
   }
 );
-const User = mongoose.model("users", userShema);
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ isActive: 1 });
+userSchema.index({ isDelete: 1 });
+userSchema.index({ username: "text", email: "text" });
+const User = mongoose.model("users", userSchema);
 module.exports = User;

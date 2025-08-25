@@ -1,165 +1,85 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Table, Button, Space, Tag, Rate, Modal, Input, message, Popconfirm, Select, DatePicker, Card, Row, Col, Tooltip } from 'antd';
 import { EyeOutlined, DeleteOutlined, EyeInvisibleOutlined, FilterOutlined, ClearOutlined } from '@ant-design/icons';
 import ReviewDetailModal from './ReviewDetail';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import type { ErrorType } from '../../../../types/error/IError';
+import { fetchApproved, fetchGetReviewAdmin, fetchReplyComment, type TypeParams } from '../../../../services/admin/reviewService';
+import type { IReviewReplyUI, IReviews, TypeStatus } from '../../../../types/IReview';
+import Title from 'antd/es/typography/Title';
 
 const { TextArea, Search } = Input;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-// Mock data mẫu
-const mockReviews = [
-    {
-        id: '1',
-        user_id: 'user1',
-        userName: 'Nguyễn Văn A',
-        product_id: 'prod1',
-        productName: 'iPhone 15 Pro Max',
-        order_id: 'order1',
-        rating: 5,
-        comment: 'Sản phẩm rất tốt, giao hàng nhanh, đóng gói cẩn thận. Tôi rất hài lòng với sản phẩm này.',
-        images: ['https://via.placeholder.com/100x100?text=IMG1', 'https://via.placeholder.com/100x100?text=IMG2'],
-        is_approved: true,
-        is_order: true,
-        helpful: 15,
-        createdAt: '2024-01-15T10:30:00Z',
-        replies: []
-    },
-    {
-        id: '2',
-        user_id: 'user2',
-        userName: 'Trần Thị B',
-        product_id: 'prod2',
-        productName: 'Samsung Galaxy S24',
-        order_id: 'order2',
-        rating: 4,
-        comment: 'Điện thoại đẹp, pin khỏe. Tuy nhiên camera có thể tốt hơn.',
-        images: ['https://via.placeholder.com/100x100?text=IMG3'],
-        is_approved: false,
-        is_order: true,
-        helpful: 8,
-        createdAt: '2024-01-14T15:20:00Z',
-        replies: []
-    },
-    {
-        id: '3',
-        user_id: 'user3',
-        userName: 'Lê Văn C',
-        product_id: 'prod3',
-        productName: 'MacBook Air M2',
-        order_id: 'order3',
-        rating: 3,
-        comment: 'Máy chạy ổn nhưng giá hơi cao so với cấu hình.',
-        images: [],
-        is_approved: true,
-        is_order: true,
-        helpful: 3,
-        createdAt: '2024-01-13T09:15:00Z',
-        replies: [
-            {
-                id: 'reply1',
-                content: 'Cảm ơn bạn đã phản hồi. Chúng tôi sẽ cải thiện dịch vụ.',
-                createdAt: '2024-01-13T10:30:00Z',
-                author: 'Admin'
-            }
-        ]
-    },
-    {
-        id: '4',
-        user_id: 'user4',
-        userName: 'Phạm Thị D',
-        product_id: 'prod4',
-        productName: 'iPad Pro 12.9',
-        order_id: 'order4',
-        rating: 5,
-        comment: 'Màn hình đẹp, hiệu năng mạnh mẽ. Rất phù hợp cho công việc thiết kế.',
-        images: ['https://via.placeholder.com/100x100?text=IMG4'],
-        is_approved: true,
-        is_order: true,
-        helpful: 22,
-        createdAt: '2024-01-12T14:45:00Z',
-        replies: []
-    },
-    {
-        id: '5',
-        user_id: 'user5',
-        userName: 'Hoàng Văn E',
-        product_id: 'prod5',
-        productName: 'AirPods Pro 2',
-        order_id: 'order5',
-        rating: 2,
-        comment: 'Chất lượng âm thanh không như mong đợi, giá hơi cao.',
-        images: [],
-        is_approved: false,
-        is_order: true,
-        helpful: 1,
-        createdAt: '2024-01-11T08:20:00Z',
-        replies: []
-    }
-];
+interface Pagination {
+    current?: number;
+    pageSize?: number;
+    total?: number;
+}
 
 const ReviewManagement = () => {
-    const [reviews, setReviews] = useState(mockReviews);
-    const [selectedReview, setSelectedReview] = useState(null);
+    const [reviews, setReviews] = useState<IReviews[]>([]);
+    const [stats, setStats] = useState<TypeStatus | null>(null);
+    const [selectedReview, setSelectedReview] = useState<IReviews | null>(null);
     const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [replyModalVisible, setReplyModalVisible] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [loading, setLoading] = useState(false);
+    const [tableLoading, setTableLoading] = useState(false);
 
-    // States cho tìm kiếm và lọc
+    // Pagination state
+    const [pagination, setPagination] = useState<Pagination>({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
+
+    // Filter state
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterRating, setFilterRating] = useState('all');
-    const [filterDateRange, setFilterDateRange] = useState(null);
+    const [filterDateRange, setFilterDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
     const [filterHasReply, setFilterHasReply] = useState('all');
+    const { current, pageSize } = pagination;
+    // Fetch API
+    const getAllReview = useCallback(async () => {
+        setTableLoading(true);
+        try {
+            const params: TypeParams = {
+                page: current,
+                limit: pageSize
+            };
 
-    // Lọc và tìm kiếm dữ liệu
-    const filteredReviews = useMemo(() => {
-        let filtered = [...reviews];
+            if (searchText.trim()) params.keyword = searchText.trim();
+            if (filterStatus !== 'all') params.is_approved = filterStatus === 'approved';
+            if (filterRating !== 'all') params.rating = Number(filterRating);
+            if (filterHasReply !== 'all') params.hasReply = filterHasReply === 'has_reply';
+            if (filterDateRange && filterDateRange.length === 2) {
+                params.startDate = dayjs(filterDateRange[0]).startOf('day').toISOString();
+                params.endDate = dayjs(filterDateRange[1]).endOf('day').toISOString();
+            }
 
-        // Tìm kiếm theo tên người dùng, sản phẩm, hoặc nội dung bình luận
-        if (searchText) {
-            filtered = filtered.filter(review =>
-                review.userName.toLowerCase().includes(searchText.toLowerCase()) ||
-                review.productName.toLowerCase().includes(searchText.toLowerCase()) ||
-                (review.comment && review.comment.toLowerCase().includes(searchText.toLowerCase()))
-            );
+            const res = await fetchGetReviewAdmin(params);
+            setReviews(res.reviews);
+            console.log(res.reviews)
+            setStats(res.stats);
+            setPagination(prev => ({ ...prev, total: res.total || 0 }));
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            message.error(errorMessage);
+        } finally {
+            setTableLoading(false);
         }
 
-        // Lọc theo trạng thái duyệt
-        if (filterStatus !== 'all') {
-            filtered = filtered.filter(review =>
-                filterStatus === 'approved' ? review.is_approved : !review.is_approved
-            );
-        }
+    }, [current, pageSize, searchText, filterStatus, filterRating, filterHasReply, filterDateRange, setTableLoading]);
 
-        // Lọc theo đánh giá
-        if (filterRating !== 'all') {
-            filtered = filtered.filter(review => review.rating === parseInt(filterRating));
-        }
-
-        // Lọc theo ngày tạo
-        if (filterDateRange && filterDateRange.length === 2) {
-            const [startDate, endDate] = filterDateRange;
-            filtered = filtered.filter(review => {
-                const reviewDate = dayjs(review.createdAt);
-                return reviewDate.isAfter(startDate.startOf('day')) &&
-                    reviewDate.isBefore(endDate.endOf('day'));
-            });
-        }
-
-        // Lọc theo có phản hồi hay không
-        if (filterHasReply !== 'all') {
-            filtered = filtered.filter(review =>
-                filterHasReply === 'has_reply'
-                    ? review.replies.length > 0
-                    : review.replies.length === 0
-            );
-        }
-
-        return filtered;
-    }, [reviews, searchText, filterStatus, filterRating, filterDateRange, filterHasReply]);
+    useEffect(() => {
+        getAllReview();
+    }, [getAllReview]);
 
     // Reset tất cả bộ lọc
     const handleResetFilters = () => {
@@ -168,72 +88,124 @@ const ReviewManagement = () => {
         setFilterRating('all');
         setFilterDateRange(null);
         setFilterHasReply('all');
-        message.success('Đã reset tất cả bộ lọc!');
-    };
+        setPagination(prev => ({ ...prev, current: 1 })); // về trang 1
 
+    };
+    const handleTableChange = (pag: Pagination) => {
+        setPagination({
+            ...pagination,
+            current: pag.current,
+            pageSize: pag.pageSize
+        });
+    };
     // Xem chi tiết bình luận
-    const handleViewDetail = (record) => {
+    const handleViewDetail = (record: IReviews) => {
         setSelectedReview(record);
         setDetailModalVisible(true);
     };
 
     // Ẩn/hiện bình luận
-    const handleToggleApproval = (reviewId) => {
-        setReviews(prev => prev.map(review =>
-            review.id === reviewId
-                ? { ...review, is_approved: !review.is_approved }
-                : review
-        ));
-        message.success('Cập nhật trạng thái thành công!');
+    const handleToggleApproval = async (reviewId: string) => {
+        try {
+            const reviewToUpdate = reviews.filter((review) => review._id === reviewId)[0];
+            const newApprovalStatus = !reviewToUpdate.is_approved;
+            const res = await fetchApproved(reviewId, newApprovalStatus)
+            const updatedReviews = reviews.map((review) =>
+                review._id === reviewId ? { ...review, is_approved: newApprovalStatus } : review
+            );
+
+
+            setReviews(updatedReviews);
+
+            message.success(res.message)
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            message.error(errorMessage);
+        }
     };
 
     // Xóa cứng bình luận
-    const handleHardDelete = (reviewId) => {
-        setReviews(prev => prev.filter(review => review.id !== reviewId));
+    const handleHardDelete = (reviewId: string) => {
+        setReviews(prev => prev.filter(review => review._id !== reviewId));
         message.success('Xóa bình luận thành công!');
     };
 
     // Phản hồi bình luận
-    const handleReply = (review) => {
-        setSelectedReview(review);
+    const handleReply = (reviewId: string | undefined) => {
+        const r = reviews.find(x => x._id === reviewId);
+        if (!r) return;
+        setSelectedReview(r);
+        setReplyContent('');
         setReplyModalVisible(true);
     };
 
     // Gửi phản hồi
-    const handleSubmitReply = () => {
+    const handleSubmitReply = async () => {
         if (!replyContent.trim()) {
             message.error('Vui lòng nhập nội dung phản hồi!');
             return;
         }
-
+        if (!selectedReview?._id) {
+            message.error('Thiếu ID đánh giá.');
+            return;
+        }
         setLoading(true);
-        setTimeout(() => {
-            const newReply = {
-                id: `reply_${Date.now()}`,
-                content: replyContent,
-                createdAt: new Date().toISOString(),
-                author: 'Admin'
+        try {
+
+            const res = await fetchReplyComment(selectedReview?._id, replyContent)
+            const srv = res.reviewReply;
+            // Map về đúng shape IReviewReplyUI
+            const newReply: IReviewReplyUI = {
+                _id: srv._id,
+                comment: srv.comment,
+                createdAt: srv.createdAt,
+                user: srv.user_id
+                    ? {
+                        _id: srv.user_id._id,
+                        username: srv.user_id.username,
+                        avatar: srv.user_id.avatar,
+                    }
+                    : undefined,
             };
 
-            setReviews(prev => prev.map(review =>
-                review.id === selectedReview.id
-                    ? { ...review, replies: [...review.replies, newReply] }
-                    : review
-            ));
+            // Cập nhật danh sách reviews
+            setReviews(prev =>
+                prev.map(r =>
+                    r._id === selectedReview._id
+                        ? {
+                            ...r,
+                            replies: [...(r.replies ?? []), newReply],
+                            hasReply: true, // nếu bạn có field này
+                        }
+                        : r
+                )
+            );
 
-            // Cập nhật selectedReview nếu đang hiển thị detail
-            if (selectedReview) {
-                setSelectedReview(prev => ({
-                    ...prev,
-                    replies: [...prev.replies, newReply]
-                }));
-            }
-
+            // Cập nhật selectedReview nếu đang xem chi tiết
+            setSelectedReview(prev =>
+                prev
+                    ? {
+                        ...prev,
+                        replies: [...(prev.replies ?? []), newReply],
+                        hasReply: true,
+                    }
+                    : prev
+            );
+            message.success(res.message);
             setReplyContent('');
             setReplyModalVisible(false);
-            setLoading(false);
-            message.success('Phản hồi thành công!');
-        }, 1000);
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            message.error(errorMessage);
+        } finally {
+            setLoading(false)
+        }
     };
 
     const columns = [
@@ -242,32 +214,37 @@ const ReviewManagement = () => {
             dataIndex: 'id',
             key: 'id',
             width: 80,
-            render: (text) => <span className="font-mono text-sm">{text}</span>
+            render: (_: unknown, __: IReviews, index: number) =>
+                (pagination.current! - 1) * (pagination.pageSize || 10) + index + 1,
         },
         {
             title: 'Người dùng',
             dataIndex: 'userName',
             key: 'userName',
-            render: (text) => <span className="font-medium">{text}</span>
+            render: (_: string, record: IReviews) => (
+                <span className="font-medium">{record.user.username}</span>
+            )
         },
         {
             title: 'Sản phẩm',
             dataIndex: 'productName',
             key: 'productName',
-            render: (text) => <span className="text-blue-600">{text}</span>
+            render: (_: string, record: IReviews) => (
+                <span className="text-blue-600">{record.product.product_name}</span>
+            )
         },
         {
             title: 'Đánh giá',
             dataIndex: 'rating',
             key: 'rating',
             width: 140,
-            render: (rating) => <Rate disabled defaultValue={rating} className="text-sm" />
+            render: (rating: number) => <Rate disabled value={rating} className="text-sm" />
         },
         {
             title: 'Bình luận',
             dataIndex: 'comment',
             key: 'comment',
-            render: (text) => (
+            render: (text: string) => (
                 <div className="max-w-xs">
                     <p className="truncate text-gray-700">{text || 'Không có bình luận'}</p>
                 </div>
@@ -279,7 +256,7 @@ const ReviewManagement = () => {
             dataIndex: 'is_approved',
             key: 'is_approved',
             width: 100,
-            render: (approved) => (
+            render: (approved: boolean) => (
                 <Tag color={approved ? 'green' : 'red'}>
                     {approved ? 'Đã duyệt' : 'Chờ duyệt'}
                 </Tag>
@@ -296,7 +273,7 @@ const ReviewManagement = () => {
             title: 'Thời gian',
             key: 'createdAt',
             width: 120,
-            render: (_, record) => (
+            render: (_: string, record: IReviews) => (
                 <Tooltip title={dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss')}>
                     <span className="text-blue-600 font-medium">
                         {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm:ss')}
@@ -308,7 +285,7 @@ const ReviewManagement = () => {
             title: 'Thao tác',
             key: 'actions',
             width: 200,
-            render: (_, record) => (
+            render: (_: unknown, record: IReviews) => (
                 <Space size="small">
                     <Button
                         type="primary"
@@ -322,7 +299,7 @@ const ReviewManagement = () => {
                     <Tooltip title={record.is_approved ? 'Ẩn nội dung này' : 'Hiển thị nội dung này'}>
                         <Popconfirm
                             title={record.is_approved ? 'Bạn chắc chắn muốn ẩn nội dung này?' : 'Bạn chắc chắn muốn hiển thị nội dung này?'}
-                            onConfirm={() => handleToggleApproval(record.id)}
+                            onConfirm={() => handleToggleApproval(record._id)}
                             okText="Có"
                             cancelText="Không"
                         >
@@ -345,7 +322,7 @@ const ReviewManagement = () => {
                     <Popconfirm
                         title="Xóa bình luận"
                         description="Bạn có chắc chắn muốn xóa bình luận này?"
-                        onConfirm={() => handleHardDelete(record.id)}
+                        onConfirm={() => handleHardDelete(record._id)}
                         okText="Xóa"
                         cancelText="Hủy"
                         okButtonProps={{ danger: true }}
@@ -367,7 +344,7 @@ const ReviewManagement = () => {
         <div className="p-6 bg-gray-50 min-h-screen">
             <div className="bg-white rounded-lg shadow-sm">
                 <div className="p-6 !border-b !border-gray-200">
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý bình luận</h1>
+                    <Title level={2}>Quản lý bình luận</Title>
                     <p className="text-gray-600 mt-1">Quản lý tất cả bình luận và đánh giá của khách hàng</p>
                 </div>
 
@@ -466,7 +443,7 @@ const ReviewManagement = () => {
                                         </label>
                                         <RangePicker
                                             value={filterDateRange}
-                                            onChange={setFilterDateRange}
+                                            onChange={(dates) => setFilterDateRange(dates)}
                                             className="w-full"
                                             placeholder={['Từ ngày', 'Đến ngày']}
                                             format="DD/MM/YYYY"
@@ -480,27 +457,24 @@ const ReviewManagement = () => {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                     <div className="text-center">
                                         <p className="text-gray-500">Tổng số</p>
-                                        <p className="text-lg font-bold text-blue-600">{filteredReviews.length}</p>
+                                        <p className="text-lg font-bold text-blue-600">{stats?.total}</p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-gray-500">Đã duyệt</p>
                                         <p className="text-lg font-bold text-green-600">
-                                            {filteredReviews.filter(r => r.is_approved).length}
+                                            {stats?.approved}
                                         </p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-gray-500">Chờ duyệt</p>
                                         <p className="text-lg font-bold text-orange-600">
-                                            {filteredReviews.filter(r => !r.is_approved).length}
+                                            {stats?.notApproved}
                                         </p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-gray-500">Đánh giá TB</p>
                                         <p className="text-lg font-bold text-yellow-600">
-                                            {filteredReviews.length > 0
-                                                ? (filteredReviews.reduce((sum, r) => sum + r.rating, 0) / filteredReviews.length).toFixed(1)
-                                                : '0'
-                                            }
+                                            {stats?.avgRating}
                                         </p>
                                     </div>
                                 </div>
@@ -510,15 +484,18 @@ const ReviewManagement = () => {
 
                     <Table
                         columns={columns}
-                        dataSource={filteredReviews}
+                        dataSource={reviews}
                         rowKey="id"
                         pagination={{
-                            total: filteredReviews.length,
+                            current: pagination.current,
+                            pageSize: pagination.pageSize,
+                            total: pagination.total,
                             showSizeChanger: true,
                             showQuickJumper: true,
-                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bình luận`,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bình luận`
                         }}
-                        className="shadow-sm"
+                        loading={tableLoading}
+                        onChange={handleTableChange}
                     />
                 </div>
             </div>
@@ -527,7 +504,7 @@ const ReviewManagement = () => {
             <ReviewDetailModal
                 visible={detailModalVisible}
                 onCancel={() => setDetailModalVisible(false)}
-                review={selectedReview}
+                review={selectedReview!}
                 onReply={handleReply}
             />
 
@@ -547,7 +524,7 @@ const ReviewManagement = () => {
                 <div className="space-y-4">
                     <div>
                         <p className="text-sm text-gray-600 mb-2">Phản hồi cho bình luận của:</p>
-                        <p className="font-medium">{selectedReview?.userName}</p>
+                        <p className="font-medium"></p>
                     </div>
                     <div>
                         <TextArea

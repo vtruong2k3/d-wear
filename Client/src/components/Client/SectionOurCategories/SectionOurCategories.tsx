@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import BoxCategory from "./BoxCategory";
 import imgPolo from "../../../assets/images/polo.jpg";
 import imgQuanAu from "../../../assets/images/quan-au.jpg";
@@ -29,12 +30,12 @@ const SectionOurCategories: React.FC<SectionOurCategoriesProps> = ({ type }) => 
       <div className="container">
         <div className="lg:flex justify-between items-center">
           <h2 className="text-3xl font-bold">Danh Mục</h2>
-          <a
-            href="#none"
+          <Link
+            to="/product"
             className="mt-6 lg:mt-0 h-9 border border-black px-7 inline-flex items-center font-semibold text-black rounded-full text-[15px] hover:bg-black hover:text-white transition-all duration-300"
           >
-            Xem tất cà
-          </a>
+            Xem tất cả
+          </Link>
         </div>
 
         <ul className="mt-10 md:grid grid-cols-3 place-items-stretch gap-10 cursor-pointer">
@@ -49,11 +50,13 @@ const SectionOurCategories: React.FC<SectionOurCategoriesProps> = ({ type }) => 
       <div className="container">
         <h2 className="text-3xl font-bold text-center">Danh Mục Của Chúng Tôi</h2>
 
-        <ul className="mt-6 grid grid-cols-2 gap-10 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-          {categories.slice(0, visibleCount).map((item, index) => (
-            <BoxCategory key={item.name} data={item} idx={index} type={2} />
-          ))}
-        </ul>
+        <Link to={`/product`}>
+          <ul className="mt-6 grid grid-cols-2 gap-10 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+            {categories.slice(0, visibleCount).map((item, index) => (
+              <BoxCategory key={item.name} data={item} idx={index} type={2} />
+            ))}
+          </ul>
+        </Link>
       </div>
     </section>
   );

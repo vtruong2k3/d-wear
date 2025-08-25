@@ -121,7 +121,15 @@ const Variants: React.FC = () => {
   };
 
   const columns = [
-    { title: "ID", dataIndex: "_id", key: "_id", width: 80 },
+    {
+      title: "ID",
+      dataIndex: "_id",
+      key: "_id",
+      width: 80,
+      render: (_: unknown, __: unknown, index: number) => (
+        <Tag color="blue">#{index + 1}</Tag>
+      )
+    },
     {
       title: "Tên sản phẩm",
       key: "product_name",
@@ -222,7 +230,7 @@ const Variants: React.FC = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <Title level={2}>Quản Lý Biến Thể Sản Phẩm</Title>
+        <Title level={2}>Danh sách biến thể</Title>
         <Switch
           checked={showHidden}
           onChange={(checked) => {

@@ -1,6 +1,7 @@
 
 
 
+import { Link } from "react-router-dom";
 import type { IProducts } from "../../../types/IProducts";
 import BoxProduct from "../BoxProduct/BoxProduct";
 
@@ -13,12 +14,12 @@ const SectionAllProduct = ({ products }: { products: IProducts[] }) => {
           <div>
             <h2 className="text-3xl font-bold">Sản Phẩm</h2>
           </div>
-          <a
-            href="#none"
+          <Link
+            to="/product"
             className="mt-6 lg:mt-0 h-9 border border-black px-7 inline-flex items-center font-semibold text-black rounded-full text-[15px] hover:bg-black hover:text-white transition-all duration-300"
           >
             Xem tất cả
-          </a>
+          </Link>
         </div>
 
         <ul className="gap-5 mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">

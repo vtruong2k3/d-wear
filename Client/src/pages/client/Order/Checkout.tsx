@@ -120,7 +120,7 @@ const Checkout = () => {
         const addresses = addressRes.data.address ?? [];
 
         if (!Array.isArray(addresses)) {
-          console.error("❌ Dữ liệu address không phải mảng:", addressRes.data);
+          console.error(" Dữ liệu address không phải mảng:", addressRes.data);
           return;
         }
 
@@ -144,7 +144,7 @@ const Checkout = () => {
           const wardRes = await getWards(defaultAddress.districtId);
           setWards(wardRes.data?.wards || []);
 
-          // ✅ Gọi API tính phí ship theo địa chỉ mặc định
+          //  Gọi API tính phí ship theo địa chỉ mặc định
           const payload = {
             to_district_id: Number(defaultAddress.districtId),
             to_ward_code: defaultAddress.wardId,
@@ -165,12 +165,12 @@ const Checkout = () => {
               setShippingFee(25000);
             }
           } catch (err) {
-            console.error("❌ Lỗi khi tính phí ship mặc định:", err);
+            console.error(" Lỗi khi tính phí ship mặc định:", err);
             setShippingFee(25000);
           }
         }
       } catch (error) {
-        console.error("❌ Lỗi khi tải dữ liệu:", error);
+        console.error(" Lỗi khi tải dữ liệu:", error);
       }
     };
 
@@ -509,7 +509,8 @@ const Checkout = () => {
     return selectedVoucher.discountValue;
   }, [selectedVoucher, rawTotal]);
 
-  const finalTotal = rawTotal - discount + shippingFee;
+  const finalTotal = Math.max(0, rawTotal - discount + shippingFee);
+
 
 
   const formatCurrency = (value: number) =>
@@ -616,7 +617,7 @@ const Checkout = () => {
 
   const handleSaveManualAddress = async () => {
     try {
-      const values = await form.validateFields(); // ✅ Bắt buộc dùng cái này
+      const values = await form.validateFields(); //  Bắt buộc dùng cái này
 
       const province = provinces.find(
         (p) => p.ProvinceID === Number(selectedProvince)
@@ -1056,24 +1057,19 @@ const Checkout = () => {
                 </Descriptions.Item>
               </Descriptions>
 
-              {finalTotal >= 2000000 && (
+              {finalTotal >= 5000000 && (
                 <Text type="warning">
                   <ExclamationCircleOutlined style={{ marginRight: 6 }} />
                   Đơn hàng lớn hơn 2 triệu vui lòng thanh toán bằng momo hoặc vnpay.
                 </Text>
               )}
-              {finalTotal < 0 && (
-                <Text type="warning">
-                  <ExclamationCircleOutlined style={{ marginRight: 6 }} />
-                  Giá trị đơn hàng không hợp lệ.
-                </Text>
-              )}
+
               <Button
                 type={paymentMethodValue === "cod" ? "primary" : "default"}
                 size="large"
                 block
                 onClick={() => setPaymentMethod("cod")}
-                disabled={finalTotal >= 2000000 || finalTotal < 0}
+                disabled={finalTotal >= 5000000}
               >
                 Thanh toán khi nhận hàng (COD)
               </Button>
@@ -1083,7 +1079,7 @@ const Checkout = () => {
                 size="large"
                 block
                 onClick={() => setPaymentMethod("momo")}
-                disabled={finalTotal < 0}
+                disabled={finalTotal <= 0}
               >
                 Thanh toán online với MoMo
               </Button>
@@ -1101,8 +1097,7 @@ const Checkout = () => {
                   (addressType === "saved" && !selectedAddressId) ||
                   (addressType === "manual" &&
                     (!selectedProvince || !selectedDistrict || !selectedWard)) ||
-                  (finalTotal >= 2000000 && paymentMethodValue !== "momo") ||
-                  finalTotal < 0
+                  (finalTotal >= 2000000 && paymentMethodValue !== "momo")
                 }
               >
                 {paymentMethodValue === "cod"
