@@ -17,7 +17,11 @@ reviewRouter.post(
   authAdminMiddelware,
   reviewController.reviewRely
 );
-
+reviewRouter.delete(
+  "/review/:reviewId",
+  authAdminMiddelware,
+  reviewController.deleteReview
+);
 reviewRouter.get(
   "/review/:productId",
 

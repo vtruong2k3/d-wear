@@ -129,17 +129,17 @@ export default function AccountMenu() {
             navigate("/profile"); // ← thay đổi tại đây
           }}
         >
-          <Avatar /> Profile
+          <Avatar /> Trang cá nhân
         </MenuItem>
-        <MenuItem onClick={handleClose}>
+        {/* <MenuItem onClick={handleClose}>
           <Avatar /> My account
-        </MenuItem>
+        </MenuItem> */}
         <Divider />
-        {/* ✅ Thêm mục Đơn hàng ở đây */}
+
         <MenuItem
           onClick={() => {
             handleClose();
-            navigate("/orders"); // hoặc bất kỳ URL nào bạn định nghĩa
+            navigate("/orders");
           }}
         >
           <ListItemIcon>
@@ -163,13 +163,13 @@ export default function AccountMenu() {
           <ListItemIcon>
             <Settings fontSize="small" />
           </ListItemIcon>
-          Settings
+          Cài đặt
         </MenuItem>
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>
-          Logout
+          Đăng xuất
         </MenuItem>
       </Menu>
     </React.Fragment>

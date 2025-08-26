@@ -275,7 +275,7 @@ const OrderList = () => {
           <Option value="delivered" disabled={["cancelled"].includes(record.status)}>
             <span style={{ color: "#1890ff" }}>Đã giao</span>
           </Option>
-          <Option value="cancelled" disabled={["shipped", "delivered"].includes(record.status)}>
+          <Option value="cancelled" disabled>
             <span style={{ color: "#ff4d4f" }}>Đã hủy</span>
           </Option>
         </Select>

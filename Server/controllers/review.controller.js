@@ -425,3 +425,25 @@ exports.updateAppoved = async (req, res) => {
       .json({ message: "Lỗi server.", error: error.message });
   }
 };
+
+exports.deleteReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const extingReview = await Review.findById(reviewId).select("_id");
+    if (!extingReview) {
+      return res.status(404).json({
+        message: "Bình luận không tồn tại",
+      });
+    }
+    // Xoá tất cả reply liên quan đến review này
+    await ReviewReply.deleteMany({ review_id: reviewId });
+    // Xoá review
+    await Review.findByIdAndDelete(reviewId);
+    res.status(200).json({ message: "Xoá bình luận thành công" });
+  } catch (error) {
+    console.error("Lỗi khi xoá", error);
+    return res
+      .status(500)
+      .json({ message: "Lỗi server.", error: error.message });
+  }
+};

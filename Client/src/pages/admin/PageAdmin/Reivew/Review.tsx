@@ -4,7 +4,7 @@ import { EyeOutlined, DeleteOutlined, EyeInvisibleOutlined, FilterOutlined, Clea
 import ReviewDetailModal from './ReviewDetail';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ErrorType } from '../../../../types/error/IError';
-import { fetchApproved, fetchGetReviewAdmin, fetchReplyComment, type TypeParams } from '../../../../services/admin/reviewService';
+import { fetchApproved, fetchDeleteReview, fetchGetReviewAdmin, fetchReplyComment, type TypeParams } from '../../../../services/admin/reviewService';
 import type { IReviewReplyUI, IReviews, TypeStatus } from '../../../../types/IReview';
 import Title from 'antd/es/typography/Title';
 
@@ -128,9 +128,18 @@ const ReviewManagement = () => {
     };
 
     // Xóa cứng bình luận
-    const handleHardDelete = (reviewId: string) => {
-        setReviews(prev => prev.filter(review => review._id !== reviewId));
-        message.success('Xóa bình luận thành công!');
+    const handleHardDelete = async (reviewId: string) => {
+        try {
+            const res = await fetchDeleteReview(reviewId);
+            setReviews(prev => prev.filter(review => review._id !== reviewId));
+            message.success(res.message);
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            message.error(errorMessage);
+        }
     };
 
     // Phản hồi bình luận

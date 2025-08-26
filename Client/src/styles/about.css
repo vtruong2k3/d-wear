@@ -1,0 +1,21 @@
+.custom-timeline .ant-timeline-item-tail {
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.custom-timeline .ant-timeline-item-head {
+  border-color: currentColor;
+  border-width: 3px;
+  width: 16px;
+  height: 16px;
+}
+
+.custom-timeline .ant-timeline-item-content {
+  color: white;
+  margin-left: 24px;
+}
+
+.ant-statistic-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

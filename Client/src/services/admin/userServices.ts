@@ -82,3 +82,8 @@ export async function updateUser(id: string | undefined, formdata: FormData) {
   );
   return data;
 }
+
+export const deleteUser = async (id: string | undefined) => {
+  const res = await axios.delete(`/api/users/${id}`);
+  return res.data;
+};

@@ -1,27 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  restoreUser,
-  softDeleteUser,
-} from "../../../../redux/features/admin/userSlice";
+
 import {
   EyeOutlined,
   DeleteOutlined,
-  UndoOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   SearchOutlined,
   FilterOutlined,
   PlusOutlined,
-  EditOutlined
+  EditOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import {
   Button,
   message,
-  Modal,
   Space,
-  Switch,
   Table,
   Tag,
   Tooltip,
@@ -30,7 +25,8 @@ import {
   Card,
   Row,
   Col,
-  Typography
+  Typography,
+  Popconfirm
 } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
@@ -40,7 +36,7 @@ import type { UserType } from "../../../../types/IUser";
 import { getUserDetail } from "../../../../redux/features/admin/thunks/userAdminThunk";
 
 
-import { fetchAllUsers } from "../../../../services/admin/userServices";
+import { deleteUser, fetchAllUsers } from "../../../../services/admin/userServices";
 import type { ErrorType } from "../../../../types/error/IError";
 
 const { Title } = Typography;
@@ -75,8 +71,8 @@ const UsersList = () => {
   const [roleFilter, setRoleFilter] = useState<"admin" | "user" | undefined>();
   const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | undefined>();
 
-  // (Tuỳ chọn) xem đã xoá — chỉ hoạt động nếu BE hỗ trợ param includeDeleted/deletedOnly
-  const [showDeleted, setShowDeleted] = useState(false);
+
+
 
   // Debounce nhẹ cho search
   const q = useMemo(() => searchText.trim(), [searchText]);
@@ -114,7 +110,7 @@ const UsersList = () => {
   useEffect(() => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, pageSize, sortBy, order, q, roleFilter, statusFilter, showDeleted]);
+  }, [current, pageSize, sortBy, order, q, roleFilter, statusFilter]);
 
   const handleTableChange = (
     pagination: TablePaginationConfig,
@@ -148,24 +144,24 @@ const UsersList = () => {
   const handleAddUser = () => navigate("/admin/users/add");
   const handleEditUser = (user: UserType) => navigate(`/admin/users/edit/${user._id}`);
 
-  // Soft delete / restore (gọi action Redux có sẵn)
-  const handleSoftDelete = (_id: string) => {
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: "Bạn có chắc chắn muốn xóa người dùng này?",
-      onOk: async () => {
-        await dispatch(softDeleteUser(_id));
-        message.success("Đã xóa người dùng thành công!");
-        fetchList();
-      },
-    });
+
+  const handleHardDelete = async (id: string) => {
+    try {
+      setLoading(true);
+      const res = await deleteUser(id);
+      setRows(prev => prev.filter(user => user._id !== id));
+      message.success(res.message);
+    } catch (error) {
+      const errorMessage =
+        (error as ErrorType).response?.data?.message ||
+        (error as ErrorType).message ||
+        "Đã xảy ra lỗi, vui lòng thử lại.";
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRestore = async (_id: string) => {
-    await dispatch(restoreUser(_id));
-    message.success("Đã khôi phục người dùng thành công!");
-    fetchList();
-  };
 
   const columns: ColumnsType<UserType> = [
     {
@@ -209,7 +205,7 @@ const UsersList = () => {
           }
         >
           <Tag
-            icon={isGoogleAccount ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+            icon={isGoogleAccount ? <CheckCircleOutlined /> : <UserOutlined />}
             color={isGoogleAccount ? "blue" : "default"}
           >
             {isGoogleAccount ? "Google" : "Thường"}
@@ -248,26 +244,27 @@ const UsersList = () => {
           </Tooltip>
 
           {record.role !== "admin" && (
-            !showDeleted ? (
+
+            <Popconfirm
+              title="Xóa tài khoản"
+              description="Bạn có chắc chắn muốn xóa tài khoản này?"
+              onConfirm={() => handleHardDelete(record._id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
               <Tooltip title="Xóa">
                 <Button
                   type="text"
                   danger
                   icon={<DeleteOutlined />}
-                  onClick={() => handleSoftDelete(record._id)}
+
                   size="small"
                 />
               </Tooltip>
-            ) : (
-              <Tooltip title="Khôi phục">
-                <Button
-                  type="text"
-                  icon={<UndoOutlined />}
-                  onClick={() => handleRestore(record._id)}
-                  size="small"
-                />
-              </Tooltip>
-            )
+            </Popconfirm>
+
+
           )}
         </Space>
       ),
@@ -285,26 +282,19 @@ const UsersList = () => {
         }}
       >
         <Title level={3}>
-          {showDeleted ? "Người dùng đã xoá" : "Quản lý tài khoản người dùng"}
+          "Quản lý tài khoản người dùng
         </Title>
         <Space>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAddUser}
-            disabled={showDeleted} // không cho thêm khi đang xem danh sách đã xoá
+
           >
             Thêm người dùng
           </Button>
 
-          {/* Chỉ hoạt động khi BE hỗ trợ includeDeleted/deletedOnly */}
-          <span>Hiển thị đã xoá:</span>
-          <Switch
-            checked={showDeleted}
-            onChange={setShowDeleted}
-            checkedChildren="Đã xóa"
-            unCheckedChildren="Hoạt động"
-          />
+
         </Space>
       </div>
 

@@ -11,10 +11,10 @@ const createUserSchema = Joi.object({
     "any.required": "email là bắt buộc",
   }),
   password: Joi.string()
-    .min(6)
+    .min(5)
     .allow("", null) // cho phép bỏ trống
     .messages({
-      "string.min": "Mật khẩu tối thiểu 6 ký tự",
+      "string.min": "Mật khẩu tối thiểu 5 ký tự",
     }),
   phone: Joi.string()
     .trim()
@@ -40,10 +40,10 @@ const updateUserSchema = Joi.object({
     "any.required": "email là bắt buộc",
   }),
   password: Joi.string()
-    .min(6)
+    .min(5)
     .allow("", null) // cho phép bỏ trống
     .messages({
-      "string.min": "Mật khẩu tối thiểu 6 ký tự",
+      "string.min": "Mật khẩu tối thiểu 5 ký tự",
     }),
   phone: Joi.string()
     .trim()

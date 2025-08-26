@@ -1,5 +1,6 @@
 const Address = require("../models/address");
 const User = require("../models/users");
+const mongoose = require("mongoose");
 const bcryptjs = require("bcryptjs");
 const profileUpdateSchema = require("../validate/profileValidate");
 const path = require("path");
@@ -7,6 +8,9 @@ const {
   createUserSchema,
   updateUserSchema,
 } = require("../validate/userValidate");
+const Cart = require("../models/carts");
+const Order = require("../models/orders");
+const OrderItem = require("../models/orderItems");
 const fs = require("fs").promises;
 exports.updateUserProfile = async (req, res) => {
   try {
@@ -170,8 +174,10 @@ exports.getUserById = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   try {
+    console.log("req.body", req.body);
     const { error } = createUserSchema.validate(req.body, {
       abortEarly: false,
+      convert: true,
     });
     if (error) {
       const errors = error.details.map((err) => err.message);
@@ -351,6 +357,53 @@ exports.updateUser = async (req, res) => {
       .json({ message: "Cập nhật người dùng thành công", data: userObj });
   } catch (error) {
     console.error("Lỗi cập nhật người dùng:", error);
+    return res
+      .status(500)
+      .json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  const session = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Thiếu id người dùng" });
+    }
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+    if (user.role === "admin") {
+      const otherAdmins = await User.countDocuments({
+        role: "admin",
+        _id: { $ne: id },
+        isActive: true,
+      });
+      if (otherAdmins === 0) {
+        return res
+          .status(400)
+          .json({ message: "Không thể xoá quản trị viên cuối cùng." });
+      }
+    }
+    await Cart.deleteMany({ user_id: id }).session(session);
+    const order = await Order.find({ user_id: id })
+      .select("_id")
+      .lean()
+      .session(session);
+    const orderId = order.map((o) => o._id);
+    if (orderId.length) {
+      await OrderItem.deleteMany({ order_id: { $in: orderId } }).session(
+        session
+      );
+    }
+    if (order.length) {
+      await Order.deleteMany({ user_id: id }).session(session);
+    }
+    await User.deleteOne({ _id: id }).session(session);
+    res.status(200).json({ message: "Xoá người dùng thành công" });
+  } catch (error) {
+    console.error("Lỗi khi xoá người dùng:", error);
     return res
       .status(500)
       .json({ message: "Lỗi máy chủ", error: error.message });

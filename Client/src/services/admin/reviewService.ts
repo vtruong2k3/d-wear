@@ -38,3 +38,7 @@ export const fetchApproved = async (
   });
   return res.data;
 };
+export const fetchDeleteReview = async (reviewId: string | undefined) => {
+  const res = await axios.delete(`/api/review/${reviewId}`);
+  return res.data;
+};

@@ -12,6 +12,9 @@ import OrdersPage from "../../pages/client/Order/OrdersPage";
 import OrderDetailPage from "../../pages/client/Order/OrderDetailPage";
 import AddressManagement from "../../pages/client/Address/AddressManagerModal";
 import AboutPage from "../../pages/client/About/About";
+import ContactPage from "../../pages/client/Contact/Contact";
+import BlogtPage from "../../pages/client/Blog/Blog";
+import ForgotPassword from "../../pages/client/Login/ForgotPassword";
 const clientRoutes = [
   {
     path: "/",
@@ -24,6 +27,14 @@ const clientRoutes = [
       {
         path: "/about",
         element: <AboutPage />,
+      },
+      {
+        path: "/contact",
+        element: <ContactPage />,
+      },
+      {
+        path: "/blog",
+        element: <BlogtPage />,
       },
       {
         path: "/product",
@@ -70,6 +81,10 @@ const clientRoutes = [
       {
         path: "/register",
         element: <Register />,
+      },
+      {
+        path: "/forgot-password",
+        element: <ForgotPassword />,
       },
     ],
   },

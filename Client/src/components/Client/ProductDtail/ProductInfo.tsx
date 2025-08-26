@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import toast from "react-hot-toast";
 
-import ico_eye from "../../../assets/images/ico_eye.png";
-import ico_fire from "../../../assets/images/ico_fire.png";
+// import ico_eye from "../../../assets/images/ico_eye.png";
+// import ico_fire from "../../../assets/images/ico_fire.png";
 import ico_checked from "../../../assets/images/ico_checked.png";
 import ico_heart from "../../../assets/images/ico_heart.png";
 import ico_reload from "../../../assets/images/ico_reload.png";
@@ -149,14 +149,14 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
             </div>
 
             <div className="mt-2 pt-2 !border-t !border-gray-300">
-                <p className="flex items-center gap-2 mt-2">
+                {/* <p className="flex items-center gap-2 mt-2">
                     <img className="w-5 animate-flicker" src={ico_eye} alt="" />
                     <span className="text-sm font-medium">35 people are viewing this right now</span>
                 </p>
                 <p className="flex items-center gap-2 mt-4">
                     <img className="w-5 animate-zoomInOut" src={ico_fire} alt="" />
                     <span className="text-sm font-medium text-red-600">35 sold in last 18 hours</span>
-                </p>
+                </p> */}
                 <p className="flex items-center gap-2 mt-6">
                     <img className="w-5" src={ico_checked} alt="" />
                     <span className="text-sm font-medium text-green">
@@ -286,7 +286,7 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                         onClick={handleAddToCartClick}
                         className="h-12 bg-black text-white rounded-lg px-6 flex-1 hover:bg-gray-800 transition-colors"
                     >
-                        Add To Cart
+                        Thêm vào giỏ hàng
                     </button>
 
                     <button className="w-12 h-12 !bg-white !border !border-gray-300 rounded-lg flex items-center justify-center hover:border-black transition-colors">

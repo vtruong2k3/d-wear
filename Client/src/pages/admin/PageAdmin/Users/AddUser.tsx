@@ -212,45 +212,47 @@ const AddUserForm: React.FC = () => {
                     </Card>
 
                     {/* Cài đặt tài khoản */}
-                    <Card title="Cài đặt tài khoản">
-                        <Row gutter={32}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="isActive"
-                                    label="Trạng thái hoạt động"
-                                    valuePropName="checked"
-                                    style={{ marginBottom: 16 }}
-                                >
-                                    <Switch
-                                        checkedChildren="Kích hoạt"
-                                        unCheckedChildren="Khóa"
-                                        defaultChecked
-                                    />
-                                </Form.Item>
-                                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                                    Tài khoản có thể đăng nhập và sử dụng hệ thống
-                                </p>
-                            </Col>
+                    <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
+                        <Card title="Cài đặt tài khoản">
+                            <Row gutter={32}>
+                                <Col span={12}>
+                                    <Form.Item
+                                        name="isActive"
+                                        label="Trạng thái hoạt động"
+                                        valuePropName="checked"
+                                        style={{ marginBottom: 16 }}
+                                    >
+                                        <Switch
+                                            checkedChildren="Kích hoạt"
+                                            unCheckedChildren="Khóa"
 
-                            <Col span={12}>
-                                <Form.Item
-                                    name="isGoogleAccount"
-                                    label="Tài khoản Google"
-                                    valuePropName="checked"
-                                    style={{ marginBottom: 16 }}
-                                >
-                                    <Switch
-                                        checkedChildren={<GoogleOutlined />}
-                                        unCheckedChildren="Thường"
-                                        disabled
-                                    />
-                                </Form.Item>
-                                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                                    Tài khoản được liên kết với Google
-                                </p>
-                            </Col>
-                        </Row>
-                    </Card>
+                                        />
+                                    </Form.Item>
+                                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
+                                        Tài khoản có thể đăng nhập và sử dụng hệ thống
+                                    </p>
+                                </Col>
+
+                                <Col span={12}>
+                                    <Form.Item
+                                        name="isGoogleAccount"
+                                        label="Tài khoản Google"
+                                        valuePropName="checked"
+                                        style={{ marginBottom: 16 }}
+                                    >
+                                        <Switch
+                                            checkedChildren={<GoogleOutlined />}
+                                            unCheckedChildren="Thường"
+                                            disabled
+                                        />
+                                    </Form.Item>
+                                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
+                                        Tài khoản được liên kết với Google
+                                    </p>
+                                </Col>
+                            </Row>
+                        </Card>
+                    </Form>
                 </Col>
 
                 {/* Sidebar */}
