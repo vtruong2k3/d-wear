@@ -5,7 +5,7 @@ import Products from "../../pages/admin/PageAdmin/Products/Products";
 import LoginAdmin from "../../pages/admin/auth/LoginAdmin";
 import ProductEdit from "../../pages/admin/PageAdmin/Products/ProductEdit";
 import ProductAdd from "../../pages/admin/PageAdmin/Products/ProductAdd";
-
+import QuickAddProduct from "../../pages/admin/PageAdmin/Products/QuickAddProduct";
 import Orders from "../../pages/admin/PageAdmin/Orders/Orders";
 import Orderdetail from "../../pages/admin/PageAdmin/Orders/OrderDetail";
 import Brand from "../../pages/admin/PageAdmin/Brand/Brand";
@@ -28,6 +28,7 @@ const adminRouter = [
       { path: "products", element: <Products /> },
       { path: "products/edit/:id", element: <ProductEdit /> },
       { path: "products/add", element: <ProductAdd /> },
+      { path: "products/quick-add", element: <QuickAddProduct /> },
       { path: "categories", element: <Categories /> },
       { path: "variants", element: <Variants /> },
       { path: "orders", element: <Orders /> },

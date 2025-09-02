@@ -31,7 +31,11 @@ variantRouter.put(
   upload.fields([{ name: "imageVariant", maxCount: 5 }]),
   variantController.updateVariant
 );
-
+variantRouter.post(
+  "/variant/bulk",
+  upload.fields([{ name: "imageVariant", maxCount: 5 }]),
+  variantController.createVariantBulk
+);
 variantRouter.delete("/variant/:id", variantController.deleteVariant);
 variantRouter.delete(
   "/variant/product/:id",

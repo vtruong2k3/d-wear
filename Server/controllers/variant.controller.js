@@ -327,3 +327,13 @@ exports.getSoftDeletedVariants = async (req, res) => {
     });
   }
 };
+
+exports.createVariantBulk = async (req, res) => {
+  console.log("Data biến thể", req.body);
+
+  console.error("Lỗi khi thêm biến thể:", error);
+  return res.status(500).json({
+    message: "Lỗi server khi lấy biến thể đã xoá mềm",
+    error: error.message,
+  });
+};

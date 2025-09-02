@@ -58,3 +58,13 @@ export const getDetailProductAdmin = async (
   });
   return res.data;
 };
+
+export const createProductBulk = async (formData: FormData) => {
+  const { data } = await axios.post("/api/product/bulk", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return data;
+};

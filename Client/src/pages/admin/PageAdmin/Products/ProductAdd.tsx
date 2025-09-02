@@ -365,7 +365,7 @@ const ProductAdd = () => {
                     name="basePrice"
                     rules={[
                       { required: true, message: "Vui lòng nhập giá!" },
-                      { min: 1000, message: "Số tiền phỉa lớn hơn 1000đ" }
+                      { type: "number", min: 1000, message: "Số tiền phải lớn hơn 1000đ" }
                     ]}
                   >
                     <InputNumber<number>

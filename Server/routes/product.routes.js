@@ -32,6 +32,12 @@ productRouter.post(
   upload.fields([{ name: "productImage", maxCount: 8 }, ...variantFields]),
   productController.createProductWithVariants
 );
+productRouter.post(
+  "/product/bulk",
+
+  upload.fields([{ name: "productImage", maxCount: 8 }]),
+  productController.createProduct
+);
 
 //  Sửa sản phẩm + biến thể
 productRouter.put(
