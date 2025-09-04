@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     Button,
     Form,
@@ -24,57 +24,41 @@ import {
     ClusterOutlined,
 } from "@ant-design/icons";
 
+import { createProductBulk } from "../../../../services/admin/productService";
+import { createVariantBulk } from "../../../../services/admin/variantServices";
+import type { RcFile, UploadFile } from "antd/es/upload";
+import type { ErrorType } from "../../../../types/error/IError";
+import { fetchAllBrands } from "../../../../services/admin/brandService";
+import { fetchGetAllCategory } from "../../../../services/admin/categoryService";
+import type { IBrand } from "../../../../types/brand/IBrand";
+import type { ICategory } from "../../../../types/category/ICategory";
+
+import { getSizes } from "../../../../services/admin/sizeService";
+import { getColors } from "../../../../services/admin/colorService";
+import type { SizeOption } from "../../../../types/size/ISize";
+import type { ColorOption } from "../../../../types/color/IColor";
+
 const { Option } = Select;
 const { TextArea } = Input;
 
 // Mock data để demo
-const mockBrands = [
-    { _id: "1", brand_name: "Nike" },
-    { _id: "2", brand_name: "Adidas" },
-    { _id: "3", brand_name: "Puma" },
-];
 
-const mockCategories = [
-    { _id: "1", category_name: "Giày thể thao" },
-    { _id: "2", category_name: "Áo thun" },
-    { _id: "3", category_name: "Quần jean" },
-];
-
-const mockSizes = [
-    { _id: "1", size_name: "S" },
-    { _id: "2", size_name: "M" },
-    { _id: "3", size_name: "L" },
-    { _id: "4", size_name: "XL" },
-    { _id: "5", size_name: "XXL" },
-    { _id: "6", size_name: "38" },
-    { _id: "7", size_name: "39" },
-    { _id: "8", size_name: "40" },
-    { _id: "9", size_name: "41" },
-    { _id: "10", size_name: "42" },
-];
-
-const mockColors = [
-    { _id: "1", color_name: "Đỏ", color_code: "#FF0000" },
-    { _id: "2", color_name: "Xanh dương", color_code: "#0000FF" },
-    { _id: "3", color_name: "Trắng", color_code: "#FFFFFF" },
-    { _id: "4", color_name: "Đen", color_code: "#000000" },
-    { _id: "5", color_name: "Vàng", color_code: "#FFFF00" },
-];
 
 const ProductAdd = () => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [imageList, setImageList] = useState([]);
-    const [brands, setBrands] = useState(mockBrands);
-    const [categories, setCategories] = useState(mockCategories);
-    const [sizes, setSizes] = useState(mockSizes);
-    const [colors, setColors] = useState(mockColors);
+    const [brands, setBrands] = useState<IBrand[]>([]);
+    const [categories, setCategories] = useState<ICategory[]>([]);
+    const [sizes, setSizes] = useState<SizeOption[]>([]);
+    const [colors, setColors] = useState<ColorOption[]>([]);
     const [variants, setVariants] = useState([]);
     const [variantErrors, setVariantErrors] = useState({});
 
     // Bulk variant creation states
     const [showBulkModal, setShowBulkModal] = useState(false);
     const [bulkForm] = Form.useForm();
+    const [bulkVariants, setBulkVariants] = useState([]);
     const [selectedSizes, setSelectedSizes] = useState([]);
     const [selectedColors, setSelectedColors] = useState([]);
     const [bulkPrice, setBulkPrice] = useState(null);
@@ -82,6 +66,31 @@ const ProductAdd = () => {
     const [bulkImages, setBulkImages] = useState([]);
 
     // Validation function
+    const getBrandAndCategory = async () => {
+        try {
+            const [brandResponse, categoryResponse, sizeResponse, colorResponse] = await Promise.all([
+
+                fetchAllBrands(),
+                fetchGetAllCategory(),
+                getSizes(),
+                getColors()
+            ]);
+            console.log("data", sizeResponse, colorResponse);
+            setBrands(brandResponse);
+            setCategories(categoryResponse);
+            setSizes(sizeResponse.data);
+            setColors(colorResponse.data);
+        } catch (error) {
+            const errorMessage =
+                (error as ErrorType).response?.data?.message ||
+                (error as ErrorType).message ||
+                "Đã xảy ra lỗi, vui lòng thử lại.";
+            message.error(errorMessage);
+        }
+    }
+    useEffect(() => {
+        getBrandAndCategory();
+    }, []);
     const validateVariants = () => {
         const errors = {};
         let isValid = true;
@@ -111,9 +120,9 @@ const ProductAdd = () => {
             return false;
         }
 
-        const isLt2M = file.size / 1024 / 1024 < 2;
-        if (!isLt2M) {
-            message.error("Ảnh sản phẩm phải nhỏ hơn 2MB!");
+        const isLt5M = file.size / 1024 / 1024 < 5;
+        if (!isLt5M) {
+            message.error("Ảnh sản phẩm phải nhỏ hơn 5MB!");
             return false;
         }
 
@@ -145,10 +154,23 @@ const ProductAdd = () => {
             }
 
             setLoading(true);
-
+            const formdata = new FormData();
+            formdata.append("product_name", values.product_name);
+            formdata.append("description", values.description);
+            formdata.append("basePrice", values.basePrice);
+            formdata.append("brand_id", values.brand_id);
+            formdata.append("category_id", values.category_id);
+            formdata.append("gender", values.gender);
+            formdata.append("material", values.material);
+            imageList.forEach((file: UploadFile) => {
+                if (file.originFileObj) {
+                    formdata.append("productImage", file.originFileObj as RcFile);
+                }
+            });
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 2000));
-
+            await createProductBulk(formdata);
+            await createVariantBulk(variants);
             message.success("Thêm sản phẩm thành công!");
             console.log("Product data:", {
                 productInfo: values,
@@ -197,64 +219,110 @@ const ProductAdd = () => {
         updated.splice(index, 1);
         setVariants(updated);
     };
+    type Variant = {
+        size: string;
+        color: string;
+        price: number;
+        stock: number;
+        image: string[];
+    };
 
+    const normalize = (s?: string) => (s ?? "").trim().toLowerCase();
+
+    const resolveImagesForColorIndex = (
+        bulkImages: string[],
+        colorIndex: number,
+        totalColors: number
+    ) => {
+        if (bulkImages.length === 1) return [bulkImages[0]]; // 1 ảnh cho tất cả
+        if (bulkImages.length === totalColors) return [bulkImages[colorIndex]]; // map theo màu
+        return [];
+    };
     // Bulk variant creation functions
     const handleBulkCreate = () => {
         if (!selectedSizes.length || !selectedColors.length) {
             message.error("Vui lòng chọn ít nhất 1 size và 1 màu!");
             return;
         }
-
-        if (!bulkPrice || bulkPrice <= 0) {
+        if (!bulkPrice || Number(bulkPrice) <= 0) {
             message.error("Vui lòng nhập giá hợp lệ!");
             return;
         }
-
-        if (bulkStock === null || bulkStock === undefined || bulkStock < 0) {
+        if (bulkStock == null || Number(bulkStock) < 0) {
             message.error("Vui lòng nhập số lượng tồn kho hợp lệ!");
             return;
         }
 
-        const newVariants = [];
-        selectedSizes.forEach(sizeId => {
-            selectedColors.forEach(colorId => {
-                const size = sizes.find(s => s._id === sizeId);
-                const color = colors.find(c => c._id === colorId);
+        // Lấy dữ liệu form bulk 1 lần, dùng xuyên suốt
+        const bulkData = bulkForm.getFieldsValue(); // ← thay vì set state rồi đọc
+        const priceNum = Number(bulkPrice);
+        const stockNum = Number(bulkStock);
 
-                // Check if variant already exists
-                const exists = variants.some(v =>
-                    v.size === size?.size_name && v.color === color?.color_name
-                );
+        const sizeById = new Map(sizes.map((s: any) => [s._id, s]));
+        const colorById = new Map(colors.map((c: any) => [c._id, c]));
 
-                if (!exists) {
+        setVariants((prev: Variant[]) => {
+            const existed = new Set(prev.map(v => `${normalize(v.size)}|${normalize(v.color)}`));
+
+            const newVariants: Variant[] = [];
+            selectedSizes.forEach((sizeId: string) => {
+                const sizeObj = sizeById.get(sizeId);
+                const sizeName = sizeObj?.size_name || "";
+                if (!sizeName) return;
+
+                selectedColors.forEach((colorId: string, cIdx: number) => {
+                    const colorObj = colorById.get(colorId);
+                    const colorName = colorObj?.color_name || "";
+                    if (!colorName) return;
+
+                    const key = `${normalize(sizeName)}|${normalize(colorName)}`;
+                    if (existed.has(key)) return;
+
+                    const images = resolveImagesForColorIndex(
+                        bulkImages,
+                        cIdx,
+                        selectedColors.length
+                    );
+
                     newVariants.push({
-                        size: size?.size_name || "",
-                        color: color?.color_name || "",
-                        price: bulkPrice,
-                        stock: bulkStock,
-                        image: [...bulkImages], // Copy bulk images
+                        size: sizeName,
+                        color: colorName,
+                        price: priceNum,
+                        stock: stockNum,
+                        image: images,
                     });
-                }
+
+                    existed.add(key); // tránh trùng trong cùng lần tạo
+                });
             });
+
+            if (newVariants.length === 0) {
+                message.warning("Tất cả biến thể đã tồn tại hoặc dữ liệu không hợp lệ!");
+                return prev;
+            }
+
+            //  Log dùng biến cục bộ (không bị stale)
+            console.log("New bulk variants form values:", bulkData);
+            console.log("New variants to add:", newVariants);
+
+            message.success(`Đã thêm ${newVariants.length} biến thể mới!`);
+
+            // Reset UI/bulk form
+            setShowBulkModal(false);
+            setSelectedSizes([]);
+            setSelectedColors([]);
+            setBulkPrice(null);
+            setBulkStock(0);
+            setBulkImages([]);
+            bulkForm.resetFields();
+
+            return [...prev, ...newVariants];
         });
 
-        if (newVariants.length === 0) {
-            message.warning("Tất cả biến thể đã tồn tại!");
-            return;
-        }
-
-        setVariants([...variants, ...newVariants]);
-        message.success(`Đã thêm ${newVariants.length} biến thể mới!`);
-
-        // Reset bulk form
-        setShowBulkModal(false);
-        setSelectedSizes([]);
-        setSelectedColors([]);
-        setBulkPrice(null);
-        setBulkStock(0);
-        setBulkImages([]);
-        bulkForm.resetFields();
+        // Nếu vẫn muốn lưu bulk form vào state để dùng nơi khác:
+        // setBulkVariants(bulkData);
     };
+
 
     const getVariantPreview = () => {
         if (!selectedSizes.length || !selectedColors.length) return [];
@@ -457,6 +525,7 @@ const ProductAdd = () => {
                                         rules={[{ required: true, message: "Vui lòng tải lên ít nhất 1 ảnh!" }]}
                                     >
                                         <Upload
+                                            name="productImage"
                                             listType="picture-card"
                                             fileList={imageList}
                                             onChange={handleImageChange}
@@ -620,6 +689,7 @@ const ProductAdd = () => {
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh biến thể</label>
                                                         <Upload
+                                                            name="imageVariant"
                                                             listType="picture"
                                                             fileList={variant.image}
                                                             onChange={(info) => handleVariantImageChange(index, info.fileList)}
@@ -702,7 +772,7 @@ const ProductAdd = () => {
                     </Button>,
                 ]}
             >
-                <Form form={bulkForm} layout="vertical">
+                <Form form={bulkForm} layout="vertical" onFinish={handleBulkCreate}>
                     <Row gutter={16}>
                         <Col span={12}>
                             <Form.Item

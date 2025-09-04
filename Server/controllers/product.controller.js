@@ -762,31 +762,31 @@ exports.createProduct = async (req, res) => {
     } = req.body;
     console.log("Data sản phẩm ", req.body);
 
-    // const productImages = Array.isArray(req.files?.productImage)
-    //   ? req.files.productImage
-    //   : Array.isArray(req.files)
-    //   ? req.files
-    //   : [];
-    // // Tạo sản phẩm mới
-    // const newProduct = new Product({
-    //   product_name,
-    //   description,
-    //   basePrice,
-    //   brand_id,
-    //   category_id,
-    //   gender,
-    //   material,
-    //   imageUrls: productImages.map(
-    //     (file) => `uploads/products/${file.filename}`
-    //   ),
-    // });
+    const productImages = Array.isArray(req.files?.productImage)
+      ? req.files.productImage
+      : Array.isArray(req.files)
+      ? req.files
+      : [];
+    // Tạo sản phẩm mới
+    const newProduct = new Product({
+      product_name,
+      description,
+      basePrice,
+      brand_id,
+      category_id,
+      gender,
+      material,
+      imageUrls: productImages.map(
+        (file) => `uploads/products/${file.filename}`
+      ),
+    });
 
-    // await newProduct.save();
+    await newProduct.save();
 
-    // res.status(201).json({
-    //   message: "Thêm sản phẩm thành công",
-    //   product: newProduct,
-    // });
+    res.status(201).json({
+      message: "Thêm sản phẩm thành công",
+      product: newProduct,
+    });
   } catch (error) {
     console.error("Lỗi khi thêm sản phẩm", error);
     res.status(500).json({ message: "server error", error: error.message });

@@ -13,7 +13,10 @@ export const getAllSizes = async (
   );
   return res.data;
 };
-
+export const getSizes = async () => {
+  const res = await axios.get("/api/sizes/items");
+  return res.data; // trả về danh sách size
+};
 /**
  * Thêm mới một size
  */

@@ -330,10 +330,82 @@ exports.getSoftDeletedVariants = async (req, res) => {
 
 exports.createVariantBulk = async (req, res) => {
   console.log("Data biến thể", req.body);
+  const { productId } = req.params;
+  const { variants } = req.body;
 
-  console.error("Lỗi khi thêm biến thể:", error);
-  return res.status(500).json({
-    message: "Lỗi server khi lấy biến thể đã xoá mềm",
-    error: error.message,
-  });
+  if (!mongoose.isValidObjectId(productId)) {
+    return res.status(400).json({ message: "productId không hợp lệ" });
+  }
+  if (!Array.isArray(variants) || variants.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "variants phải là mảng và không rỗng" });
+  }
+
+  // Chuẩn hóa và lọc dữ liệu
+  const docs = variants
+    .map((v) => ({
+      product_id: productId,
+      size: (v.size ?? "").trim(),
+      color: (v.color ?? "").trim(),
+      price: Number(v.price ?? 0),
+      stock: Number(v.stock ?? 0),
+      image: Array.isArray(v.image) ? v.image : v.image ? [v.image] : [],
+    }))
+    .filter((v) => v.size && v.color && v.price >= 0 && v.stock >= 0);
+
+  if (docs.length === 0) {
+    return res.status(400).json({ message: "Dữ liệu biến thể không hợp lệ" });
+  }
+
+  try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    // Lấy những biến thể đã tồn tại để loại trùng
+    const existed = await Variant.find(
+      {
+        product_id: productId,
+        $or: docs.map((d) => ({
+          size: new RegExp(`^${d.size}$`, "i"),
+          color: new RegExp(`^${d.color}$`, "i"),
+        })),
+      },
+      { size: 1, color: 1 },
+      { session }
+    );
+
+    const existedSet = new Set(
+      existed.map((e) => `${normalize(e.size)}|${normalize(e.color)}`)
+    );
+
+    const toInsert = docs.filter(
+      (d) => !existedSet.has(`${normalize(d.size)}|${normalize(d.color)}`)
+    );
+
+    let inserted = [];
+    if (toInsert.length > 0) {
+      inserted = await Variant.insertMany(toInsert, {
+        session,
+        ordered: false,
+      });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.json({
+      message: "Tạo biến thể hoàn tất",
+      requested: docs.length,
+      inserted: inserted.length,
+      skipped: docs.length - inserted.length,
+      variants: inserted,
+    });
+  } catch (error) {
+    console.error("Lỗi khi thêm biến thể:", error);
+    return res.status(500).json({
+      message: "Lỗi server khi lấy biến thể đã xoá mềm",
+      error: error.message,
+    });
+  }
 };

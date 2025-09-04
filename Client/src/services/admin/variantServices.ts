@@ -28,7 +28,7 @@ export const getAllVariants = async (
     })),
   };
 };
-export const createVariantBulk = async (formdata: FormData) => {
+export const createVariantBulk = async (formdata: IVariants[]) => {
   return axios.post("/api/variant/bulk", formdata, {
     headers: {
       "Content-Type": "multipart/form-data",

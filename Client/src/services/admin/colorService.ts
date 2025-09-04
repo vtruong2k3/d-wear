@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { ColorRespone, GetColorsResponse } from "../../types/color/IColor";
 
-// ✅ Lấy danh sách màu sắc có phân trang
+//  Lấy danh sách màu sắc có phân trang
 export const getAllColors = async (
   page = 1,
   limit = 10
@@ -11,8 +11,11 @@ export const getAllColors = async (
   );
   return res.data;
 };
-
-// ✅ Thêm màu sắc mới
+export const getColors = async () => {
+  const res = await axios.get("/api/colors/items");
+  return res.data; // trả về danh sách color
+};
+//  Thêm màu sắc mới
 export const createColor = async (
   color_name: string
 ): Promise<ColorRespone> => {
