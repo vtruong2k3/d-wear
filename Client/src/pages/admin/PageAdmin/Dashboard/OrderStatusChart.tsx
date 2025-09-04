@@ -7,14 +7,13 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts';
-// ✅ Khai báo kiểu cho mỗi mục trong biểu đồ
+
 interface OrderStatusItem {
     name: string;
     value: number;
     color: string;
 }
 
-// ✅ Khai báo kiểu props
 interface OrderStatusChartProps {
     data: OrderStatusItem[];
     title?: string;

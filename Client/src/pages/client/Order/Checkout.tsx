@@ -1060,7 +1060,7 @@ const Checkout = () => {
               {finalTotal >= 5000000 && (
                 <Text type="warning">
                   <ExclamationCircleOutlined style={{ marginRight: 6 }} />
-                  Đơn hàng lớn hơn 2 triệu vui lòng thanh toán bằng momo hoặc vnpay.
+                  Đơn hàng lớn hơn 5 triệu vui lòng thanh toán bằng momo hoặc vnpay.
                 </Text>
               )}
 
@@ -1097,7 +1097,7 @@ const Checkout = () => {
                   (addressType === "saved" && !selectedAddressId) ||
                   (addressType === "manual" &&
                     (!selectedProvince || !selectedDistrict || !selectedWard)) ||
-                  (finalTotal >= 2000000 && paymentMethodValue !== "momo")
+                  (finalTotal >= 5000000 && paymentMethodValue !== "momo")
                 }
               >
                 {paymentMethodValue === "cod"

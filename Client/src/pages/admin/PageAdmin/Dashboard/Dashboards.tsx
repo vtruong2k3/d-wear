@@ -34,6 +34,8 @@ import { useLoading } from '../../../../contexts/LoadingContext';
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import utc from "dayjs/plugin/utc";
+import { formatCurrency } from '../../../../utils/Format';
+
 
 dayjs.extend(weekOfYear);
 dayjs.extend(utc);
@@ -103,9 +105,9 @@ const DailyStatistics = () => {
   const statsData: StatCardProps[] = [
     {
       title: statisticType === 'normal' ? 'Doanh thu hôm nay' : 'Tổng doanh thu',
-      value: currentData.totalRevenue,
+      value: formatCurrency(currentData.totalRevenue),
+      prefix: '',
       precision: 0,
-      prefix: '₫',
       trend: 'up',
       trendValue: 18.3,
       icon: <DollarOutlined className="text-green-500" />,
@@ -195,9 +197,10 @@ const DailyStatistics = () => {
 
     return (Object.entries(statusCount) as [OrderStatus, number][]).map(
       ([key, value]) => ({
-        name: key,
+
+        name: statusMap[key].label,
         value,
-        label: statusMap[key].label,
+        code: key,
         color: statusMap[key].color,
       })
     );

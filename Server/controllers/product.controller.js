@@ -12,46 +12,99 @@ const Cart = require("../models/carts");
 const upload = require("../middlewares/uploadProduct.middleware");
 
 // Lấy tất cả sản phẩm cùng biến thể
+// Giả sử Variant có field: price (Number). Nếu bạn dùng salePrice/finalPrice -> đổi tên field tương ứng.
+// Giả sử Variant có isDeleted (nếu có thì lọc thêm isDeleted: {$ne: true})
+
 exports.getAllProductWithVariants = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
 
     const sortBy = req.query.sortBy || "createdAt";
     const order = req.query.order === "asc" ? 1 : -1;
-    const keyword = req.query.q || "";
+    const keyword = (req.query.q || "").trim();
 
-    // Bổ sung điều kiện không lấy sản phẩm bị xóa mềm
-    const query = {
-      isDeleted: { $ne: true },
-    };
+    const minPrice =
+      req.query.minPrice !== undefined ? Number(req.query.minPrice) : null;
+    const maxPrice =
+      req.query.maxPrice !== undefined ? Number(req.query.maxPrice) : null;
 
+    // 1) Product filter cơ bản (không xóa mềm + tên)
+    const productQuery = { isDeleted: { $ne: true } };
     if (keyword) {
-      query.product_name = { $regex: keyword, $options: "i" };
+      productQuery.product_name = { $regex: keyword, $options: "i" };
     }
 
-    const totalProducts = await Product.countDocuments(query);
+    // 2) Nếu có yêu cầu lọc theo giá variant -> tìm product_id có ít nhất một variant khớp
+    if (minPrice !== null || maxPrice !== null) {
+      const variantPriceFilter = {};
+      if (minPrice !== null) variantPriceFilter.$gte = minPrice;
+      if (maxPrice !== null) variantPriceFilter.$lte = maxPrice;
 
-    const products = await Product.find(query)
+      const variantFilter = {
+        // nếu có cờ xóa mềm trên variant:
+        // isDeleted: { $ne: true },
+        price: variantPriceFilter,
+      };
+
+      // Nếu đang lọc theo từ khóa product_name, ta vẫn lọc variant độc lập trước:
+      // Lấy ra danh sách product_id có ít nhất 1 variant trong khoảng giá
+      const productIdsByPrice = await Variant.distinct(
+        "product_id",
+        variantFilter
+      );
+
+      // Nếu không có product nào match theo giá -> trả rỗng sớm
+      if (!productIdsByPrice.length) {
+        return res.status(200).json({
+          message: "Lấy danh sách sản phẩm thành công",
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          products: [],
+        });
+      }
+
+      // Kết hợp với điều kiện tên (nếu có)
+      productQuery._id = { $in: productIdsByPrice };
+    }
+
+    // 3) Đếm tổng theo productQuery cuối cùng
+    const totalProducts = await Product.countDocuments(productQuery);
+
+    // 4) Lấy products theo trang
+    const products = await Product.find(productQuery)
       .populate("brand_id", "brand_name")
       .populate("category_id", "category_name")
       .sort({ [sortBy]: order })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const productIds = products.map((p) => p._id);
-    const variants = await Variant.find({ product_id: { $in: productIds } });
 
+    // 5) Lấy variants cho các product đang hiển thị
+    //    Nếu có min/max -> chỉ lấy variants trong khoảng giá (để trả về đúng cái user muốn xem)
+    const variantQuery = { product_id: { $in: productIds } };
+    // nếu có cờ xóa mềm trên variant:
+    // variantQuery.isDeleted = { $ne: true };
+
+    if (minPrice !== null || maxPrice !== null) {
+      variantQuery.price = {};
+      if (minPrice !== null) variantQuery.price.$gte = minPrice;
+      if (maxPrice !== null) variantQuery.price.$lte = maxPrice;
+    }
+
+    const variants = await Variant.find(variantQuery).lean();
+
+    // 6) Gộp variants theo từng product
     const productList = products.map((product) => {
       const productVariants = variants.filter(
-        (v) => v.product_id.toString() === product._id.toString()
+        (v) => String(v.product_id) === String(product._id)
       );
-
-      return {
-        ...product.toObject(),
-        variants: productVariants,
-      };
+      return { ...product, variants: productVariants };
     });
 
     return res.status(200).json({

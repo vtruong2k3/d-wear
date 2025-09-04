@@ -12,7 +12,7 @@ import {
   Space,
   Row,
   Col,
-  Statistic,
+  // Statistic,
 
   Tooltip,
   Typography,
@@ -22,12 +22,12 @@ import {
   EyeOutlined,
 
   FilterOutlined,
-  SortAscendingOutlined,
+  // SortAscendingOutlined,
   ReloadOutlined,
   ShoppingCartOutlined,
-  DollarOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
+  // DollarOutlined,
+  // ClockCircleOutlined,
+  // CheckCircleOutlined,
 } from "@ant-design/icons";
 // import '../../../../styles/orderAdmin.css'
 import { Link } from "react-router-dom";
@@ -176,15 +176,15 @@ const OrderList = () => {
   };
 
   // Calculate statistics
-  const stats = {
-    total: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    processing: orders.filter(o => o.status === 'processing').length,
-    shipped: orders.filter(o => o.status === 'shipped').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length,
-    totalRevenue: orders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + o.finalAmount, 0),
-  };
+  // const stats = {
+  //   total: orders.length,
+  //   pending: orders.filter(o => o.status === 'pending').length,
+  //   processing: orders.filter(o => o.status === 'processing').length,
+  //   shipped: orders.filter(o => o.status === 'shipped').length,
+  //   delivered: orders.filter(o => o.status === 'delivered').length,
+  //   cancelled: orders.filter(o => o.status === 'cancelled').length,
+  //   totalRevenue: orders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + o.finalAmount, 0),
+  // };
 
   const columns: ColumnsType<IOrder> = [
     {
@@ -337,7 +337,7 @@ const OrderList = () => {
         </Title>
 
         {/* Statistics Cards */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        {/* <Row gutter={16} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={8} md={6} lg={4}>
             <Card size="small" style={{ borderRadius: '8px' }}>
               <Statistic
@@ -398,7 +398,7 @@ const OrderList = () => {
               />
             </Card>
           </Col>
-        </Row>
+        </Row> */}
 
         <Divider style={{ margin: '12px 0' }} />
 
@@ -420,7 +420,7 @@ const OrderList = () => {
                 size="small"
                 style={{ borderRadius: '4px', fontSize: '12px' }}
               >
-                Xóa
+                Reset
               </Button>
               <Button
                 type="primary"

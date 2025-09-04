@@ -248,7 +248,7 @@ const ShoppingCart = () => {
                 <div className="p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Tổng đơn hàng</h2>
 
-                  <div className="bg-green-50 rounded-lg p-4 mb-6">
+                  {/* <div className="bg-green-50 rounded-lg p-4 mb-6">
                     <div className="flex items-center">
                       <svg className="w-5 h-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -265,7 +265,7 @@ const ShoppingCart = () => {
                         }}
                       ></div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-gray-600 text-sm">
@@ -276,7 +276,7 @@ const ShoppingCart = () => {
                       <span>Tạm tính</span>
                       <span>{formatCurrency(selectedTotal)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-600 text-sm">
+                    {/* <div className="flex justify-between text-gray-600 text-sm">
                       <span>Phí vận chuyển</span>
                       <span>
                         {selectedTotal >= 100 ? (
@@ -285,7 +285,7 @@ const ShoppingCart = () => {
                           "30.000đ"
                         )}
                       </span>
-                    </div>
+                    </div> */}
                     <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between font-bold text-xl">
                       <span>Tổng cộng</span>
                       <span>

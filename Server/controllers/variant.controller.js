@@ -6,58 +6,57 @@ const removeAccents = require("remove-accents");
 
 exports.getAllVariant = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
-    const skip = (page - 1) * limit;
+    // 1) Chuẩn hóa phân trang
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.max(1, Number(req.query.limit) || 10);
+    const skip = (pageNum - 1) * limitNum;
 
-    const keywords = removeAccents(search)
-      .toLowerCase()
-      .split(" ")
-      .filter(Boolean); // Loại bỏ khoảng trắng thừa
+    // 2) Chuẩn hóa search
+    const rawSearch = (req.query.search || "").trim();
+    const normalizedSearch = removeAccents(rawSearch).toLowerCase(); // dùng cho so khớp không dấu
+    const keywords = normalizedSearch.split(" ").filter(Boolean);
 
-    // Lấy danh sách sản phẩm để lọc theo tên không dấu
-    const allProducts = await Product.find().select("_id product_name");
+    // 3) Nếu có search, tìm product_id khớp tên (không dấu)
+    let matchedProductIds = [];
+    if (keywords.length) {
+      const allProducts = await Product.find().select("_id product_name");
+      matchedProductIds = allProducts
+        .filter((p) => {
+          const nameNoAccent = removeAccents(p.product_name).toLowerCase();
+          // match nếu TẤT CẢ từ khóa đều có trong tên (độ chính xác cao hơn some)
+          return keywords.every((kw) => nameNoAccent.includes(kw));
+        })
+        .map((p) => p._id);
+    }
 
-    // Lọc ra các product_id có tên phù hợp
-    const matchedProductIds = allProducts
-      .filter((product) => {
-        const name = removeAccents(product.product_name).toLowerCase();
-        return keywords.some((kw) => name.includes(kw));
-      })
-      .map((product) => product._id);
+    // 4) Tạo filter cho Variant
+    const variantFilter = { isDeleted: { $ne: true } };
 
-    // Tạo bộ lọc
-    const variantFilter = {
-      isDeleted: { $ne: true },
-      $or: [
+    if (keywords.length) {
+      variantFilter.$or = [
         { product_id: { $in: matchedProductIds } },
-        { color: { $regex: search, $options: "i" } },
-        { size: { $regex: search, $options: "i" } },
-      ],
-    };
+        { color: { $regex: rawSearch, $options: "i" } },
+        { size: { $regex: rawSearch, $options: "i" } },
+      ];
+    }
 
     const total = await Variant.countDocuments(variantFilter);
 
     const variants = await Variant.find(variantFilter)
-      .populate({
-        path: "product_id",
-        select: "product_name",
-      })
+      .populate({ path: "product_id", select: "product_name" })
       .skip(skip)
-      .limit(Number(limit))
+      .limit(limitNum)
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       message: "Lấy danh sách biến thể thành công",
       total,
-      currentPage: Number(page),
-      totalPages: Math.ceil(total / limit),
+      currentPage: pageNum,
+      totalPages: Math.ceil(total / limitNum),
       variants,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 

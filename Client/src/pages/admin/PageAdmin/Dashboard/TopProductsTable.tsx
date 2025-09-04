@@ -1,6 +1,6 @@
 
 import { Card, Image, Table } from 'antd';
-import { ArrowUpOutlined, FireOutlined } from '@ant-design/icons';
+import { FireOutlined } from '@ant-design/icons';
 import type { TopProduct } from '../../../../types/static/IStatic';
 import { formatCurrency } from '../../../../utils/Format';
 import '../../../../styles/TopProduct.css'
@@ -63,13 +63,10 @@ const TopProductsTable: React.FC<TopProductsTableProps> = ({ products }) => {
             title: 'Đã bán',
             dataIndex: 'sold',
             key: 'sold',
-            render: (sold: number, record: TopProduct) => (
+            render: (sold: number) => (
                 <div className="text-center">
                     <div className="font-bold text-lg">{sold}</div>
-                    <div className="flex items-center justify-center mt-1">
-                        <ArrowUpOutlined className="text-green-500 text-xs mr-1" />
-                        <span className="text-xs text-green-500">{record.growth}%</span>
-                    </div>
+
                 </div>
             ),
         },

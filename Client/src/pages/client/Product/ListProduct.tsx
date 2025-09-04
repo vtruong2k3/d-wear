@@ -12,7 +12,7 @@ import {
   Typography,
   Space,
   Divider,
-  Badge,
+
   Slider,
   InputNumber,
   Collapse,
@@ -44,6 +44,7 @@ import type { IBrand } from "../../../types/brand/IBrand";
 import { fetchAllBrands } from "../../../services/client/apiBrandService";
 import { useLoading } from "../../../contexts/LoadingContext";
 
+
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -60,6 +61,7 @@ const ListProduct = () => {
   const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([
     0, 10000000,
   ]);
+  const [minPrice, maxPrice] = priceRange;
   const { setLoading } = useLoading();
 
   const parsed = queryString.parse(location.search);
@@ -81,6 +83,8 @@ const ListProduct = () => {
     order: "desc",
     q: safeQ,
     category_id: categoryId,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
 
   });
 
@@ -106,6 +110,7 @@ const ListProduct = () => {
       category_id: categoryId,
       sortBy: sortBy || "createdAt", // fallback
       order: order || "desc",
+
     });
 
     setCategory(categoryId);
@@ -405,7 +410,7 @@ const ListProduct = () => {
                     size="small"
                     onClick={() => {
                       setPriceRange(tempPriceRange);
-                      updateQuery({ page: 1 });
+                      updateQuery({ page: 1, minPrice: tempPriceRange[0], maxPrice: tempPriceRange[1] });
                     }}
 
                     style={{ width: "100%" }}
@@ -416,7 +421,7 @@ const ListProduct = () => {
               </Space>
             </Panel>
 
-            <Panel
+            {/* <Panel
               header={
                 <Title level={4} style={{ margin: 0, color: "#000" }}>
                   Tình trạng
@@ -441,7 +446,7 @@ const ListProduct = () => {
                   </Text>
                 </Badge>
               </Space>
-            </Panel>
+            </Panel> */}
           </Collapse>
         </Sider>
 

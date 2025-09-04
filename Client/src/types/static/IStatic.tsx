@@ -107,7 +107,7 @@ export interface FilteredStatistics {
 }
 export interface StatCardProps {
     title?: string;
-    value: number;
+    value: number | string;
     prefix?: string;
     precision?: number;
     trend: 'up' | 'down';

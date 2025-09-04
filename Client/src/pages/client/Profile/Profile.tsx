@@ -402,15 +402,18 @@ const UserProfile = () => {
                   >
                     Sản phẩm yêu thích
                   </Button>
-                  <Button
-                    type="default"
-                    icon={<EnvironmentOutlined />}
-                    block
-                    size="large"
-                    className="border-gray-300 hover:bg-gray-50"
-                  >
-                    Địa chỉ
-                  </Button>
+                  <Link to={'/address'}>
+                    <Button
+                      type="default"
+                      icon={<EnvironmentOutlined />}
+                      block
+                      size="large"
+                      className="border-gray-300 hover:bg-gray-50"
+                    >
+                      Địa chỉ
+                    </Button>
+
+                  </Link>
                 </Space>
               </Card>
 

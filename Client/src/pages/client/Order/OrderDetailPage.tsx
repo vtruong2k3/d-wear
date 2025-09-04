@@ -598,10 +598,22 @@ const OrderDetailPage = () => {
                   <span className="text-gray-600">Tạm tính:</span>
                   <span className="font-medium">
                     {order.order.discount > 0
-                      ? formatCurrency(order.order.discount)
-                      : formatCurrency(order.order.total)}
+                      ? formatCurrency(order.order.total)
+                      : formatCurrency(0)}
                   </span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Giảm giá:</span>
+                  <span
+                    className={`font-medium ${order.order.discount > 0 ? "text-red-500" : "text-gray-800"
+                      }`}
+                  >
+                    {order.order.discount > 0
+                      ? `- ${formatCurrency(order.order.discount)}`
+                      : formatCurrency(0)}
+                  </span>
+                </div>
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Phí vận chuyển:</span>
                   <span className="font-medium text-green-600">{order.order.shippingFee ? formatCurrency(order.order.shippingFee) : "Miễn phí"}</span>

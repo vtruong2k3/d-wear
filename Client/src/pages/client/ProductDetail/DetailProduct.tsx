@@ -170,7 +170,6 @@ const DetailProduct = () => {
         <div className="container" ref={divRef}>
           <ul className="flex gap-2 items-center py-4">
             <li><a className="text-sm" href="/">Home /</a></li>
-            <li><a className="text-sm" href="#none">{dataDetail.category_id} /</a></li>
             <li><a className="text-sm">{dataDetail.product_name}</a></li>
           </ul>
 
