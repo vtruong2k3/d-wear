@@ -1,15 +1,15 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, type ActionReducerMapBuilder, type PayloadAction } from "@reduxjs/toolkit";
 import type { AuthStateAdmin } from "../../../types/auth/IAuth";
 import { doLoginAdmin, fetchUserProfile } from "./thunks/authAdminThunk";
 import { message } from "antd";
+import { setAccessToken } from "../../../configs/AxiosConfig";
 
-// Lấy token từ localStorage
-const savedToken = localStorage.getItem("token");
+
 
 const initialState: AuthStateAdmin = {
   user: null,
-  token: savedToken || null,
-  isLogin: !!savedToken,
+  token: null,
+  isLogin: false,
   loading: false,
   error: null,
   isInitialized: false, // 👈 NEW
@@ -20,7 +20,7 @@ const authAdminSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-      localStorage.removeItem("token");
+      setAccessToken(null);
       state.user = null;
       state.token = null;
       state.isLogin = false;
@@ -30,7 +30,7 @@ const authAdminSlice = createSlice({
       message.success("Đăng xuất thành công");
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: (builder: ActionReducerMapBuilder<AuthStateAdmin>) => {
     builder
       // Đăng nhập
       .addCase(doLoginAdmin.pending, (state) => {
@@ -39,12 +39,11 @@ const authAdminSlice = createSlice({
       })
       .addCase(doLoginAdmin.fulfilled, (state, action) => {
         const token = action.payload.token;
-        localStorage.setItem("token", token);
         state.token = token;
         state.isLogin = true;
         state.loading = false;
       })
-      .addCase(doLoginAdmin.rejected, (state, action) => {
+      .addCase(doLoginAdmin.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload as string;
         state.token = null;
@@ -64,6 +63,8 @@ const authAdminSlice = createSlice({
         state.isInitialized = true; //  đánh dấu đã init
       })
       .addCase(fetchUserProfile.rejected, (state) => {
+        setAccessToken(null);
+        state.token = null;
         state.user = null;
         state.isLogin = false;
         state.loading = false;

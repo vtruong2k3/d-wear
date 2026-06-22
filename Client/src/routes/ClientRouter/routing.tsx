@@ -1,20 +1,23 @@
-import Layout from "../../layouts/ClientLayout";
-import Home from "../../pages/client/Home/Home";
-import DetailProduct from "../../pages/client/ProductDetail/DetailProduct";
-import Login from "../../pages/client/Login/Login";
-import Register from "../../pages/client/Login/Register";
-import ListProduct from "../../pages/client/Product/ListProduct";
-import Profile from "../../pages/client/Profile/Profile";
-import ShoppingCart from "../../pages/client/Cart/ShoppingCart";
-import Checkout from "../../pages/client/Order/Checkout";
-import PaymentResult from "../../pages/client/Order/PaymentResult";
-import OrdersPage from "../../pages/client/Order/OrdersPage";
-import OrderDetailPage from "../../pages/client/Order/OrderDetailPage";
-import AddressManagement from "../../pages/client/Address/AddressManagerModal";
-import AboutPage from "../../pages/client/About/About";
-import ContactPage from "../../pages/client/Contact/Contact";
-import BlogtPage from "../../pages/client/Blog/Blog";
-import ForgotPassword from "../../pages/client/Login/ForgotPassword";
+import  { lazy } from 'react';
+
+const Layout = lazy(() => import("../../layouts/ClientLayout"));
+const Home = lazy(() => import("../../pages/client/Home/Home"));
+const DetailProduct = lazy(() => import("../../pages/client/ProductDetail/DetailProduct"));
+const Login = lazy(() => import("../../pages/client/Login/Login"));
+const Register = lazy(() => import("../../pages/client/Login/Register"));
+const ListProduct = lazy(() => import("../../pages/client/Product/ListProduct"));
+const Profile = lazy(() => import("../../pages/client/Profile/Profile"));
+const ShoppingCart = lazy(() => import("../../pages/client/Cart/ShoppingCart"));
+const Checkout = lazy(() => import("../../pages/client/Order/Checkout"));
+const PaymentResult = lazy(() => import("../../pages/client/Order/PaymentResult"));
+const OrdersPage = lazy(() => import("../../pages/client/Order/OrdersPage"));
+const OrderDetailPage = lazy(() => import("../../pages/client/Order/OrderDetailPage"));
+const AddressManagement = lazy(() => import("../../pages/client/Address/AddressManagerModal"));
+const AboutPage = lazy(() => import("../../pages/client/About/About"));
+const ContactPage = lazy(() => import("../../pages/client/Contact/Contact"));
+const BlogtPage = lazy(() => import("../../pages/client/Blog/Blog"));
+const ForgotPassword = lazy(() => import("../../pages/client/Login/ForgotPassword"));
+
 const clientRoutes = [
   {
     path: "/",
@@ -40,7 +43,6 @@ const clientRoutes = [
         path: "/product",
         element: <ListProduct />,
       },
-
       {
         path: "product/:id",
         element: <DetailProduct />,
@@ -66,27 +68,26 @@ const clientRoutes = [
         element: <PaymentResult />,
       },
       {
-        path: "orders", // ✅ Danh sách đơn hàng
+        path: "orders",
         element: <OrdersPage />,
       },
       {
-        path: "orders/:id", // ✅ Chi tiết đơn hàng
+        path: "orders/:id",
         element: <OrderDetailPage />,
       },
-      {
-        path: "/login",
-
-        element: <Login />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
-        path: "/forgot-password",
-        element: <ForgotPassword />,
-      },
     ],
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
   },
 ];
 

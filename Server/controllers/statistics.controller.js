@@ -12,27 +12,26 @@ exports.getSummary = async (req, res) => {
     const startOfDay = new Date(`${today}T00:00:00Z`);
     const endOfDay = new Date(`${today}T23:59:59Z`);
 
-    const [orders, users, shippingCount] = await Promise.all([
-      Order.find({ createdAt: { $gte: startOfDay, $lte: endOfDay } }),
-      User.find({ createdAt: { $gte: startOfDay, $lte: endOfDay } }),
+    const [revenueAgg, orderCount, customerCount, shippingCount] = await Promise.all([
+      Order.aggregate([
+        { $match: { createdAt: { $gte: startOfDay, $lte: endOfDay }, status: "delivered" } },
+        { $group: { _id: null, total: { $sum: "$finalAmount" } } }
+      ]),
+      Order.countDocuments({ createdAt: { $gte: startOfDay, $lte: endOfDay } }),
+      User.countDocuments({ createdAt: { $gte: startOfDay, $lte: endOfDay } }),
       Order.countDocuments({
         status: "shipped",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
     ]);
 
-    const totalRevenue = orders.reduce((sum, order) => {
-      if (order.status === "delivered") {
-        return sum + order.finalAmount;
-      }
-      return sum;
-    }, 0);
+    const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
 
     res.json({
       totalRevenue,
-      totalOrders: orders.length,
-      totalCustomers: users.length,
-      shippingOrders: shippingCount, //  thêm đơn đang giao
+      totalOrders: orderCount,
+      totalCustomers: customerCount,
+      shippingOrders: shippingCount,
     });
   } catch (err) {
     res.status(500).json({
@@ -48,31 +47,46 @@ exports.getDailyData = async (req, res) => {
     const today = dayjs();
     const data = [];
 
-    for (let i = 0; i < days; i++) {
-      const date = today.subtract(i, "day").format("YYYY-MM-DD");
-      const nextDay = today
-        .subtract(i - 1, "day")
-        .startOf("day")
-        .toDate();
-      const startDate = new Date(`${date}T00:00:00.000Z`);
-      const endDate = new Date(nextDay);
+    const startDate = today.subtract(days - 1, "day").startOf("day").toDate();
+    const endDate = today.endOf("day").toDate();
 
-      const orders = await Order.find({
-        createdAt: { $gte: startDate, $lt: endDate },
-      });
-      const revenue = orders
-        .filter((o) => o.status === "delivered")
-        .reduce((sum, o) => sum + o.finalAmount, 0);
-      const customers = await User.countDocuments({
-        createdAt: { $gte: startDate, $lt: endDate },
-      });
+    const orderAgg = await Order.aggregate([
+      { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          ordersCount: { $sum: 1 },
+          revenue: {
+            $sum: { $cond: [{ $eq: ["$status", "delivered"] }, "$finalAmount", 0] }
+          }
+        }
+      }
+    ]);
 
-      data.unshift({
-        date,
-        displayDate: dayjs(date).format("DD/MM"),
-        revenue,
-        orders: orders.length,
-        customers,
+    const userAgg = await User.aggregate([
+      { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          customersCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const orderMap = {};
+    orderAgg.forEach((item) => { orderMap[item._id] = item; });
+    
+    const userMap = {};
+    userAgg.forEach((item) => { userMap[item._id] = item; });
+
+    for (let i = days - 1; i >= 0; i--) {
+      const dateStr = today.subtract(i, "day").format("YYYY-MM-DD");
+      data.push({
+        date: dateStr,
+        displayDate: dayjs(dateStr).format("DD/MM"),
+        revenue: orderMap[dateStr]?.revenue || 0,
+        orders: orderMap[dateStr]?.ordersCount || 0,
+        customers: userMap[dateStr]?.customersCount || 0,
       });
     }
 
@@ -206,7 +220,7 @@ exports.filterByDate = async (req, res) => {
     const from = new Date(startDate + "T00:00:00Z");
     const to = new Date(endDate + "T23:59:59Z");
 
-    const orders = await Order.find({ createdAt: { $gte: from, $lte: to } });
+    const orders = await Order.find({ createdAt: { $gte: from, $lte: to } }).select("status finalAmount createdAt receiverName order_code phone");
     const revenue = orders
       .filter((o) => o.status === "delivered")
       .reduce((sum, o) => sum + o.finalAmount, 0);
@@ -278,10 +292,10 @@ exports.summaryByWeek = async (req, res) => {
 
     const orders = await Order.find({
       createdAt: { $gte: firstDay, $lte: lastDay },
-    });
+    }).select("status finalAmount createdAt receiverName order_code phone");
     const users = await User.find({
       createdAt: { $gte: firstDay, $lte: lastDay },
-    });
+    }).select("createdAt");
     const revenue = orders
       .filter((o) => o.status === "delivered")
       .reduce((sum, o) => sum + o.finalAmount, 0);
@@ -334,23 +348,44 @@ exports.summaryByYear = async (req, res) => {
     const { year } = req.params;
     const result = [];
 
-    for (let month = 0; month < 12; month++) {
-      const start = new Date(year, month, 1);
-      const end = new Date(year, month + 1, 0, 23, 59, 59);
+    const startYear = new Date(year, 0, 1);
+    const endYear = new Date(year, 11, 31, 23, 59, 59);
 
-      const orders = await Order.find({
-        createdAt: { $gte: start, $lte: end },
-      });
-      const users = await User.find({ createdAt: { $gte: start, $lte: end } });
+    const orderAgg = await Order.aggregate([
+      { $match: { createdAt: { $gte: startYear, $lte: endYear } } },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          ordersCount: { $sum: 1 },
+          revenue: {
+            $sum: { $cond: [{ $eq: ["$status", "delivered"] }, "$finalAmount", 0] }
+          }
+        }
+      }
+    ]);
 
+    const userAgg = await User.aggregate([
+      { $match: { createdAt: { $gte: startYear, $lte: endYear } } },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          customersCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const orderMap = {};
+    orderAgg.forEach((item) => { orderMap[item._id] = item; });
+
+    const userMap = {};
+    userAgg.forEach((item) => { userMap[item._id] = item; });
+
+    for (let month = 1; month <= 12; month++) {
       result.push({
-        month: month + 1,
-        revenue: orders
-          .filter((o) => o.status === "delivered")
-          .reduce((sum, o) => sum + o.finalAmount, 0),
-
-        orders: orders.length,
-        customers: users.length,
+        month: month,
+        revenue: orderMap[month]?.revenue || 0,
+        orders: orderMap[month]?.ordersCount || 0,
+        customers: userMap[month]?.customersCount || 0,
       });
     }
 

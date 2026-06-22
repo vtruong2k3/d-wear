@@ -105,7 +105,7 @@ exports.getIdProductVariant = async (req, res) => {
 };
 exports.createVariant = async (req, res) => {
   req.body.image = req.files.imageVariant
-    ? req.files.imageVariant.map((file) => file.path)
+    ? req.files.imageVariant.map((file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || file.path))
     : [];
 
   try {
@@ -159,7 +159,7 @@ exports.updateVariant = async (req, res) => {
 
   //  Chỉ gán image nếu có ảnh mới
   if (req.files?.imageVariant && req.files.imageVariant.length > 0) {
-    req.body.image = req.files.imageVariant.map((file) => file.path);
+    req.body.image = req.files.imageVariant.map((file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || file.path));
   } else {
     delete req.body.image; // Không gửi field image => giữ ảnh cũ
   }

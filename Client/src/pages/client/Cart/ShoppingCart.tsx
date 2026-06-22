@@ -101,12 +101,13 @@ const ShoppingCart = () => {
 
         {cartItems.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-lg text-gray-500">Bạn chưa có sản phẩm nào trong giỏ hàng.</p>
+            <div className="text-6xl mb-6 opacity-30">🛍️</div>
+            <p className="text-xl font-medium text-gray-500">Giỏ hàng của bạn đang trống.</p>
             <button
               onClick={() => navigate("/")}
-              className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="mt-6 px-8 py-3.5 bg-black text-white font-bold rounded-xl hover:bg-gray-900 shadow-lg transition-all active:scale-95"
             >
-              Quay lại trang chủ
+              Tiếp tục mua sắm
             </button>
           </div>
         ) : (
@@ -119,7 +120,7 @@ const ShoppingCart = () => {
                       type="checkbox"
                       checked={selectedItems.length === cartItems.length}
                       onChange={handleSelectAll}
-                      className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                      className="w-5 h-5 text-gray-900 rounded border-gray-300 focus:ring-gray-900 cursor-pointer accent-black"
                     />
                     <span className="ml-3 text-sm font-medium text-gray-700">
                       Chọn tất cả ({cartItems.length} sản phẩm)
@@ -132,8 +133,8 @@ const ShoppingCart = () => {
                     <div
                       key={cart._id}
                       className={`p-6 transition-all duration-200 ${selectedItems.includes(cart._id)
-                        ? "bg-blue-50 border-l-4 border-blue-500"
-                        : "hover:bg-gray-50"
+                        ? "bg-gray-50 border-l-[3px] border-black"
+                        : "hover:bg-gray-50/50"
                         }`}
                     >
                       <div className="flex items-start  space-x-4">
@@ -141,7 +142,7 @@ const ShoppingCart = () => {
                           type="checkbox"
                           checked={selectedItems.includes(cart._id)}
                           onChange={() => handleSelectItem(cart._id)}
-                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-1"
+                          className="w-5 h-5 text-gray-900 rounded border-gray-300 focus:ring-gray-900 mt-1 cursor-pointer accent-black"
                         />
 
                         <div className="flex-shrink-0 ml-3">
@@ -161,16 +162,27 @@ const ShoppingCart = () => {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                            {cart.product_name}
-                          </h3>
+                          <div className="flex justify-between items-start">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 pr-4">
+                              {cart.product_name}
+                            </h3>
+                            <button
+                              onClick={() => handleDeleteCart(cart._id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                              aria-label="Xóa sản phẩm"
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
 
                           {/* Hiển thị size và màu */}
                           <div className="flex items-center space-x-4 mb-3">
                             {cart.size && (
                               <div className="flex items-center space-x-2">
                                 <span className="text-sm text-gray-500">Size:</span>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <span className="text-sm font-semibold text-gray-900">
                                   {cart.size}
                                 </span>
                               </div>
@@ -178,63 +190,43 @@ const ShoppingCart = () => {
                             {cart.color && (
                               <div className="flex items-center space-x-2">
                                 <span className="text-sm text-gray-500">Màu:</span>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex items-center space-x-1.5">
                                   <div
-                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                    className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
                                     style={{ backgroundColor: cart.color }}
                                   ></div>
-                                  <span className="text-sm text-gray-700">{cart.color}</span>
+                                  <span className="text-sm font-semibold text-gray-900">{cart.color}</span>
                                 </div>
                               </div>
                             )}
                           </div>
 
-                          <p className="text-xl font-bold text-blue-600">{formatCurrency(cart.price)}</p>
+                          <div className="flex items-end justify-between mt-4">
+                            <p className="text-xl font-bold text-red-600">{formatCurrency(cart.price)}</p>
 
-                          {/* Nút điều khiển số lượng mới */}
-                          <div className="flex items-center mt-3">
-                            <span className="text-sm text-gray-500 mr-3">Số lượng:</span>
-                            <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                            {/* Nút điều khiển số lượng */}
+                            <div className="flex items-center border border-gray-300 rounded-lg bg-white h-10 overflow-hidden">
                               <button
                                 onClick={() => handleReduceFormCart(cart)}
                                 disabled={cart.quantity <= 1}
-                                className={`flex items-center justify-center w-8 h-8 rounded-l-lg transition-colors ${cart.quantity <= 1
-                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                  : "bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-800"
+                                className={`flex items-center justify-center w-10 h-full transition-colors ${cart.quantity <= 1
+                                  ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                                  : "hover:bg-gray-100 text-gray-600"
                                   }`}
                               >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                </svg>
+                                <span className="text-lg font-medium">-</span>
                               </button>
-                              <div className="flex items-center justify-center w-12 h-8 bg-gray-50 text-sm font-semibold text-gray-900 border-x border-gray-300">
+                              <div className="flex items-center justify-center w-12 h-full text-base font-bold text-gray-900 border-x border-gray-200">
                                 {cart.quantity}
                               </div>
                               <button
                                 onClick={() => handleAddToCart(cart)}
-                                className="flex items-center justify-center w-8 h-8 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-800 rounded-r-lg transition-colors"
+                                className="flex items-center justify-center w-10 h-full hover:bg-gray-100 text-gray-600 transition-colors"
                               >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
+                                <span className="text-lg font-medium">+</span>
                               </button>
                             </div>
                           </div>
-                        </div>
-
-                        <div className="text-right flex flex-col items-end space-y-2">
-                          <div className="text-xl font-bold text-gray-900">
-                            {formatCurrency(cart.price * cart.quantity)}
-                          </div>
-                          <button
-                            onClick={() => handleDeleteCart(cart._id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                            aria-label="Xóa sản phẩm"
-                          >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -288,10 +280,9 @@ const ShoppingCart = () => {
                     </div> */}
                     <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between font-bold text-xl">
                       <span>Tổng cộng</span>
-                      <span>
+                      <span className="text-red-600">
                         {formatCurrency((
-                          selectedTotal +
-                          (selectedTotal >= 100 ? 0 : 10)
+                          selectedTotal === 0 ? 0 : selectedTotal + (selectedTotal >= 100 ? 0 : 10)
                         ))}
                       </span>
                     </div>

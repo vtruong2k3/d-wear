@@ -20,6 +20,11 @@ voucherRouter.get(
   voucherController.getAllVouchers
 );
 voucherRouter.get(
+  "/voucher/stats",
+  authAdminMiddelware,
+  voucherController.getVoucherStats
+);
+voucherRouter.get(
   "/voucher/:id",
   authAdminMiddelware,
   voucherController.getVoucherById

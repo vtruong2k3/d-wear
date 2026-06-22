@@ -1,30 +1,17 @@
 import * as React from "react";
-import Box from "@mui/material/Box";
-import Avatar from "@mui/material/Avatar";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-
-import Settings from "@mui/icons-material/Settings";
-import Logout from "@mui/icons-material/Logout";
+import { Avatar, Dropdown, type MenuProps } from "antd";
+import { UserOutlined, SettingOutlined, LogoutOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
-import { doLogout } from "../../../redux/features/client/authenSlice.ts";
-import { type AppDispatch, type RootState } from "../../../redux/store.ts";
+import { doLogout } from "../../../redux/features/client/authenSlice";
+import { type AppDispatch, type RootState } from "../../../redux/store";
 import { useNavigate } from "react-router-dom";
 import { MapPin, ShoppingBagIcon } from "lucide-react";
-import { fetchUserProfile } from "../../../redux/features/client/thunks/authUserThunk.ts";
+import { fetchUserProfile } from "../../../redux/features/client/thunks/authUserThunk";
 
 export default function AccountMenu() {
-
   const { user, isLogin } = useSelector((state: RootState) => state.authenSlice);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const open = Boolean(anchorEl);
-
 
   const avatarSrc = React.useMemo(() => {
     const avatar = user?.avatar;
@@ -38,140 +25,71 @@ export default function AccountMenu() {
       if (avatar.startsWith("http")) {
         return avatar;
       }
-      // Nếu là đường dẫn tương đối từ backend
-      const normalized = avatar.startsWith("/")
-        ? avatar
-        : `/${avatar}`;
-      return `http://localhost:5000${normalized.replace(/\\/g, "/")}`;
+      const normalized = avatar.startsWith("/") ? avatar : `/${avatar}`;
+      return `${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${normalized.replace(/\\/g, "/")}`;
     }
 
     return undefined;
   }, [user?.avatar]);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleLogout = () => {
     dispatch(doLogout());
   };
-  React.useEffect(() => {
 
+  React.useEffect(() => {
     if (isLogin) {
       dispatch(fetchUserProfile());
     }
-
   }, [dispatch, isLogin]);
+
+  const items: MenuProps["items"] = [
+    {
+      key: "profile",
+      label: "Trang cá nhân",
+      icon: <UserOutlined />,
+      onClick: () => navigate("/profile"),
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "orders",
+      label: "Đơn hàng của tôi",
+      icon: <ShoppingBagIcon size={16} />,
+      onClick: () => navigate("/orders"),
+    },
+    {
+      key: "address",
+      label: "Địa chỉ",
+      icon: <MapPin size={16} />,
+      onClick: () => navigate("/address"),
+    },
+    {
+      key: "settings",
+      label: "Cài đặt",
+      icon: <SettingOutlined />,
+    },
+    {
+      key: "logout",
+      label: "Đăng xuất",
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+      danger: true,
+    },
+  ];
+
   return (
-    <React.Fragment>
-      <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>
-        <Tooltip title="Account settings">
-          <IconButton
-            onClick={handleClick}
-            size="small"
-            sx={{ ml: 2 }}
-            aria-controls={open ? "account-menu" : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? "true" : undefined}
-          >
-            <Avatar
-              sx={{ width: 32, height: 32 }}
-              src={avatarSrc}
-            >
-              {!avatarSrc && (user?.username?.[0]?.toUpperCase() || "?")}
-            </Avatar>
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <Menu
-        anchorEl={anchorEl}
-        id="account-menu"
-        open={open}
-        onClose={handleClose}
-        onClick={handleClose}
-        slotProps={{
-          paper: {
-            elevation: 0,
-            sx: {
-              overflow: "visible",
-              filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-              mt: 1.5,
-              "& .MuiAvatar-root": {
-                width: 32,
-                height: 32,
-                ml: -0.5,
-                mr: 1,
-              },
-              "&::before": {
-                content: '""',
-                display: "block",
-                position: "absolute",
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: "background.paper",
-                transform: "translateY(-50%) rotate(45deg)",
-                zIndex: 0,
-              },
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-      >
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/profile"); // ← thay đổi tại đây
-          }}
+    <div className="flex items-center text-center">
+      <Dropdown menu={{ items }} placement="bottomRight" arrow trigger={['click']}>
+        <Avatar
+          size={32}
+          src={avatarSrc}
+          className="cursor-pointer ml-4"
+          icon={!avatarSrc && !user?.username ? <UserOutlined /> : undefined}
         >
-          <Avatar /> Trang cá nhân
-        </MenuItem>
-        {/* <MenuItem onClick={handleClose}>
-          <Avatar /> My account
-        </MenuItem> */}
-        <Divider />
-
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/orders");
-          }}
-        >
-          <ListItemIcon>
-            <ShoppingBagIcon fontSize="small" />
-          </ListItemIcon>
-          Đơn hàng của tôi
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/address");
-          }}
-        >
-          <ListItemIcon>
-            <MapPin fontSize="small" />
-          </ListItemIcon>
-          Địa chỉ
-        </MenuItem>
-
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <Settings fontSize="small" />
-          </ListItemIcon>
-          Cài đặt
-        </MenuItem>
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <Logout fontSize="small" />
-          </ListItemIcon>
-          Đăng xuất
-        </MenuItem>
-      </Menu>
-    </React.Fragment>
+          {!avatarSrc && user?.username ? user.username[0].toUpperCase() : null}
+        </Avatar>
+      </Dropdown>
+    </div>
   );
 }

@@ -1,24 +1,27 @@
-import AdminLayout from "../../layouts/AdminLayout";
-import Categories from "../../pages/admin/PageAdmin/Categories/CategoriesList";
-import Dashboard from "../../pages/admin/PageAdmin/Dashboard/Dashboards";
-import Products from "../../pages/admin/PageAdmin/Products/Products";
-import LoginAdmin from "../../pages/admin/auth/LoginAdmin";
-import ProductEdit from "../../pages/admin/PageAdmin/Products/ProductEdit";
-import ProductAdd from "../../pages/admin/PageAdmin/Products/ProductAdd";
-import QuickAddProduct from "../../pages/admin/PageAdmin/Products/QuickAddProduct";
-import Orders from "../../pages/admin/PageAdmin/Orders/Orders";
-import Orderdetail from "../../pages/admin/PageAdmin/Orders/OrderDetail";
-import Brand from "../../pages/admin/PageAdmin/Brand/Brand";
-import Voucher from "../../pages/admin/PageAdmin/Voucher/Voucher";
-import Variants from "../../pages/admin/PageAdmin/Variants/Variants";
-import Sizes from "../../pages/admin/PageAdmin/Size/Size";
-import Color from "../../pages/admin/PageAdmin/Color/Color";
-import UsersList from "../../pages/admin/PageAdmin/Users/UsersList";
-import Messenger from "../../pages/admin/PageAdmin/Messenger/Messenger";
-import Review from "../../pages/admin/PageAdmin/Reivew/Review";
-import ProductDetailAdmin from "../../pages/admin/PageAdmin/Products/ProductDetalAdmin"
-import AddUser from '../../pages/admin/PageAdmin/Users/AddUser';
-import UpdateUser from '../../pages/admin/PageAdmin/Users/UpdateUser';
+import React, { lazy } from 'react';
+
+const AdminLayout = lazy(() => import("../../layouts/AdminLayout"));
+const Categories = lazy(() => import("../../pages/admin/PageAdmin/Categories/CategoriesList"));
+const Dashboard = lazy(() => import("../../pages/admin/PageAdmin/Dashboard/Dashboards"));
+const Products = lazy(() => import("../../pages/admin/PageAdmin/Products/Products"));
+const LoginAdmin = lazy(() => import("../../pages/admin/auth/LoginAdmin"));
+const ProductEdit = lazy(() => import("../../pages/admin/PageAdmin/Products/ProductEdit"));
+const ProductAdd = lazy(() => import("../../pages/admin/PageAdmin/Products/ProductAdd"));
+const QuickAddProduct = lazy(() => import("../../pages/admin/PageAdmin/Products/QuickAddProduct"));
+const Orders = lazy(() => import("../../pages/admin/PageAdmin/Orders/Orders"));
+const Orderdetail = lazy(() => import("../../pages/admin/PageAdmin/Orders/OrderDetail"));
+const Brand = lazy(() => import("../../pages/admin/PageAdmin/Brand/Brand"));
+const Voucher = lazy(() => import("../../pages/admin/PageAdmin/Voucher/Voucher"));
+const Variants = lazy(() => import("../../pages/admin/PageAdmin/Variants/Variants"));
+const Sizes = lazy(() => import("../../pages/admin/PageAdmin/Size/Size"));
+const Color = lazy(() => import("../../pages/admin/PageAdmin/Color/Color"));
+const UsersList = lazy(() => import("../../pages/admin/PageAdmin/Users/UsersList"));
+const Messenger = lazy(() => import("../../pages/admin/PageAdmin/Messenger/Messenger"));
+const Review = lazy(() => import("../../pages/admin/PageAdmin/Reivew/Review"));
+const ProductDetailAdmin = lazy(() => import("../../pages/admin/PageAdmin/Products/ProductDetalAdmin"));
+const AddUser = lazy(() => import("../../pages/admin/PageAdmin/Users/AddUser"));
+const UpdateUser = lazy(() => import("../../pages/admin/PageAdmin/Users/UpdateUser"));
+
 const adminRouter = [
   {
     path: "/admin",
@@ -42,7 +45,6 @@ const adminRouter = [
       { path: "review", element: <Review /> },
       { path: "users/add", element: <AddUser /> },
       { path: "users/edit/:id", element: <UpdateUser /> },
-
       { path: "products/:id", element: <ProductDetailAdmin /> },
     ],
   },

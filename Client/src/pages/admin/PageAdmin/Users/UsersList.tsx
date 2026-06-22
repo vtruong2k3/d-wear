@@ -1,275 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
+import { Space, Button, Typography } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-
-import {
-  EyeOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  SearchOutlined,
-  FilterOutlined,
-  PlusOutlined,
-  EditOutlined,
-  UserOutlined
-} from "@ant-design/icons";
-import {
-  Button,
-  message,
-  Space,
-  Table,
-  Tag,
-  Tooltip,
-  Input,
-  Select,
-  Card,
-  Row,
-  Col,
-  Typography,
-  Popconfirm
-} from "antd";
-import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import UserDetailModal from "./UserDetailModal";
-import type { AppDispatch } from "../../../../redux/store";
-import type { UserType } from "../../../../types/IUser";
-import { getUserDetail } from "../../../../redux/features/admin/thunks/userAdminThunk";
-
-
-import { deleteUser, fetchAllUsers } from "../../../../services/admin/userServices";
-import type { ErrorType } from "../../../../types/error/IError";
+import UserFilter from "../../../../components/Admin/Users/UserFilter";
+import UserTable from "../../../../components/Admin/Users/UserTable";
+import { useUsers } from "../../../../hooks/admin/useUsers";
 
 const { Title } = Typography;
-const { Option } = Select;
 
 const UsersList = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  // Dữ liệu + trạng thái tải
-  const [rows, setRows] = useState<UserType[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    rows,
+    meta,
+    loading,
+    current, setCurrent,
+    pageSize,
+    searchText, setSearchText,
+    roleFilter, setRoleFilter,
+    statusFilter, setStatusFilter,
+    handleTableChange,
+    handleResetFilters,
+    handleHardDelete
+  } = useUsers();
 
-  // Meta từ backend
-  const [meta, setMeta] = useState<{
-    currentPage: number;
-    pageSize: number;
-    totalPages: number;
-    total: number;
-    sortBy: string;
-    order: "asc" | "desc";
-  } | null>(null);
-
-  // Phân trang + sort
-  const [current, setCurrent] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [sortBy, setSortBy] = useState<string>("createdAt");
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
-
-  // Bộ lọc & tìm kiếm
-  const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"admin" | "user" | undefined>();
-  const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | undefined>();
-
-
-
-
-  // Debounce nhẹ cho search
-  const q = useMemo(() => searchText.trim(), [searchText]);
-
-  const fetchList = async () => {
-    try {
-      setLoading(true);
-      const res = await fetchAllUsers(
-        current,
-        pageSize,
-        {
-          q: q || undefined,
-          role: roleFilter,
-          status: statusFilter,
-          sortBy,
-          order,
-
-        }
-      );
-
-
-      setRows(res.data);
-      setMeta(res.meta);
-    } catch (error) {
-      const errorMessage =
-        (error as ErrorType).response?.data?.message ||
-        (error as ErrorType).message ||
-        "Đã xảy ra lỗi, vui lòng thử lại.";
-      message.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, pageSize, sortBy, order, q, roleFilter, statusFilter]);
-
-  const handleTableChange = (
-    pagination: TablePaginationConfig,
-    _filters: Record<string, FilterValue | null>,
-    sorter: SorterResult<UserType> | SorterResult<UserType>[],
-
-  ) => {
-    setCurrent(pagination.current || 1);
-    setPageSize(pagination.pageSize || 10);
-
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (s?.field && s?.order) {
-      setSortBy(String(s.field));
-      setOrder(s.order === 'ascend' ? 'asc' : 'desc');
-    } else {
-      // reset mặc định khi bỏ sort
-      setSortBy('createdAt');
-      setOrder('desc');
-    }
-  };
-
-  // Reset filter
-  const handleResetFilters = () => {
-    setSearchText("");
-    setRoleFilter(undefined);
-    setStatusFilter(undefined);
-    setCurrent(1);
-  };
-
-  // Điều hướng
   const handleAddUser = () => navigate("/admin/users/add");
-  const handleEditUser = (user: UserType) => navigate(`/admin/users/edit/${user._id}`);
-
-
-  const handleHardDelete = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await deleteUser(id);
-      setRows(prev => prev.filter(user => user._id !== id));
-      message.success(res.message);
-    } catch (error) {
-      const errorMessage =
-        (error as ErrorType).response?.data?.message ||
-        (error as ErrorType).message ||
-        "Đã xảy ra lỗi, vui lòng thử lại.";
-      message.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const columns: ColumnsType<UserType> = [
-    {
-      title: "Tên",
-      dataIndex: "username",
-      sorter: true, // để antd phát sorter; BE xử lý sortBy/order
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      sorter: true,
-    },
-    {
-      title: "Vai trò",
-      dataIndex: "role",
-      render: (role) => <Tag color={role === "admin" ? "volcano" : "blue"}>{role}</Tag>,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "isActive",
-      render: (isActive: boolean) => (
-        <Tooltip title={isActive ? "Tài khoản đang hoạt động" : "Đã bị khoá"}>
-          <Tag
-            icon={isActive ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-            color={isActive ? "green" : "red"}
-          >
-            {isActive ? "Kích Hoạt" : "Đã Khoá"}
-          </Tag>
-        </Tooltip>
-      ),
-    },
-    {
-      title: "Google Account",
-      dataIndex: "isGoogleAccount", // đúng schema
-      render: (isGoogleAccount: boolean) => (
-        <Tooltip
-          title={
-            isGoogleAccount
-              ? "Tài khoản được đăng nhập bằng Google"
-              : "Tài khoản đăng ký thông thường"
-          }
-        >
-          <Tag
-            icon={isGoogleAccount ? <CheckCircleOutlined /> : <UserOutlined />}
-            color={isGoogleAccount ? "blue" : "default"}
-          >
-            {isGoogleAccount ? "Google" : "Thường"}
-          </Tag>
-        </Tooltip>
-      ),
-    },
-    {
-      title: "Ngày tạo",
-      dataIndex: "createdAt",
-      sorter: true,
-      render: (date: string) => new Date(date).toLocaleString("vi-VN"),
-    },
-    {
-      title: "Hành động",
-      fixed: "right",
-      width: 200,
-      render: (_: unknown, record) => (
-        <Space size="small">
-          <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              onClick={() => dispatch(getUserDetail(record._id))}
-              size="small"
-            />
-          </Tooltip>
-
-          <Tooltip title="Chỉnh sửa">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleEditUser(record)}
-              size="small"
-            />
-          </Tooltip>
-
-          {record.role !== "admin" && (
-
-            <Popconfirm
-              title="Xóa tài khoản"
-              description="Bạn có chắc chắn muốn xóa tài khoản này?"
-              onConfirm={() => handleHardDelete(record._id)}
-              okText="Xóa"
-              cancelText="Hủy"
-              okButtonProps={{ danger: true }}
-            >
-              <Tooltip title="Xóa">
-                <Button
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-
-                  size="small"
-                />
-              </Tooltip>
-            </Popconfirm>
-
-
-          )}
-        </Space>
-      ),
-    },
-  ];
 
   return (
     <div style={{ padding: 24 }}>
@@ -282,104 +38,36 @@ const UsersList = () => {
         }}
       >
         <Title level={3}>
-          "Quản lý tài khoản người dùng
+          Quản lý tài khoản người dùng
         </Title>
         <Space>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAddUser}
-
           >
             Thêm người dùng
           </Button>
-
-
         </Space>
       </div>
 
-      {/* Tìm kiếm & lọc (đẩy lên server) */}
-      <Card
-        style={{ marginBottom: 16 }}
-        title={
-          <Space>
-            <FilterOutlined />
-            Tìm kiếm & lọc
-          </Space>
-        }
-        size="small"
-      >
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Input
-              placeholder="Tìm theo tên hoặc email"
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
-                setCurrent(1);
-              }}
-              allowClear
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Select
-              placeholder="Vai trò"
-              style={{ width: "100%" }}
-              value={roleFilter}
-              onChange={(v) => {
-                setRoleFilter(v);
-                setCurrent(1);
-              }}
-              allowClear
-            >
-              <Option value="admin">Admin</Option>
-              <Option value="user">User</Option>
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Select
-              placeholder="Trạng thái"
-              style={{ width: "100%" }}
-              value={statusFilter}
-              onChange={(v) => {
-                setStatusFilter(v);
-                setCurrent(1);
-              }}
-              allowClear
-            >
-              <Option value="active">Kích hoạt</Option>
-              <Option value="inactive">Đã khoá</Option>
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Button onClick={handleResetFilters} style={{ width: "100%" }}>
-              Xóa bộ lọc
-            </Button>
-          </Col>
-        </Row>
+      <UserFilter
+        searchText={searchText} setSearchText={setSearchText}
+        roleFilter={roleFilter} setRoleFilter={setRoleFilter}
+        statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+        setCurrent={setCurrent}
+        handleResetFilters={handleResetFilters}
+        totalUsers={meta?.total ?? 0}
+      />
 
-        <div style={{ marginTop: 12, color: "#666" }}>
-          Tổng số người dùng: {meta?.total ?? 0}
-        </div>
-      </Card>
-
-      <Table<UserType>
-        rowKey="_id"
+      <UserTable
+        rows={rows}
         loading={loading}
-        dataSource={rows}
-        columns={columns}
-        onChange={handleTableChange}
-        scroll={{ x: 1200 }}
-        pagination={{
-          current,
-          pageSize,
-          total: meta?.total ?? 0,
-          showSizeChanger: true,
-          pageSizeOptions: ["5", "10", "20", "50"],
-          showQuickJumper: true,
-          showTotal: (t, range) => `${range[0]}-${range[1]} của ${t} người dùng`,
-        }}
+        current={current}
+        pageSize={pageSize}
+        total={meta?.total ?? 0}
+        handleTableChange={handleTableChange}
+        handleHardDelete={handleHardDelete}
       />
 
       <UserDetailModal />

@@ -11,8 +11,9 @@ import {
     Col,
     message,
     Card,
-
-    Space
+    Space,
+    Typography,
+    Divider
 } from 'antd';
 import {
     UserOutlined,
@@ -22,25 +23,22 @@ import {
     CameraOutlined,
     GoogleOutlined,
     SaveOutlined,
-    UndoOutlined
+    UndoOutlined,
+    ArrowLeftOutlined,
+    SafetyCertificateOutlined
 } from '@ant-design/icons';
-
 import { useNavigate } from 'react-router-dom';
-
-
-const { Option } = Select;
-const { Title } = Typography;
-import { Typography } from 'antd';
 import { createUser } from '../../../../services/admin/userServices';
 import type { ErrorType } from '../../../../types/error/IError';
+
+const { Option } = Select;
+const { Title, Text } = Typography;
 
 const AddUserForm: React.FC = () => {
     const [form] = Form.useForm();
     const [avatarUrl, setAvatarUrl] = useState<string>('');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
-
     const [loading, setLoading] = useState(false);
-
     const navigate = useNavigate();
 
     const handleSubmit = async () => {
@@ -55,7 +53,6 @@ const AddUserForm: React.FC = () => {
             if (values.phone) formdata.append("phone", values.phone);
             formdata.append("role", values.role);
             formdata.append("isActive", String(values.isActive));
-
 
             if (avatarFile) {
                 formdata.append("avatar", avatarFile, avatarFile.name);
@@ -75,242 +72,183 @@ const AddUserForm: React.FC = () => {
         }
     };
 
-
     const handleReset = () => {
         form.resetFields();
         setAvatarUrl('');
-        form.setFieldsValue({
-            role: 'user',
-            isActive: true,
-            isGoogleAccount: false
-        });
+        setAvatarFile(null);
     };
-
-    const handleCancel = () => {
-        navigate('/admin/users');
-    };
-
-
-
-
 
     return (
-        <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ padding: '24px 40px', maxWidth: 1400, margin: '0 auto', background: '#f5f7fa', minHeight: '100vh' }}>
             {/* Header */}
-            <div style={{ marginBottom: 24 }}>
-                <Title level={2}>
-                    <UserOutlined /> Thêm người dùng mới
-                </Title>
-                <p style={{ color: '#666', marginBottom: 0 }}>
-                    Tạo tài khoản mới cho hệ thống
-                </p>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+                <Button 
+                    type="text" 
+                    icon={<ArrowLeftOutlined />} 
+                    onClick={() => navigate('/admin/users')}
+                    style={{ marginRight: 16, fontSize: 16 }}
+                />
+                <div>
+                    <Title level={3} style={{ margin: 0, color: '#1f2937' }}>
+                        Thêm Người Dùng Mới
+                    </Title>
+                    <Text type="secondary">Tạo tài khoản và phân quyền truy cập hệ thống</Text>
+                </div>
             </div>
 
-            <Row gutter={24}>
-                {/* Form chính */}
-                <Col span={16}>
-                    <Card title="Thông tin cơ bản" style={{ marginBottom: 24 }}>
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            requiredMark={false}
-                            initialValues={{
-                                role: 'user',
-                                isActive: true,
-                                isGoogleAccount: false
-                            }}
-                            onFinish={handleSubmit}
+            <Row gutter={[24, 24]}>
+                {/* Cột trái: Form nhập liệu */}
+                <Col xs={24} lg={16}>
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        requiredMark={false}
+                        initialValues={{
+                            role: 'user',
+                            isActive: true,
+                            isGoogleAccount: false
+                        }}
+                    >
+                        <Card 
+                            title={<><UserOutlined style={{ marginRight: 8 }}/> Thông tin cơ bản</>} 
+                            bordered={false}
+                            style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: 24 }}
                         >
-                            <Row gutter={16}>
-                                <Col span={12}>
+                            <Row gutter={24}>
+                                <Col xs={24} md={12}>
                                     <Form.Item
                                         name="username"
-                                        label="Tên người dùng"
+                                        label={<span style={{ fontWeight: 500 }}>Họ và tên</span>}
                                         rules={[
-                                            { required: true, message: 'Vui lòng nhập tên người dùng!' },
-                                            { min: 3, message: 'Tên người dùng phải có ít nhất 3 ký tự!' },
-                                            { max: 50, message: 'Tên người dùng không được quá 50 ký tự!' }
+                                            { required: true, message: 'Vui lòng nhập họ tên!' },
+                                            { min: 3, message: 'Ít nhất 3 ký tự!' }
                                         ]}
                                     >
-                                        <Input
-                                            prefix={<UserOutlined />}
-                                            placeholder="Nhập tên người dùng"
-                                            size="large"
-                                        />
+                                        <Input prefix={<UserOutlined style={{ color: '#bfbfbf' }}/>} placeholder="Nhập họ và tên..." size="large" style={{ borderRadius: 8 }} />
                                     </Form.Item>
                                 </Col>
-
-                                <Col span={12}>
+                                <Col xs={24} md={12}>
                                     <Form.Item
                                         name="email"
-                                        label="Email"
+                                        label={<span style={{ fontWeight: 500 }}>Địa chỉ Email</span>}
                                         rules={[
                                             { required: true, message: 'Vui lòng nhập email!' },
                                             { type: 'email', message: 'Email không hợp lệ!' }
                                         ]}
                                     >
-                                        <Input
-                                            prefix={<MailOutlined />}
-                                            placeholder="Nhập email"
-                                            size="large"
-                                        />
+                                        <Input prefix={<MailOutlined style={{ color: '#bfbfbf' }}/>} placeholder="example@email.com" size="large" style={{ borderRadius: 8 }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="phone"
+                                        label={<span style={{ fontWeight: 500 }}>Số điện thoại</span>}
+                                    >
+                                        <Input prefix={<PhoneOutlined style={{ color: '#bfbfbf' }}/>} placeholder="Nhập số điện thoại..." size="large" style={{ borderRadius: 8 }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="password"
+                                        label={<span style={{ fontWeight: 500 }}>Mật khẩu đăng nhập</span>}
+                                        rules={[
+                                            { required: true, message: 'Vui lòng nhập mật khẩu!' },
+                                            { min: 6, message: 'Ít nhất 6 ký tự!' }
+                                        ]}
+                                    >
+                                        <Input.Password prefix={<LockOutlined style={{ color: '#bfbfbf' }}/>} placeholder="••••••••" size="large" style={{ borderRadius: 8 }} />
                                     </Form.Item>
                                 </Col>
                             </Row>
+                        </Card>
 
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="phone"
-                                        label="Số điện thoại"
-                                        rules={[
-                                            { pattern: /^[0-9+\-\s()]*$/, message: 'Số điện thoại không hợp lệ!' },
-                                            { min: 10, message: 'Số điện thoại phải có ít nhất 10 số!' }
-                                        ]}
-                                    >
-                                        <Input
-                                            prefix={<PhoneOutlined />}
-                                            placeholder="Nhập số điện thoại"
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col span={12}>
+                        <Card 
+                            title={<><SafetyCertificateOutlined style={{ marginRight: 8 }}/> Phân quyền & Cài đặt</>}
+                            bordered={false}
+                            style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+                        >
+                            <Row gutter={24}>
+                                <Col xs={24} md={12}>
                                     <Form.Item
                                         name="role"
-                                        label="Vai trò"
-                                        rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
+                                        label={<span style={{ fontWeight: 500 }}>Vai trò hệ thống</span>}
                                     >
-                                        <Select placeholder="Chọn vai trò" size="large">
-                                            <Option value="user">
-                                                <UserOutlined /> Người dùng
-                                            </Option>
-                                            <Option value="admin">
-                                                <UserOutlined /> Quản trị viên
-                                            </Option>
+                                        <Select size="large" style={{ borderRadius: 8 }}>
+                                            <Option value="user">Người dùng (User)</Option>
+                                            <Option value="admin">Quản trị viên (Admin)</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                            </Row>
-
-                            <Form.Item
-                                name="password"
-                                label="Mật khẩu"
-                                rules={[
-                                    { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                                    { min: 5, message: 'Mật khẩu phải có ít nhất 5 ký tự!' }
-                                ]}
-                            >
-                                <Input.Password
-                                    prefix={<LockOutlined />}
-                                    placeholder="Nhập mật khẩu"
-                                    size="large"
-                                />
-                            </Form.Item>
-                        </Form>
-                    </Card>
-
-                    {/* Cài đặt tài khoản */}
-                    <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
-                        <Card title="Cài đặt tài khoản">
-                            <Row gutter={32}>
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="isActive"
-                                        label="Trạng thái hoạt động"
-                                        valuePropName="checked"
-                                        style={{ marginBottom: 16 }}
-                                    >
-                                        <Switch
-                                            checkedChildren="Kích hoạt"
-                                            unCheckedChildren="Khóa"
-
-                                        />
-                                    </Form.Item>
-                                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                                        Tài khoản có thể đăng nhập và sử dụng hệ thống
-                                    </p>
-                                </Col>
-
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="isGoogleAccount"
-                                        label="Tài khoản Google"
-                                        valuePropName="checked"
-                                        style={{ marginBottom: 16 }}
-                                    >
-                                        <Switch
-                                            checkedChildren={<GoogleOutlined />}
-                                            unCheckedChildren="Thường"
-                                            disabled
-                                        />
-                                    </Form.Item>
-                                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                                        Tài khoản được liên kết với Google
-                                    </p>
+                                <Col xs={24} md={12}>
+                                    <div style={{ padding: '16px 20px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+                                        <Form.Item
+                                            name="isActive"
+                                            valuePropName="checked"
+                                            style={{ margin: 0 }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <Text strong>Trạng thái hoạt động</Text>
+                                                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>Cho phép đăng nhập vào hệ thống</div>
+                                                </div>
+                                                <Switch />
+                                            </div>
+                                        </Form.Item>
+                                    </div>
                                 </Col>
                             </Row>
                         </Card>
                     </Form>
                 </Col>
 
-                {/* Sidebar */}
-                <Col span={8}>
-                    <Card title="Ảnh đại diện" style={{ marginBottom: 24 }}>
-                        <div style={{ textAlign: 'center' }}>
+                {/* Cột phải: Avatar & Actions */}
+                <Col xs={24} lg={8}>
+                    <Card 
+                        bordered={false}
+                        style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: 24, textAlign: 'center' }}
+                    >
+                        <Title level={5} style={{ marginBottom: 24 }}>Ảnh đại diện</Title>
+                        
+                        <div style={{ 
+                            width: 160, height: 160, margin: '0 auto 24px', 
+                            borderRadius: '50%', padding: 4,
+                            border: '2px dashed #d9d9d9',
+                            position: 'relative',
+                            transition: 'all 0.3s'
+                        }}>
                             <Avatar
-                                size={150}
+                                size={148}
                                 src={avatarUrl}
-                                icon={<UserOutlined />}
-                                style={{ marginBottom: 16 }}
+                                icon={<UserOutlined style={{ fontSize: 48, color: '#bfbfbf' }} />}
+                                style={{ background: '#f5f5f5' }}
                             />
-
-                            <br />
-
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={(file) => {
-                                    const okType = /^image\/(jpeg|png|webp|gif)$/.test(file.type);
-                                    if (!okType) {
-                                        message.error("Chỉ chấp nhận ảnh JPG/PNG/WebP/GIF");
-                                        return false;
-                                    }
-                                    const isLt5M = file.size / 1024 / 1024 < 5;
-                                    if (!isLt5M) {
-                                        message.error("Kích thước file phải nhỏ hơn 5MB!");
-                                        return false;
-                                    }
-                                    setAvatarFile(file);                    // lưu file để submit
-                                    setAvatarUrl(URL.createObjectURL(file)); // preview
-                                    return false; // CHẶN auto-upload
-                                }}
-                                onRemove={() => {
-                                    setAvatarFile(null);
-                                    setAvatarUrl("");
-                                }}
-                            >
-                                <Button icon={<CameraOutlined />} loading={loading} block>
-                                    {avatarUrl ? "Thay đổi ảnh" : "Chọn ảnh"}
-                                </Button>
-                            </Upload>
-
-                            <p style={{
-                                fontSize: '12px',
-                                color: '#666',
-                                marginTop: 8,
-                                marginBottom: 0
-                            }}>
-                                Định dạng: JPG, PNG, GIF<br />
-                                Kích thước tối đa: 5MB
-                            </p>
                         </div>
+
+                        <Upload
+                            accept="image/*"
+                            showUploadList={false}
+                            beforeUpload={(file) => {
+                                const isLt5M = file.size / 1024 / 1024 < 5;
+                                if (!isLt5M) {
+                                    message.error("Kích thước file phải nhỏ hơn 5MB!");
+                                    return false;
+                                }
+                                setAvatarFile(file);
+                                setAvatarUrl(URL.createObjectURL(file));
+                                return false;
+                            }}
+                        >
+                            <Button icon={<CameraOutlined />} size="large" style={{ borderRadius: 8, width: '100%' }}>
+                                {avatarUrl ? "Thay đổi ảnh" : "Tải ảnh lên"}
+                            </Button>
+                        </Upload>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 12 }}>
+                            Hỗ trợ *.png, *.jpg, *.jpeg (Max 5MB)
+                        </Text>
                     </Card>
 
-                    {/* Actions */}
-                    <Card title="Hành động">
-                        <Space direction="vertical" style={{ width: '100%' }}>
+                    <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                             <Button
                                 type="primary"
                                 icon={<SaveOutlined />}
@@ -318,46 +256,20 @@ const AddUserForm: React.FC = () => {
                                 onClick={handleSubmit}
                                 size="large"
                                 block
+                                style={{ borderRadius: 8, height: 48 }}
                             >
-                                Tạo người dùng
+                                Lưu Người Dùng
                             </Button>
-
                             <Button
                                 icon={<UndoOutlined />}
                                 onClick={handleReset}
                                 size="large"
                                 block
+                                style={{ borderRadius: 8 }}
                             >
-                                Làm mới form
-                            </Button>
-
-                            <Button
-                                onClick={handleCancel}
-                                size="large"
-                                block
-                            >
-                                Hủy và quay lại
+                                Đặt lại thông tin
                             </Button>
                         </Space>
-                    </Card>
-
-                    {/* Tips */}
-                    <Card
-                        title="💡 Gợi ý"
-                        size="small"
-                        style={{ marginTop: 16 }}
-                    >
-                        <ul style={{
-                            fontSize: '12px',
-                            color: '#666',
-                            paddingLeft: '16px',
-                            margin: 0
-                        }}>
-                            <li>Email sẽ được sử dụng để đăng nhập</li>
-                            <li>Mật khẩu nên chứa ít nhất 6 ký tự</li>
-                            <li>Vai trò Admin có quyền quản lý hệ thống</li>
-                            <li>Ảnh đại diện giúp nhận diện người dùng</li>
-                        </ul>
                     </Card>
                 </Col>
             </Row>

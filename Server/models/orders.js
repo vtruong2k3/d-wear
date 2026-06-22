@@ -48,6 +48,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["unpaid", "paid", "refunded"],
       default: "unpaid",
     },
+    momoTransactionId: { type: String, required: false },
   },
   {
     timestamps: true,

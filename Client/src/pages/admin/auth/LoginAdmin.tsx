@@ -44,10 +44,13 @@ export default function AdminLogin() {
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     try {
-      // 
       await dispatch(doLoginAdmin(data)).unwrap();
-      await dispatch(fetchUserProfile()).unwrap();
+      const fetchedUser = await dispatch(fetchUserProfile()).unwrap();
 
+      if (fetchedUser && fetchedUser.role !== 'admin') {
+        message.error("Tài khoản không có quyền Admin.");
+        dispatch({ type: "authAdmin/logout" }); // Logout nếu không phải admin
+      }
     } catch (error) {
       const errorMessage =
         (error as ErrorType).response?.data?.message ||
@@ -61,7 +64,7 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (isLogin && user?.role === "admin") {
-      navigate('/admin/dashboard')
+      navigate('/admin/dashboard', { replace: true })
     }
   }, [isLogin, navigate, user])
   return (

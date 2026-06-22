@@ -13,6 +13,7 @@ import {
   registerAPI,
 } from "../../../../services/client/authService";
 import type { AppThunkAPI } from "../../../store";
+import { setAccessToken } from "../../../../configs/AxiosConfig";
 
 //  AsyncThunk: login với Google bằng access_token
 export const doLoginWithGoogle = createAsyncThunk<
@@ -29,7 +30,7 @@ export const doLoginWithGoogle = createAsyncThunk<
 
     const { user, token } = res;
 
-    localStorage.setItem("token", token);
+    setAccessToken(token);
 
     const message = res.message || "Đăng nhập Google thành công!";
 
@@ -76,7 +77,7 @@ export const doLogin = createAsyncThunk<
 >("authen/doLogin", async (payload, { rejectWithValue }) => {
   try {
     const res = await loginAPI(payload);
-    localStorage.setItem("token", res.token);
+    setAccessToken(res.token);
 
     const message = res.message || "Đăng nhập thành công!";
 

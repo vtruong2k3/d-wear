@@ -1,380 +1,200 @@
-// VoucherManagement.jsx
 import { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Space, Tag, Popconfirm, Input, Select, Row, Col, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
-import AddVoucherForm from './VoucherFomAdd';
-import EditVoucherForm from './VoucherFormUpadate';
-import { formatCurrency, formatDate } from '../../../../utils/Format';
-import type { IVoucher } from '../../../../types/voucher/IVoucher';
-import { fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher } from '../../../../services/admin/voucherService';
+import { Button, message, Typography } from 'antd';
+import { PlusOutlined, TagOutlined } from '@ant-design/icons';
+import type { IVoucher, VoucherStats } from '../../../../types/voucher/IVoucher';
 import type { ErrorType } from '../../../../types/error/IError';
-import Title from 'antd/es/typography/Title';
+import {
+    fetchCreateVoucher, fetchDeleteVoucher, fetchGetAllVouchers, fetchUpdateVoucher, fetchVoucherStats
+} from '../../../../services/admin/voucherService';
 
+import VoucherFilterBar from './VoucherFilterBar';
+import VoucherTable from './VoucherTable';
+import VoucherFormModal from './VoucherFormModal';
 
-
-
-const { Search } = Input;
-const { Option } = Select;
+const { Title } = Typography;
 
 const VoucherManagement = () => {
+    // Data states
     const [vouchers, setVouchers] = useState<IVoucher[]>([]);
+    const [stats, setStats] = useState<VoucherStats | null>(null);
 
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    // Modal states
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [editingVoucher, setEditingVoucher] = useState<IVoucher | null>(null);
+
+    // Pagination states
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
-    // State cho tìm kiếm
+
+    // Filter states
     const [searchText, setSearchText] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+
+    // Loading states
     const [loading, setLoading] = useState<boolean>(false);
 
-    const getAllVoucher = useCallback(
-        async (page: number, limit: number) => {
-            setLoading(true);
-            try {
-                const res = await fetchGetAllVouchers(page, limit);
-                setVouchers(res.vouchers);
-                setTotal(res.pagination.total);
-                setPage(res.pagination.page);
-            } catch (error) {
-                const errorMessage =
-                    (error as ErrorType).response?.data?.message ||
-                    (error as ErrorType).message ||
-                    "Đã xảy ra lỗi, vui lòng thử lại.";
-                message.error(errorMessage);
-            } finally {
-                setLoading(false);
-            }
-        },
-        [setLoading]
-    );
-
-
-    useEffect(() => {
-        getAllVoucher(page, limit);
-    }, [page, limit, getAllVoucher]);
-
-
-    const handlePageChange = (page: number) => {
-        getAllVoucher(page, limit); // gọi lại khi chuyển trang
-    };
-    const handlePageSizeChange = (_: number, newSize: number) => {
-        setLimit(newSize);
-        getAllVoucher(1, newSize); // reset về trang 1 khi đổi pageSize
-    };
-    const handleAdd = () => {
-        setIsAddModalOpen(true);
-    };
-
-    const handleEdit = (record: IVoucher) => {
-        setEditingVoucher(record);
-        setIsEditModalOpen(true);
-    };
-
-    const handleDelete = async (id: string) => {
+    const getVoucherStats = useCallback(async () => {
         try {
-            setLoading(true)
-            const { message: msg } = await fetchDeleteVoucher(id);
-            setVouchers((prev) => prev.filter((v) => v._id !== id));
-            message.success(msg);
+            const data = await fetchVoucherStats();
+            setStats(data);
         } catch (error) {
-            const err = error as ErrorType;
-            const errorMessage =
-                err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi xoá";
-            message.error(errorMessage);
-        } finally {
-            setLoading(false)
+            console.error('Lỗi khi lấy thống kê voucher:', error);
         }
-    };
+    }, []);
 
-
-    const handleAddSubmit = async (
-        values: Omit<IVoucher, '_id' | 'createdAt' | 'updatedAt'>
-    ) => {
+    const getAllVoucher = useCallback(async () => {
+        setLoading(true);
         try {
-            setLoading(true)
-            const { message: msg, voucher } = await fetchCreateVoucher(values);
-            setVouchers(prev => [voucher, ...prev]);
-            setIsAddModalOpen(false);
-            message.success(msg);
+            const res = await fetchGetAllVouchers({
+                page,
+                limit,
+                keyword: searchText,
+                discountType: filterType,
+                isActive: filterStatus
+            });
+            setVouchers(res.vouchers);
+            setTotal(res.pagination.total);
+            setPage(res.pagination.page);
         } catch (error) {
             const errorMessage =
                 (error as ErrorType).response?.data?.message ||
                 (error as ErrorType).message ||
-                'Đã xảy ra lỗi, vui lòng thử lại.';
-            console.error('Lỗi:', errorMessage);
+                "Đã xảy ra lỗi, vui lòng thử lại.";
             message.error(errorMessage);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
+    }, [page, limit, searchText, filterType, filterStatus]);
+
+    useEffect(() => {
+        getAllVoucher();
+        getVoucherStats();
+    }, [getAllVoucher, getVoucherStats]);
+
+    const handleTableChange = (pagination: any) => {
+        setPage(pagination.current);
+        setLimit(pagination.pageSize);
     };
 
-    const handleEditSubmit = async (
-        values: Omit<IVoucher, "_id" | "createdAt" | "updatedAt">
-    ) => {
+    const handleAdd = () => {
+        setModalMode('add');
+        setEditingVoucher(null);
+        setIsModalOpen(true);
+    };
 
-        // Kiểm tra chắc chắn có editingVoucher và _id là string
-        if (!editingVoucher || !editingVoucher._id) {
-            message.error("Không tìm thấy voucher để cập nhật");
-            return;
-        }
+    const handleEdit = (record: IVoucher) => {
+        setModalMode('edit');
+        setEditingVoucher(record);
+        setIsModalOpen(true);
+    };
 
+    const handleDelete = async (id: string) => {
         try {
-            setLoading(true)
-            const { message: msg, voucher } = await fetchUpdateVoucher(editingVoucher._id, values);
-
-            setVouchers((prev) =>
-                prev.map((v) => (v._id === editingVoucher._id ? voucher : v))
-            );
-
-            setIsEditModalOpen(false);
+            setLoading(true);
+            const { message: msg } = await fetchDeleteVoucher(id);
             message.success(msg);
+            // Refresh data
+            getAllVoucher();
+            getVoucherStats();
         } catch (error) {
             const err = error as ErrorType;
-            const errorMessage =
-                err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi cập nhật voucher";
-            console.error("Lỗi cập nhật voucher:", errorMessage);
+            const errorMessage = err?.response?.data?.message || err.message || "Đã xảy ra lỗi khi xoá";
             message.error(errorMessage);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     };
 
+    const handleFormSubmit = async (values: Omit<IVoucher, '_id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            setLoading(true);
+            let msg = '';
+            if (modalMode === 'add') {
+                const res = await fetchCreateVoucher(values);
+                msg = res.message;
+            } else {
+                if (!editingVoucher?._id) return;
+                const res = await fetchUpdateVoucher(editingVoucher._id, values);
+                msg = res.message;
+            }
 
-
-    // Hàm lọc dữ liệu voucher
-    const getFilteredVouchers = () => {
-        return vouchers.filter(voucher => {
-            const matchesSearch = voucher.code.toLowerCase().includes(searchText.toLowerCase());
-            const matchesType = filterType === 'all' || voucher.discountType === filterType;
-            const matchesStatus = filterStatus === 'all' ||
-                (filterStatus === 'active' && voucher.isActive) ||
-                (filterStatus === 'inactive' && !voucher.isActive);
-
-            return matchesSearch && matchesType && matchesStatus;
-        });
+            message.success(msg);
+            setIsModalOpen(false);
+            // Cần quay về trang 1 nếu thêm mới, hoặc load lại trang hiện tại nếu sửa
+            if (modalMode === 'add') setPage(1);
+            getAllVoucher();
+            getVoucherStats();
+        } catch (error) {
+            const err = error as ErrorType;
+            const errorMessage = err.response?.data?.message || err.message || 'Đã xảy ra lỗi, vui lòng thử lại.';
+            message.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleResetFilters = () => {
         setSearchText('');
         setFilterType('all');
         setFilterStatus('all');
+        setPage(1);
     };
 
-
-
-    const columns = [
-        {
-            title: 'Mã Voucher',
-            dataIndex: 'code',
-            key: 'code',
-            render: (text: string) => <span className="font-semibold text-blue-600">{text}</span>
-        },
-        {
-            title: 'Loại Giảm Giá',
-            dataIndex: 'discountType',
-            key: 'discountType',
-            render: (type: string) => (
-                <Tag color={type === 'percentage' ? 'blue' : 'green'}>
-                    {type === 'percentage' ? 'Phần trăm' : 'Cố định'}
-                </Tag>
-            )
-        },
-        {
-            title: 'Giá Trị Giảm',
-            dataIndex: 'discountValue',
-            key: 'discountValue',
-            render: (value: number, record: IVoucher) => (
-                <span className="font-medium">
-                    {record.discountType === 'percentage'
-                        ? `${value}%`
-                        : formatCurrency(value)
-                    }
-                </span>
-            )
-        },
-        {
-            title: 'Đơn Hàng Tối Thiểu',
-            dataIndex: 'minOrderValue',
-            key: 'minOrderValue',
-            render: (value: number) => formatCurrency(value)
-        },
-        {
-            title: 'Giảm Tối Đa',
-            dataIndex: 'maxDiscountValue',
-            key: 'maxDiscountValue',
-            render: (value: number) => value > 0 ? formatCurrency(value) : formatCurrency(0)
-        },
-        {
-            title: 'Số User Tối Đa',
-            dataIndex: 'maxUser',
-            key: 'maxUser',
-            render: (value: number) => <span className="text-gray-600">{value}</span>
-        },
-        {
-            title: 'Thời Gian Hiệu Lực',
-            key: 'duration',
-            render: (_value: string, record: IVoucher) => (
-                <div className="text-sm">
-                    <div>{formatDate(record.startDate)}</div>
-                    <div className="text-gray-500">đến {formatDate(record.endDate)}</div>
-                </div>
-            )
-        },
-        {
-            title: 'Trạng Thái',
-            dataIndex: 'isActive',
-            key: 'isActive',
-            render: (isActive: boolean) => (
-                <Tag color={isActive ? 'success' : 'error'}>
-                    {isActive ? 'Hoạt động' : 'Không hoạt động'}
-                </Tag>
-            )
-        },
-        {
-            title: 'Thao Tác',
-            key: 'action',
-            render: (_value: string, record: IVoucher) => (
-                <Space size="middle">
-                    <Button
-                        type="text"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                        className="text-blue-600 hover:text-blue-800"
-                    >
-
-                    </Button>
-                    <Popconfirm
-                        title="Xóa voucher"
-                        description="Bạn có chắc chắn muốn xóa voucher này?"
-                        onConfirm={() => handleDelete(record._id!)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Button
-                            type="text"
-                            icon={<DeleteOutlined />}
-                            danger
-                        >
-
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            )
-        }
-    ];
-
-    const filteredVouchers = getFilteredVouchers();
-
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto">
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <Title level={2}>Danh sách Voucher</Title>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAdd}
-                            size="large"
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            Thêm Voucher
-                        </Button>
+        <div className="p-6 bg-[#f4f7fe] min-h-screen font-sans">
+            <div className="max-w-[1600px] mx-auto space-y-6">
+                {/* Header Section */}
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100/50 p-6 flex justify-between items-center">
+                    <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 text-white">
+                            <TagOutlined className="text-3xl" />
+                        </div>
+                        <div>
+                            <Title level={2} className="!mb-1 !text-gray-900 tracking-tight font-bold">Quản lý Voucher</Title>
+                            <p className="text-gray-500 m-0 text-base">Tạo, theo dõi và quản lý các mã khuyến mãi</p>
+                        </div>
                     </div>
-
-                    {/* Phần tìm kiếm và lọc */}
-                    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <Row gutter={[16, 16]} align="middle">
-                            <Col xs={24} sm={12} md={8}>
-                                <Search
-                                    placeholder="Tìm kiếm theo mã voucher..."
-                                    allowClear
-                                    value={searchText}
-                                    onChange={(e) => setSearchText(e.target.value)}
-                                    style={{ width: '100%' }}
-                                    prefix={<SearchOutlined />}
-                                />
-                            </Col>
-                            <Col xs={24} sm={6} md={4}>
-                                <Select
-                                    placeholder="Loại giảm giá"
-                                    value={filterType}
-                                    onChange={setFilterType}
-                                    style={{ width: '100%' }}
-                                >
-                                    <Option value="all">Tất cả loại</Option>
-                                    <Option value="percentage">Phần trăm</Option>
-                                    <Option value="fixed">Cố định</Option>
-                                </Select>
-                            </Col>
-                            <Col xs={24} sm={6} md={4}>
-                                <Select
-                                    placeholder="Trạng thái"
-                                    value={filterStatus}
-                                    onChange={setFilterStatus}
-                                    style={{ width: '100%' }}
-                                >
-                                    <Option value="all">Tất cả trạng thái</Option>
-                                    <Option value="active">Hoạt động</Option>
-                                    <Option value="inactive">Không hoạt động</Option>
-                                </Select>
-                            </Col>
-                            <Col xs={24} sm={12} md={8}>
-                                <Space>
-                                    <Button
-                                        onClick={handleResetFilters}
-                                        className="text-gray-600"
-                                    >
-                                        Reset bộ lọc
-                                    </Button>
-                                    <span className="text-sm text-gray-500">
-                                        Tìm thấy {filteredVouchers.length} voucher
-                                    </span>
-                                </Space>
-                            </Col>
-                        </Row>
-                    </div>
-
-                    <Table
-                        loading={loading}
-                        columns={columns}
-                        dataSource={filteredVouchers}
-                        rowKey="_id" // Nếu dùng MongoDB thì thường là _id
-                        pagination={{
-                            current: page,
-                            pageSize: limit,
-                            total: total,
-                            showSizeChanger: true,
-                            showQuickJumper: true,
-                            showTotal: (total, range) =>
-                                `${range[0]}-${range[1]} của ${total} voucher`,
-                            onChange: handlePageChange,
-                            onShowSizeChange: handlePageSizeChange,
-                        }}
-                        scroll={{ x: 1200 }}
-
-                    />
-
-
-                    <AddVoucherForm
-                        open={isAddModalOpen}
-                        onCancel={() => setIsAddModalOpen(false)}
-                        onSubmit={handleAddSubmit}
-                    />
-
-                    <EditVoucherForm
-                        open={isEditModalOpen}
-                        onCancel={() => setIsEditModalOpen(false)}
-                        onSubmit={handleEditSubmit}
-                        editingVoucher={editingVoucher}
-                    />
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAdd}
+                        size="large"
+                        className="bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 rounded-xl font-medium px-6"
+                    >
+                        Thêm Voucher Mới
+                    </Button>
                 </div>
+
+                {/* Filters Section */}
+                <VoucherFilterBar
+                    searchText={searchText} setSearchText={setSearchText}
+                    filterType={filterType} setFilterType={setFilterType}
+                    filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+                    handleResetFilters={handleResetFilters}
+                    totalResults={total}
+                />
+
+                {/* Table Section */}
+                <VoucherTable
+                    vouchers={vouchers}
+                    loading={loading}
+                    pagination={{ current: page, pageSize: limit, total }}
+                    handleTableChange={handleTableChange}
+                    handleEdit={handleEdit}
+                    handleDelete={handleDelete}
+                />
             </div>
+
+            <VoucherFormModal
+                mode={modalMode}
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                onSubmit={handleFormSubmit}
+                initialValues={editingVoucher}
+            />
         </div>
     );
 };

@@ -116,39 +116,48 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
     };
 
     return (
-        <div className="col-span-2 mt-6">
-            <h2 className="text-xl lg:text-3xl font-semibold">{product.product_name}</h2>
+        <div className="col-span-12 lg:col-span-5">
+            {/* --- GROUP 1: Title & Price & Rating --- */}
+            <div className="mb-6">
+                <h2 className="text-2xl lg:text-4xl font-bold text-gray-900 leading-tight mb-3">
+                    {product.product_name}
+                </h2>
 
-            <div className="flex items-center gap-3 mt-4">
-                <ul className="flex items-center gap-1 !mb-0">
-                    {[...Array(5)].map((_, i) => (
-                        <li key={i}>
-                            <img
-                                className="size-[16px]"
-                                src={star}
-                                alt="star"
-                                style={{
-                                    opacity: i < Math.floor(parseFloat(averageRating)) ? 1 : 0.3
-                                }}
-                            />
-                        </li>
-                    ))}
-                </ul>
-                <span className="text-sm text-gray-600 ">
-                    {averageRating} ({reviewCount} đánh giá)
-                </span>
+                <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-base font-bold text-gray-900">{averageRating}</span>
+                        <div className="flex items-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                                <img
+                                    key={i}
+                                    className="w-4 h-4"
+                                    src={star}
+                                    alt="star"
+                                    style={{
+                                        opacity: i < Math.floor(parseFloat(averageRating)) ? 1 : 0.3
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                    <span className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors cursor-pointer underline underline-offset-4 decoration-gray-300 hover:decoration-gray-900">
+                        {reviewCount} Đánh giá
+                    </span>
+                </div>
+
+                <div className="flex items-end gap-3">
+                    <p className="text-3xl font-black text-red-600">
+                        {formatCurrency(selectedVariant?.price || product.basePrice)}
+                    </p>
+                    <p className="text-lg text-gray-400 line-through font-semibold mb-0.5">
+                        {formatCurrency(product.basePrice)}
+                    </p>
+                </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-3">
-                <p className="text-2xl font-semibold text-red-600">
-                    {formatCurrency(selectedVariant?.price || product.basePrice)}
-                </p>
-                <p className="text-lg text-gray-400 line-through opacity-60">
-                    {formatCurrency(product.basePrice)}
-                </p>
-            </div>
-
-            <div className="mt-2 pt-2 !border-t !border-gray-300">
+            {/* --- GROUP 2: Variants & Stock --- */}
+            <div className="pt-6 border-t border-gray-100">
                 {/* <p className="flex items-center gap-2 mt-2">
                     <img className="w-5 animate-flicker" src={ico_eye} alt="" />
                     <span className="text-sm font-medium">35 people are viewing this right now</span>
@@ -157,9 +166,9 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                     <img className="w-5 animate-zoomInOut" src={ico_fire} alt="" />
                     <span className="text-sm font-medium text-red-600">35 sold in last 18 hours</span>
                 </p> */}
-                <p className="flex items-center gap-2 mt-6">
+                <p className="flex items-center gap-2 mb-6">
                     <img className="w-5" src={ico_checked} alt="" />
-                    <span className="text-sm font-medium text-green">
+                    <span className="text-sm font-medium text-green-600">
                         {selectedVariant ? (
                             selectedVariant.stock > 0 ? (
                                 <>Còn {selectedVariant.stock} sản phẩm</>
@@ -167,7 +176,7 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                                 <span className="text-red-600">Hết hàng</span>
                             )
                         ) : (
-                            "In stock"
+                            "Còn hàng"
                         )}
                     </span>
                 </p>
@@ -181,30 +190,25 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                                 <button
                                     key={color}
                                     onClick={() => handleColorSelect(color)}
-                                    className={`relative flex items-center gap-2 p-2 !border rounded-md text-xs transition-all ${selectedColor === color
-                                        ? "bg-black text-white !border-black"
-                                        : "bg-white text-black !border-gray-300 hover:!border-black"
+                                    className={`relative flex items-center gap-2 p-1 border rounded-lg text-sm font-medium transition-all ${selectedColor === color
+                                        ? "border-black border-[2px] bg-white text-black"
+                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"
                                         }`}
                                 >
                                     {colorVariant.image?.[0] && (
-                                        <div className="w-8 h-8 overflow-hidden !border !border-gray-200 rounded-md">
+                                        <div className="w-8 h-8 overflow-hidden rounded-md">
                                             <img
                                                 src={
                                                     colorVariant.image[0].startsWith("http")
                                                         ? colorVariant.image[0]
-                                                        : `http://localhost:5000/${colorVariant.image[0]}`
+                                                        : `${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}/${colorVariant.image[0]}`
                                                 }
                                                 alt={color}
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
                                     )}
-                                    <span className="font-medium">{color}</span>
-                                    {selectedColor === color && (
-                                        <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow">
-                                            <span className="text-white text-[10px] font-bold">✓</span>
-                                        </div>
-                                    )}
+                                    <span className="font-medium px-1">{color}</span>
                                 </button>
                             );
                         })}
@@ -228,11 +232,11 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                                         key={size}
                                         onClick={() => !isOutOfStock && handleSizeSelect(size)}
                                         disabled={isOutOfStock}
-                                        className={`relative px-4 py-2 !border rounded-lg text-sm font-medium transition-all ${isSelected
-                                            ? "bg-black text-white !border-black shadow-md"
+                                        className={`relative min-w-[3.5rem] px-5 py-2.5 flex items-center justify-center border rounded-lg text-sm font-semibold transition-all ${isSelected
+                                            ? "bg-black text-white border-black"
                                             : isOutOfStock
-                                                ? "bg-gray-50 text-gray-300 !border-gray-200 cursor-not-allowed opacity-50"
-                                                : "bg-white text-black !border-gray-300 hover:!border-black hover:shadow-sm"
+                                                ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed line-through"
+                                                : "bg-white text-gray-700 border-gray-200 hover:border-black hover:text-black"
                                             }`}
                                     >
                                         {size}
@@ -254,11 +258,13 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                     </div>
                 )}
 
-                <div className="mt-6 flex gap-3">
-                    <div className="flex items-center !border rounded-lg">
+                {/* --- GROUP 3: Call to Action (Grid) --- */}
+                <div className="mt-10 mb-8 grid grid-cols-12 gap-3 items-center">
+                    {/* Quantity Selector */}
+                    <div className="col-span-12 xl:col-span-4 flex items-center justify-between border border-gray-300 rounded-xl px-2 h-14 bg-white">
                         <button
                             onClick={() => handleQuantityChange('decrease')}
-                            className="w-12 h-12 flex items-center justify-center text-lg font-semibold hover:bg-gray-100 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center text-2xl font-light hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             -
                         </button>
@@ -272,29 +278,32 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                                 const maxStock = selectedVariant?.stock || 999;
                                 setQuantity(Math.min(value, maxStock));
                             }}
-                            className="w-16 h-12 text-center outline-none"
+                            className="w-full h-full text-center text-lg font-medium outline-none bg-transparent"
                         />
                         <button
                             onClick={() => handleQuantityChange('increase')}
-                            className="w-12 h-12 flex items-center justify-center text-lg font-semibold hover:bg-gray-100 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center text-2xl font-light hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             +
                         </button>
                     </div>
 
+                    {/* Add to Cart Button */}
                     <button
                         onClick={handleAddToCartClick}
-                        className="h-12 bg-black text-white rounded-lg px-6 flex-1 hover:bg-gray-800 transition-colors"
+                        className="col-span-9 xl:col-span-6 h-14 bg-black text-white rounded-xl text-lg font-bold flex items-center justify-center hover:bg-gray-900 shadow-lg shadow-black/10 hover:shadow-black/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                     >
                         Thêm vào giỏ hàng
                     </button>
 
-                    <button className="w-12 h-12 !bg-white !border !border-gray-300 rounded-lg flex items-center justify-center hover:border-black transition-colors">
-                        <img className="w-5" src={ico_heart} alt="" />
+                    {/* Wishlist Button */}
+                    <button className="col-span-3 xl:col-span-2 h-14 bg-white border border-gray-300 rounded-xl flex items-center justify-center hover:border-black hover:bg-gray-50 transition-all">
+                        <img className="w-6 opacity-60 hover:opacity-100" src={ico_heart} alt="wishlist" />
                     </button>
                 </div>
 
-                <div className="mt-5">
+                {/* --- GROUP 4: Description & Policy --- */}
+                <div className="pt-8 border-t border-gray-100">
                     <div className={`text-midGray leading-relaxed transition-all duration-300 ${showFullDescription ? 'max-h-none' : 'max-h-20 overflow-hidden'}`}>
                         <p>{product.description}</p>
                     </div>
@@ -368,8 +377,8 @@ const ProductInfo: React.FC<Props> = ({ product, variants, averageRating, review
                     </div>
                 </div>
 
-                <div className="text-center mt-6 p-6 bg-[#f6f6f6] rounded-lg">
-                    <p className="text-sm tracking-widest">Guaranteed Checkout</p>
+                <div className="text-center mt-10 p-6 bg-gray-50 border border-gray-100 rounded-2xl">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Thanh toán an toàn</p>
                     <img className="mt-3" src={img_payment} alt="" />
                 </div>
             </div>

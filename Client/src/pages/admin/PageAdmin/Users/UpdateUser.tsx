@@ -1,44 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Form,
-    Input,
-    Select,
-    Switch,
-    Button,
-    Upload,
-    Avatar,
-    Row,
-    Col,
-    message,
-    Card,
-    Spin,
-    Space,
-    Tag,
-    Alert
+    Form, Input, Select, Switch, Button, Upload, Avatar,
+    Row, Col, message, Card, Spin, Space, Tag, Alert, Typography
 } from 'antd';
 import {
-    UserOutlined,
-    MailOutlined,
-    PhoneOutlined,
-    LockOutlined,
-    CameraOutlined,
-    GoogleOutlined,
-    SaveOutlined,
-
-    HistoryOutlined,
-    EditOutlined
+    UserOutlined, MailOutlined, PhoneOutlined, LockOutlined,
+    CameraOutlined, GoogleOutlined, SaveOutlined,
+    HistoryOutlined, ArrowLeftOutlined, SafetyCertificateOutlined,
+    CheckCircleOutlined, CloseCircleOutlined
 } from '@ant-design/icons';
-
 import { useNavigate, useParams } from 'react-router-dom';
-
 import type { IUsersDetail } from '../../../../types/IUser';
-
-const { Option } = Select;
-import { Typography } from 'antd';
-const { Title, Text } = Typography;
-
 import { fetchUserById, updateUser } from '../../../../services/admin/userServices';
 import type { ErrorType } from '../../../../types/error/IError';
+
+const { Option } = Select;
+const { Title, Text } = Typography;
 
 const EditUserForm: React.FC = () => {
     const [form] = Form.useForm();
@@ -51,16 +28,14 @@ const EditUserForm: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    // Load user data
     useEffect(() => {
         const loadUserData = async () => {
             if (!id) return;
-            console.log('Loading user data for ID:', id);
             try {
                 setUserLoading(true);
-                const res = await fetchUserById(id)
+                const res = await fetchUserById(id);
                 setUserData(res.user);
-                setAvatarUrl(`http://localhost:5000${res.user.avatar}`);
+                setAvatarUrl(res.user.avatar?.startsWith('http') ? res.user.avatar : `http://localhost:5000${res.user.avatar}`);
                 form.setFieldsValue({
                     username: res.user.username,
                     email: res.user.email,
@@ -69,17 +44,13 @@ const EditUserForm: React.FC = () => {
                     isActive: res.user.isActive,
                     isGoogleAccount: res.user.isGoogleAccount,
                 });
-
-
             } catch (error) {
-                console.error('Error loading user data:', error);
                 message.error('Không thể tải thông tin người dùng!');
                 navigate('/admin/users');
             } finally {
                 setUserLoading(false);
             }
         };
-
         loadUserData();
     }, [id, form, navigate]);
 
@@ -95,22 +66,14 @@ const EditUserForm: React.FC = () => {
             formdata.append("role", values.role);
             formdata.append("isActive", String(values.isActive));
 
-
             if (avatarFile) {
                 formdata.append("avatar", avatarFile, avatarFile.name);
             }
             const res = await updateUser(id, formdata);
-            message.success(res.message || "Cập nhật người dùng thành công!");
-            console.log('Updating user:', { id, data: formdata });
-
-
+            message.success(res.message || "Cập nhật thành công!");
             navigate('/admin/users');
-
         } catch (error) {
-            const errorMessage =
-                (error as ErrorType).response?.data?.message ||
-                (error as ErrorType).message ||
-                "Đã xảy ra lỗi, vui lòng thử lại.";
+            const errorMessage = (error as ErrorType).response?.data?.message || (error as ErrorType).message || "Lỗi cập nhật.";
             message.error(errorMessage);
         } finally {
             setLoading(false);
@@ -119,349 +82,179 @@ const EditUserForm: React.FC = () => {
 
     const handleReset = () => {
         if (!userData) return;
-
         form.setFieldsValue({
             username: userData.username,
             email: userData.email,
             phone: userData.phone,
             role: userData.role,
             isActive: userData.isActive,
-            isGoogleAccount: userData.isGoogleAccount,
         });
-        setAvatarUrl(`http://localhost:5000${userData.avatar}`);
+        setAvatarUrl(userData.avatar?.startsWith('http') ? userData.avatar : `http://localhost:5000${userData.avatar}`);
         form.setFieldValue('password', '');
     };
 
-    const handleCancel = () => {
-        navigate('/admin/users');
-    };
-
-
-
-
-
     if (userLoading) {
         return (
-            <div style={{
-                padding: 24,
-                textAlign: 'center',
-                minHeight: 400,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                <Spin size="large" />
-                <div style={{ marginLeft: 16 }}>Đang tải thông tin người dùng...</div>
+            <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Spin size="large" tip={<div style={{ marginTop: 12 }}>Đang tải hồ sơ...</div>} />
             </div>
         );
     }
 
-    if (!userData) {
-        return (
-            <div style={{ padding: 24 }}>
-                <Alert
-                    message="Không tìm thấy người dùng"
-                    description="Người dùng không tồn tại hoặc đã bị xóa"
-                    type="error"
-                    showIcon
-                    action={
-                        <Button onClick={() => navigate('/admin/users')}>
-                            Quay lại danh sách
-                        </Button>
-                    }
-                />
-            </div>
-        );
-    }
+    if (!userData) return null;
 
     return (
-        <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ padding: '24px 40px', maxWidth: 1400, margin: '0 auto', background: '#f5f7fa', minHeight: '100vh' }}>
             {/* Header */}
-            <div style={{ marginBottom: 24 }}>
-                <Title level={2}>
-                    <EditOutlined /> Chỉnh sửa người dùng
-                </Title>
-                <Space>
-                    <Text type="secondary">ID: {userData._id}</Text>
-                    <Text type="secondary">•</Text>
-                    <Text type="secondary">
-                        Tạo ngày: {new Date(userData.createdAt).toLocaleDateString('vi-VN')}
-                    </Text>
-                    <Text type="secondary">•</Text>
-                    <Text type="secondary">
-                        Cập nhật: {new Date(userData.updatedAt).toLocaleDateString('vi-VN')}
-                    </Text>
-                </Space>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+                <Button 
+                    type="text" 
+                    icon={<ArrowLeftOutlined />} 
+                    onClick={() => navigate('/admin/users')}
+                    style={{ marginRight: 16, fontSize: 16 }}
+                />
+                <div>
+                    <Title level={3} style={{ margin: 0, color: '#1f2937' }}>
+                        Cập Nhật Thông Tin
+                    </Title>
+                    <Space size="middle" style={{ marginTop: 4 }}>
+                        <Text type="secondary">ID: <Text strong>{userData._id}</Text></Text>
+                        <Text type="secondary">Cập nhật lúc: {new Date(userData.updatedAt).toLocaleDateString('vi-VN')}</Text>
+                    </Space>
+                </div>
             </div>
 
-            <Row gutter={24}>
-                {/* Form chính */}
-                <Col span={16}>
-                    <Card title="Thông tin cơ bản" style={{ marginBottom: 24 }}>
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            requiredMark={false}
-                            onFinish={handleSubmit}
+            <Row gutter={[24, 24]}>
+                {/* Form Col */}
+                <Col xs={24} lg={16}>
+                    <Form form={form} layout="vertical" requiredMark={false}>
+                        <Card 
+                            title={<><UserOutlined style={{ marginRight: 8 }}/> Thông tin cá nhân</>} 
+                            bordered={false}
+                            style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: 24 }}
                         >
-                            <Row gutter={16}>
-                                <Col span={12}>
+                            <Row gutter={24}>
+                                <Col xs={24} md={12}>
                                     <Form.Item
                                         name="username"
-                                        label="Tên người dùng"
-                                        rules={[
-                                            { required: true, message: 'Vui lòng nhập tên người dùng!' },
-                                            { min: 3, message: 'Tên người dùng phải có ít nhất 3 ký tự!' },
-                                            { max: 50, message: 'Tên người dùng không được quá 50 ký tự!' }
-                                        ]}
+                                        label={<span style={{ fontWeight: 500 }}>Họ và tên</span>}
+                                        rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }, { min: 3, message: 'Ít nhất 3 ký tự!' }]}
                                     >
-                                        <Input
-                                            prefix={<UserOutlined />}
-                                            placeholder="Nhập tên người dùng"
-                                            size="large"
-                                        />
+                                        <Input prefix={<UserOutlined style={{ color: '#bfbfbf' }}/>} size="large" style={{ borderRadius: 8 }} />
                                     </Form.Item>
                                 </Col>
-
-                                <Col span={12}>
+                                <Col xs={24} md={12}>
                                     <Form.Item
                                         name="email"
-
                                         label={
-                                            <Space>
-                                                Email
-                                                <Tag color="orange" style={{ fontSize: 12, padding: '0 6px', lineHeight: '20px', height: 20 }} >Không thể thay đổi</Tag>
+                                            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                                <span style={{ fontWeight: 500 }}>Email</span>
+                                                <Tag color="error" style={{ border: 0 }}>Cố định</Tag>
                                             </Space>
                                         }
-
                                     >
-                                        <Input
-                                            prefix={<MailOutlined />}
-                                            placeholder="Email"
-                                            size="large"
-                                            disabled
-                                        />
+                                        <Input prefix={<MailOutlined style={{ color: '#bfbfbf' }}/>} size="large" disabled style={{ borderRadius: 8, color: '#8c8c8c' }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item name="phone" label={<span style={{ fontWeight: 500 }}>Số điện thoại</span>}>
+                                        <Input prefix={<PhoneOutlined style={{ color: '#bfbfbf' }}/>} size="large" style={{ borderRadius: 8 }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item name="password" label={<span style={{ fontWeight: 500 }}>Đổi mật khẩu</span>}>
+                                        <Input.Password prefix={<LockOutlined style={{ color: '#bfbfbf' }}/>} placeholder="Để trống nếu không đổi" size="large" style={{ borderRadius: 8 }} />
                                     </Form.Item>
                                 </Col>
                             </Row>
+                        </Card>
 
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="phone"
-                                        label="Số điện thoại"
-                                        rules={[
-                                            { pattern: /^[0-9+\-\s()]*$/, message: 'Số điện thoại không hợp lệ!' },
-                                            { min: 10, message: 'Số điện thoại phải có ít nhất 10 số!' }
-                                        ]}
-                                    >
-                                        <Input
-                                            prefix={<PhoneOutlined />}
-                                            placeholder="Nhập số điện thoại"
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="role"
-                                        label="Vai trò"
-                                        rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
-                                    >
-                                        <Select placeholder="Chọn vai trò" size="large">
-                                            <Option value="user">
-                                                <UserOutlined /> Người dùng
-                                            </Option>
-                                            <Option value="admin">
-                                                <UserOutlined /> Quản trị viên
-                                            </Option>
+                        <Card 
+                            title={<><SafetyCertificateOutlined style={{ marginRight: 8 }}/> Phân quyền & Trạng thái</>}
+                            bordered={false}
+                            style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+                        >
+                            <Row gutter={24}>
+                                <Col xs={24} md={12}>
+                                    <Form.Item name="role" label={<span style={{ fontWeight: 500 }}>Vai trò hệ thống</span>}>
+                                        <Select size="large" style={{ borderRadius: 8 }}>
+                                            <Option value="user">Người dùng (User)</Option>
+                                            <Option value="admin">Quản trị viên (Admin)</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                            </Row>
-
-                            <Form.Item
-                                name="password"
-                                label="Mật khẩu mới"
-                                help="Để trống nếu không muốn thay đổi mật khẩu"
-                                rules={[
-                                    { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' }
-                                ]}
-                            >
-                                <Input.Password
-                                    prefix={<LockOutlined />}
-                                    placeholder="Nhập mật khẩu mới"
-                                    size="large"
-                                />
-                            </Form.Item>
-                        </Form>
-                    </Card>
-
-                    {/* Cài đặt tài khoản */}
-                    <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
-                        <Card title="Cài đặt tài khoản">
-                            <Row gutter={32}>
-                                <Col span={12}>
-                                    <Form.Item
-
-                                        name="isActive"
-                                        label="Trạng thái hoạt động"
-                                        valuePropName="checked"
-                                        style={{ marginBottom: 16 }}
-                                    >
-                                        <Switch
-
-                                            checkedChildren="Kích hoạt"
-                                            unCheckedChildren="Khóa"
-                                        />
-                                    </Form.Item>
-                                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                                        Tài khoản có thể đăng nhập và sử dụng hệ thống
-                                    </p>
-                                </Col>
-
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="isGoogleAccount"
-                                        label="Tài khoản Google"
-                                        valuePropName="checked"
-                                        style={{ marginBottom: 16 }}
-                                    >
-                                        <Switch
-
-                                            checkedChildren={<GoogleOutlined />}
-                                            unCheckedChildren="Thường"
-                                            disabled
-                                        />
-                                    </Form.Item>
-                                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                                        Tài khoản được liên kết với Google
-                                    </p>
+                                <Col xs={24} md={12}>
+                                    <div style={{ padding: '16px 20px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+                                        <Form.Item name="isActive" valuePropName="checked" style={{ margin: 0 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <Text strong>Trạng thái truy cập</Text>
+                                                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>{form.getFieldValue('isActive') ? 'Đang hoạt động' : 'Bị khóa'}</div>
+                                                </div>
+                                                <Switch />
+                                            </div>
+                                        </Form.Item>
+                                    </div>
                                 </Col>
                             </Row>
                         </Card>
                     </Form>
                 </Col>
 
-                {/* Sidebar */}
-                <Col span={8}>
-                    <Card title="Ảnh đại diện" style={{ marginBottom: 24 }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <Avatar
-                                size={150}
-                                src={avatarUrl}
-                                icon={<UserOutlined />}
-                                style={{ marginBottom: 16 }}
-                            />
+                {/* Sidebar Col */}
+                <Col xs={24} lg={8}>
+                    {/* User Profile Summary */}
+                    <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: 24, textAlign: 'center' }}>
+                        <div style={{ 
+                            width: 140, height: 140, margin: '0 auto 20px', 
+                            borderRadius: '50%', padding: 4,
+                            border: '2px dashed #d9d9d9',
+                        }}>
+                            <Avatar size={128} src={avatarUrl} icon={<UserOutlined />} style={{ background: '#f5f5f5' }} />
+                        </div>
 
-                            <br />
-
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={(file) => {
-                                    const okType = /^image\/(jpeg|png|webp|gif)$/.test(file.type);
-                                    if (!okType) {
-                                        message.error("Chỉ chấp nhận ảnh JPG/PNG/WebP/GIF");
-                                        return false;
-                                    }
-                                    const isLt5M = file.size / 1024 / 1024 < 5;
-                                    if (!isLt5M) {
-                                        message.error("Kích thước file phải nhỏ hơn 5MB!");
-                                        return false;
-                                    }
-                                    setAvatarFile(file);                    // lưu file để submit
-                                    setAvatarUrl(URL.createObjectURL(file)); // preview
-                                    return false; // CHẶN auto-upload
-                                }}
-                                onRemove={() => {
-                                    setAvatarFile(null);
-                                    setAvatarUrl("");
-                                }}
-                            >
-                                <Button icon={<CameraOutlined />} loading={loading} block>
-                                    {avatarUrl ? "Thay đổi ảnh" : "Chọn ảnh"}
-                                </Button>
-                            </Upload>
-
-                            <p style={{
-                                fontSize: '12px',
-                                color: '#666',
-                                marginTop: 8,
-                                marginBottom: 0
-                            }}>
-                                Định dạng: JPG, PNG, GIF<br />
-                                Kích thước tối đa: 5MB
-                            </p>
+                        <Upload
+                            accept="image/*"
+                            showUploadList={false}
+                            beforeUpload={(file) => {
+                                setAvatarFile(file);
+                                setAvatarUrl(URL.createObjectURL(file));
+                                return false;
+                            }}
+                        >
+                            <Button icon={<CameraOutlined />} size="middle" style={{ borderRadius: 8 }}>
+                                Thay ảnh đại diện
+                            </Button>
+                        </Upload>
+                        
+                        <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f0f0f0', textAlign: 'left' }}>
+                            <Space direction="vertical" style={{ width: '100%' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text type="secondary">Nguồn tài khoản</Text>
+                                    {userData.isGoogleAccount ? (
+                                        <Tag icon={<GoogleOutlined />} color="blue" style={{ border: 0 }}>Google</Tag>
+                                    ) : (
+                                        <Tag color="default" style={{ border: 0 }}>Mặc định</Tag>
+                                    )}
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text type="secondary">Đăng ký ngày</Text>
+                                    <Text strong>{new Date(userData.createdAt).toLocaleDateString('vi-VN')}</Text>
+                                </div>
+                            </Space>
                         </div>
                     </Card>
 
-                    {/* User Status */}
-                    <Card title="Trạng thái tài khoản" style={{ marginBottom: 24 }}>
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Text>Trạng thái:</Text>
-                                <Tag color={userData.isActive ? 'green' : 'red'}>
-                                    {userData.isActive ? 'Kích hoạt' : 'Đã khóa'}
-                                </Tag>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Text>Loại tài khoản:</Text>
-                                <Tag color={userData.isGoogleAccount ? 'blue' : 'default'}>
-                                    {userData.isGoogleAccount ? 'Google' : 'Thường'}
-                                </Tag>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Text>Vai trò:</Text>
-                                <Tag color={userData.role === 'admin' ? 'volcano' : 'blue'}>
-                                    {userData.role}
-                                </Tag>
-                            </div>
-                        </Space>
-                    </Card>
-
-                    {/* Actions */}
-                    <Card title="Hành động">
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                            <Button
-                                type="primary"
-                                icon={<SaveOutlined />}
-                                loading={loading}
-                                onClick={handleSubmit}
-                                size="large"
-                                block
-                            >
-                                Lưu thay đổi
+                    <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                            <Button type="primary" icon={<SaveOutlined />} loading={loading} onClick={handleSubmit} size="large" block style={{ borderRadius: 8, height: 48 }}>
+                                Lưu Thay Đổi
                             </Button>
-
-                            <Button
-                                icon={<HistoryOutlined />}
-                                onClick={handleReset}
-                                size="large"
-                                block
-                            >
-                                Hoàn tác thay đổi
-                            </Button>
-
-                            <Button
-                                onClick={handleCancel}
-                                size="large"
-                                block
-                            >
-                                Hủy và quay lại
+                            <Button icon={<HistoryOutlined />} onClick={handleReset} size="large" block style={{ borderRadius: 8 }}>
+                                Khôi phục bản gốc
                             </Button>
                         </Space>
                     </Card>
-
-                    {/* Warning */}
-                    <Alert
-                        message="Lưu ý"
-                        description="Email không thể thay đổi. Để trống mật khẩu nếu không muốn thay đổi."
-                        type="warning"
-                        showIcon
-                        style={{ marginTop: 16, padding: 8, fontSize: 12 }}
-                    />
                 </Col>
             </Row>
         </div>

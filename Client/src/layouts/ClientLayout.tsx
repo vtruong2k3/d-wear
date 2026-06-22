@@ -34,7 +34,7 @@ const Layout = () => {
       <GlobalLoading />
       <div className="client-layout">
         <Header />
-        <main style={{ background: "#f6f6f6" }}>
+        <main className="bg-white min-h-screen">
 
           <Outlet />
           <FashionShopChat />

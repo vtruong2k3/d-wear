@@ -1,4 +1,5 @@
 const User = require("../models/users");
+const RefreshToken = require("../models/refreshTokens");
 const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
 const authValidate = require("../validate/authValidate");
@@ -28,6 +29,9 @@ exports.login = async (req, res) => {
     if (user.isActive === false) {
       return res.status(400).json({ message: "Tài khoản đã bị khóa" });
     }
+    if (user.isGoogleAccount) {
+      return res.status(400).json({ message: "Tài khoản này được đăng ký bằng Google, vui lòng đăng nhập bằng Google." });
+    }
     const isPassword = await bcryptjs.compare(password, user.password);
     if (!isPassword) {
       return res.status(400).json({ message: "Mật khẩu không đúng" });
@@ -36,10 +40,35 @@ exports.login = async (req, res) => {
     const token = await jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "15m" }
     );
+
+    const refreshToken = await jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Băm và lưu vào DB
+    const tokenHash = await bcryptjs.hash(refreshToken, 10);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash,
+      expiresAt,
+      userAgent: req.headers["user-agent"],
+      ipAddress: req.ip
+    });
+
+    // Cài HttpOnly Cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/api/auth/refresh-token",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     // Ẩn mật khẩu khỏi response
     const {
       password: _v,
@@ -135,10 +164,35 @@ exports.loginWithGoogle = async (req, res) => {
     if (!user.isActive) {
       return res.status(400).json({ message: "Tài khoản đã bị khóa" });
     }
-    // Tạo JWT token
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "15m",
     });
+
+    const refreshToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Băm và lưu vào DB
+    const tokenHash = await bcryptjs.hash(refreshToken, 10);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash,
+      expiresAt,
+      userAgent: req.headers["user-agent"],
+      ipAddress: req.ip
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/api/auth/refresh-token",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
 
     // Lấy dữ liệu cần trả về (ẩn field nhạy cảm)
     const {
@@ -318,3 +372,115 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({ message: "Lỗi máy chủ" });
   }
 };
+
+//  /auth/refresh-token
+exports.refreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Chưa có refresh token" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Refresh token không hợp lệ hoặc đã hết hạn" });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user || !user.isActive || user.isDelete) {
+      return res.status(401).json({ message: "Tài khoản không hợp lệ" });
+    }
+
+    // Kiểm tra trong database
+    const userTokens = await RefreshToken.find({ userId: user._id });
+    let matchedTokenDoc = null;
+
+    for (const tokenDoc of userTokens) {
+      const isMatch = await bcryptjs.compare(refreshToken, tokenDoc.tokenHash);
+      if (isMatch) {
+        matchedTokenDoc = tokenDoc;
+        break;
+      }
+    }
+
+    if (!matchedTokenDoc || matchedTokenDoc.revoked) {
+      return res.status(401).json({ message: "Refresh token bị từ chối" });
+    }
+
+    // Xoay vòng (Rotation): Xóa token cũ
+    await RefreshToken.findByIdAndDelete(matchedTokenDoc._id);
+
+    // Cấp token mới
+    const newAccessToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const newRefreshToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const newTokenHash = await bcryptjs.hash(newRefreshToken, 10);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash: newTokenHash,
+      expiresAt,
+      userAgent: req.headers["user-agent"],
+      ipAddress: req.ip
+    });
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/api/auth/refresh-token",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({ token: newAccessToken });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ" });
+  }
+};
+
+//  /auth/logout
+exports.logout = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (refreshToken) {
+      try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const userTokens = await RefreshToken.find({ userId: decoded.id });
+        for (const tokenDoc of userTokens) {
+          const isMatch = await bcryptjs.compare(refreshToken, tokenDoc.tokenHash);
+          if (isMatch) {
+            await RefreshToken.findByIdAndDelete(tokenDoc._id);
+            break;
+          }
+        }
+      } catch (err) {
+        // Token không hợp lệ thì bỏ qua, vẫn clear cookie
+      }
+    }
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/api/auth/refresh-token",
+    });
+    return res.status(200).json({ message: "Đăng xuất thành công" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ" });
+  }
+};
+

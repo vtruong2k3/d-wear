@@ -162,7 +162,7 @@ exports.createProductWithVariants = async (req, res) => {
     );
 
     // Map đường dẫn ảnh sản phẩm
-    const imageUrls = productImages.map((file) => file.path);
+    const imageUrls = productImages.map((file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || file.path));
 
     if (!imageUrls.length) {
       return res.status(400).json({
@@ -186,7 +186,7 @@ exports.createProductWithVariants = async (req, res) => {
     variantsData.forEach((variant, idx) => {
       const key = `imageVariant_${idx}[]`;
       const files = req.files[key] || [];
-      variant.image = files.map((file) => file.path);
+      variant.image = files.map((file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || file.path));
     });
 
     //  Validate sản phẩm
@@ -278,7 +278,7 @@ exports.updateProductWithVariants = async (req, res) => {
         ? [req.body.existingImageUrls]
         : req.body.existingImageUrls || [];
 
-    const newImages = req.files?.productImage?.map((file) => file.path) || [];
+    const newImages = req.files?.productImage?.map((file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || file.path)) || [];
     const fullImageUrls = [...existingImageUrls, ...newImages];
     req.body.imageUrls = fullImageUrls;
 
@@ -309,18 +309,18 @@ exports.updateProductWithVariants = async (req, res) => {
     variantsData.forEach((variant, idx) => {
       const key = `imageVariant_${idx}[]`;
       const files = req.files[key] || [];
+      let oldImages = [];
+
+      if (Array.isArray(variant.image)) {
+        // Giữ nguyên URL cũ từ frontend gửi lên
+        oldImages = variant.image;
+      }
 
       if (files.length > 0) {
-        variant.image = files.map((file) => file.path);
-      } else if (Array.isArray(variant.image)) {
-        // giữ ảnh cũ
-        variant.image = variant.image.map((fileName) =>
-          fileName.includes("uploads")
-            ? fileName
-            : `uploads/products/${fileName}`
-        );
+        const newImages = files.map((file) => file.location || (process.env.R2_PUBLIC_URL ? process.env.R2_PUBLIC_URL + '/' + file.key : file.path));
+        variant.image = [...oldImages, ...newImages];
       } else {
-        variant.image = [];
+        variant.image = oldImages;
       }
 
       variant.product_id = id; // Gán product_id thật
@@ -830,7 +830,7 @@ exports.createProduct = async (req, res) => {
       gender,
       material,
       imageUrls: productImages.map(
-        (file) => `uploads/products/${file.filename}`
+        (file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || `uploads/products/${file.filename}`)
       ),
     });
 

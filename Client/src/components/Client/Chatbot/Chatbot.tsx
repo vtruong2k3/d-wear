@@ -54,7 +54,6 @@ const FashionChatbot = () => {
     useEffect(() => {
         if (!chatRoomId || !isOpen) return;
 
-        socket.connect();
         socket.emit('joinRoom', chatRoomId);
 
         const handleReceiveMessage = (newMessage: ChatMessage) => {
@@ -71,7 +70,6 @@ const FashionChatbot = () => {
         return () => {
             socket.emit('leaveRoom', chatRoomId);
             socket.off('receive-message', handleReceiveMessage);
-            socket.disconnect();
         };
     }, [chatRoomId, isOpen, user?._id]);
 

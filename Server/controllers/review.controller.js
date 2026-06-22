@@ -53,7 +53,7 @@ exports.reviewOrderProduct = async (req, res) => {
     // 4. Xử lý ảnh
     const images =
       req.files?.reviewImage?.map(
-        (file) => `/uploads/review/${file.filename}`
+        (file) => process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${file.key}` : (file.location || `/uploads/review/${file.filename}`)
       ) || [];
 
     // 5. Tạo đánh giá

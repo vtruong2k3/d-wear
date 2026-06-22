@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000"); // 🔁 backend chạy port 3000
+const SOCKET_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
+const socket = io(SOCKET_URL);
 
 export default socket;

@@ -15,8 +15,10 @@ export interface IOrder {
     phone: string;
     note?: string;
     email?: string; // Thêm trường email nếu cần
-    paymentMethod: 'cod' | 'vnpay' | 'banking'; // hoặc bạn mở rộng thêm
-    paymentStatus: 'paid' | 'unpaid';
+    paymentMethod: 'cod' | 'vnpay' | 'momo';
+    paymentStatus: 'paid' | 'unpaid' | 'refunded';
+    paidAt?: string;
+    momoTransactionId?: string;
 
     status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'; // tùy logic
 

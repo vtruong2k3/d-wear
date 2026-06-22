@@ -158,16 +158,32 @@ exports.createVoucher = async (req, res) => {
 
 exports.getAllVouchers = async (req, res) => {
   try {
-    // Mặc định: page = 1, limit = 10
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-
     const skip = (page - 1) * limit;
 
-    // Lấy danh sách voucher + tổng số
+    // Build filter object từ query params
+    const filter = {};
+
+    // Tìm kiếm theo mã voucher
+    if (req.query.keyword && req.query.keyword.trim()) {
+      filter.code = { $regex: req.query.keyword.trim(), $options: "i" };
+    }
+
+    // Lọc theo loại giảm giá
+    if (req.query.discountType && req.query.discountType !== "all") {
+      filter.discountType = req.query.discountType;
+    }
+
+    // Lọc theo trạng thái
+    if (req.query.isActive !== undefined && req.query.isActive !== "all") {
+      filter.isActive = req.query.isActive === "true";
+    }
+
+    // Lấy danh sách voucher + tổng số (đã filter)
     const [vouchers, total] = await Promise.all([
-      Voucher.find().skip(skip).limit(limit).sort({ createdAt: -1 }),
-      Voucher.countDocuments(),
+      Voucher.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
+      Voucher.countDocuments(filter),
     ]);
 
     res.status(200).json({
@@ -233,10 +249,13 @@ exports.updateVoucher = async (req, res) => {
       isActive,
     } = req.body;
 
-    // const existVoucher = await Voucher.findOne({ code });
-    // if (existVoucher) {
-    //   return res.status(400).json({ message: "Voucher đã tồn tại" });
-    // }
+    // Kiểm tra trùng mã voucher (loại trừ chính voucher đang sửa)
+    if (code) {
+      const existVoucher = await Voucher.findOne({ code, _id: { $ne: id } });
+      if (existVoucher) {
+        return res.status(400).json({ message: "Mã voucher đã tồn tại" });
+      }
+    }
 
     const voucher = await Voucher.findByIdAndUpdate(
       id,
@@ -253,8 +272,13 @@ exports.updateVoucher = async (req, res) => {
       },
       { new: true }
     );
+
+    if (!voucher) {
+      return res.status(404).json({ message: "Voucher không tồn tại" });
+    }
+
     res.status(200).json({
-      message: "Update thành công. ",
+      message: "Cập nhật voucher thành công",
       voucher,
     });
   } catch (error) {
@@ -271,9 +295,44 @@ exports.deleteVoucher = async (req, res) => {
     return res.status(400).json({ message: "ID không được để trống" });
   }
   try {
-    await Voucher.findByIdAndDelete(id);
+    const deleted = await Voucher.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Voucher không tồn tại" });
+    }
     res.status(200).json({
-      message: "Xoá thành công.",
+      message: "Xoá voucher thành công",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/voucher/stats
+exports.getVoucherStats = async (req, res) => {
+  try {
+    const now = new Date();
+    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const [total, active, inactive, expired, expiringSoon] = await Promise.all([
+      Voucher.countDocuments(),
+      Voucher.countDocuments({ isActive: true, endDate: { $gte: now } }),
+      Voucher.countDocuments({ isActive: false }),
+      Voucher.countDocuments({ endDate: { $lt: now } }),
+      Voucher.countDocuments({
+        isActive: true,
+        endDate: { $gte: now, $lte: sevenDaysLater },
+      }),
+    ]);
+
+    res.status(200).json({
+      total,
+      active,
+      inactive,
+      expired,
+      expiringSoon,
     });
   } catch (error) {
     return res.status(500).json({

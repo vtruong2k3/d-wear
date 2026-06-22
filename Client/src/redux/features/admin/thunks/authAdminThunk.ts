@@ -6,6 +6,7 @@ import type { ErrorType } from "../../../../types/error/IError";
 
 import { getUserInfo } from "../../../../services/client/authService";
 import { message } from "antd";
+import { setAccessToken } from "../../../../configs/AxiosConfig";
 
 export const doLoginAdmin = createAsyncThunk(
   "authAdmin/login",
@@ -13,7 +14,7 @@ export const doLoginAdmin = createAsyncThunk(
     try {
       const res = await loginAdminAPI(data);
 
-      localStorage.setItem("token", res.token);
+      setAccessToken(res.token);
 
       message.success(res.message);
 

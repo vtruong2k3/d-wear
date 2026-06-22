@@ -7,14 +7,14 @@ import {
   doRegister,
   fetchUserProfile,
 } from "./thunks/authUserThunk";
+import { setAccessToken } from "../../../configs/AxiosConfig";
 
-// Lấy token từ localStorage, user sẽ được fetch sau
-const savedToken = localStorage.getItem("token");
+
 
 const initialState: AuthState = {
   user: null,
-  token: savedToken || null,
-  isLogin: !!savedToken,
+  token: null, // Khởi tạo null vì giờ token lưu ở bộ nhớ và sẽ được cấp lại qua silent refresh
+  isLogin: false,
   loading: false,
   error: null,
 };
@@ -24,7 +24,7 @@ export const authenSlice = createSlice({
   initialState,
   reducers: {
     doLogout: (state) => {
-      localStorage.removeItem("token");
+      setAccessToken(null);
 
       state.user = null;
       state.token = null;
@@ -44,7 +44,6 @@ export const authenSlice = createSlice({
       })
       .addCase(doLoginWithGoogle.fulfilled, (state, action) => {
         const { token } = action.payload;
-        localStorage.setItem("token", token);
         state.token = token;
         state.user = action.payload.user;
         state.isLogin = true;
@@ -56,7 +55,7 @@ export const authenSlice = createSlice({
         state.token = null;
         state.user = null;
         state.isLogin = false;
-        localStorage.removeItem("token");
+        setAccessToken(null);
       });
 
     builder
@@ -67,7 +66,6 @@ export const authenSlice = createSlice({
       })
       .addCase(doLogin.fulfilled, (state, action) => {
         const { token } = action.payload;
-        localStorage.setItem("token", token);
         state.token = token;
         state.user = action.payload.user;
         state.isLogin = true;
@@ -79,7 +77,7 @@ export const authenSlice = createSlice({
         state.token = null;
         state.user = null;
         state.isLogin = false;
-        localStorage.removeItem("token");
+        setAccessToken(null);
       });
 
     builder
@@ -100,7 +98,7 @@ export const authenSlice = createSlice({
         state.error = action.payload ?? "Đăng ký thất bại";
         state.isLogin = false;
         toast.error(state.error);
-        localStorage.removeItem("token");
+        setAccessToken(null);
       });
 
     builder
@@ -119,7 +117,7 @@ export const authenSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isLogin = false;
-        localStorage.removeItem("token");
+        setAccessToken(null);
       });
   },
 });

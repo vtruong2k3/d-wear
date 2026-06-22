@@ -3,31 +3,37 @@ import {
   type IVoucher,
   type CreateVoucherResponse,
   type VoucherResponse,
+  type VoucherStats,
 } from "../../types/voucher/IVoucher";
 
+export interface VoucherFilterParams {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  discountType?: string;
+  isActive?: string;
+}
+
 export const fetchGetAllVouchers = async (
-  page: number,
-  limit: number
+  params: VoucherFilterParams
 ): Promise<VoucherResponse> => {
-  const res = await axios.get<VoucherResponse>("/api/voucher", {
-    params: { page, limit },
-  });
+  const res = await axios.get<VoucherResponse>("/api/voucher", { params });
+  return res.data;
+};
+
+export const fetchVoucherStats = async (): Promise<VoucherStats> => {
+  const res = await axios.get<VoucherStats>("/api/voucher/stats");
   return res.data;
 };
 
 export const fetchCreateVoucher = async (
   data: Omit<IVoucher, "_id" | "createdAt" | "updatedAt">
 ): Promise<CreateVoucherResponse> => {
-  try {
-    const response = await axios.post<CreateVoucherResponse>(
-      "/api/voucher",
-      data
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Lỗi khi tạo voucher:", error);
-    throw new Error("Không thể tạo voucher");
-  }
+  const response = await axios.post<CreateVoucherResponse>(
+    "/api/voucher",
+    data
+  );
+  return response.data;
 };
 
 export const fetchUpdateVoucher = async (

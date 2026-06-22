@@ -4,7 +4,7 @@ let io;
 const initSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173", // Đổi theo frontend của bạn
+      origin: ["http://localhost:5173", "http://localhost:5174"],
       methods: ["GET", "POST"],
     },
   });

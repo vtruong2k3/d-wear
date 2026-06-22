@@ -13,8 +13,10 @@ exports.getAllCart = async (req, res) => {
       .lean();
 
     if (result.length === 0) {
-      return res.status(404).json({
-        message: "Giỏ hàng trống",
+      return res.status(200).json({
+        message: "Lấy giỏ hàng thành công",
+        carts: [],
+        totalAmount: 0,
       });
     }
 

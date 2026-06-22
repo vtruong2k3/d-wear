@@ -66,78 +66,48 @@ const OrdersPage = () => {
   useEffect(() => {
     if (orders.length === 0) return;
 
+    // Join room cho từng order._id để nhận update
     orders.forEach((order) => {
       socket.emit('joinRoom', order._id);
     });
 
-    socket.on('orderStatusUpdate', ({ orderId, status }) => {
+    const handleStatusUpdate = ({ orderId, status }: { orderId: string, status: string }) => {
       setOrders((prevOrders) => {
         const updated = prevOrders.map((order) =>
-          order._id === orderId ? { ...order, status } : order
+          order._id === orderId ? { ...order, status: status as import('../../../types/order/IOrder').IOrder["status"] } : order
         );
-
         const updatedOrder = updated.find(order => order._id === orderId);
         if (updatedOrder) {
           toast.success(`Trạng thái đơn hàng đã cập nhật: ${getStatusText(status)}`);
         }
-
         return updated;
       });
-    });
-
-
-    return () => {
-      orders.forEach((order) => {
-        socket.emit('leaveRoom', order._id);
-      });
-      socket.off('orderStatusUpdate');
     };
-  }, [orders]);
 
-  useEffect(() => {
-    if (orders.length === 0) return;
-
-    orders.forEach((order) => {
-      socket.emit('joinRoom', order._id);
-    });
-
-    socket.on('cancelOrder', ({ orderId, status }) => {
+    const handleCancelOrder = ({ orderId, status }: { orderId: string, status: string }) => {
       setOrders((prevOrders) => {
         const updated = prevOrders.map((order) =>
-          order._id === orderId ? { ...order, status } : order
+          order._id === orderId ? { ...order, status: status as import('../../../types/order/IOrder').IOrder["status"] } : order
         );
-
         const updatedOrder = updated.find(order => order._id === orderId);
         if (updatedOrder) {
           toast.error(`Đơn hàng đã bị hủy: ${updatedOrder.order_code}`);
         }
-
         return updated;
       });
-    });
+    };
 
+    socket.on('orderStatusUpdate', handleStatusUpdate);
+    socket.on('cancelOrder', handleCancelOrder);
 
     return () => {
       orders.forEach((order) => {
         socket.emit('leaveRoom', order._id);
       });
-      socket.off('cancelOrder');
+      socket.off('orderStatusUpdate', handleStatusUpdate);
+      socket.off('cancelOrder', handleCancelOrder);
     };
   }, [orders]);
-  useEffect(() => {
-    // Tham gia phòng admin để nhận đơn mới
-    socket.emit("joinRoom", "user");
-
-    // Nhận đơn hàng mới
-    socket.on("newOrder", ({ orders: newOrder }) => {
-      setOrders((prev) => [newOrder, ...prev]); // thêm vào đầu danh sách
-      toast.success(" Có đơn hàng mới!");
-    });
-
-    return () => {
-      socket.off("newOrder");
-    };
-  }, []);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
       day: '2-digit',

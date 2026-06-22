@@ -37,8 +37,8 @@ exports.updateUserProfile = async (req, res) => {
       phone,
     };
 
-    if (avatarFile && avatarFile.filename) {
-      updateData.avatar = `/uploads/avatar/${avatarFile.filename}`;
+    if (avatarFile && (avatarFile.key || avatarFile.filename)) {
+      updateData.avatar = process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${avatarFile.key}` : (avatarFile.location || `/uploads/avatar/${avatarFile.filename}`);
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -210,8 +210,8 @@ exports.createUser = async (req, res) => {
 
     // xử lý avatar nếu upload
     let avatarUrl;
-    if (req.file?.filename) {
-      avatarUrl = `/uploads/avatar/${req.file.filename}`;
+    if (req.file && (req.file.key || req.file.filename)) {
+      avatarUrl = process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${req.file.key}` : (req.file.location || `/uploads/avatar/${req.file.filename}`);
     }
 
     const user = await User.create({
@@ -286,10 +286,10 @@ exports.updateUser = async (req, res) => {
 
     let avatarUrl = user.avatar;
 
-    if (req.file?.filename) {
-      const newAvatarRel = `/uploads/avatar/${req.file.filename}`;
+    if (req.file && (req.file.key || req.file.filename)) {
+      const newAvatarRel = process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${req.file.key}` : (req.file.location || `/uploads/avatar/${req.file.filename}`);
 
-      if (user.avatar && user.avatar !== newAvatarRel) {
+      if (user.avatar && user.avatar !== newAvatarRel && user.avatar.startsWith("/uploads")) {
         const absOld = path.join(process.cwd(), user.avatar.replace(/^\//, ""));
         try {
           await fs.unlink(absOld);

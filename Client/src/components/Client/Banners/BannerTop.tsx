@@ -8,34 +8,36 @@ const bannerData = [
   {
     id: 1,
     image: img_banner1,
-
-    link: "/product"
+    headline: "Bộ Sưu Tập Mới",
+    subtitle: "Khám phá xu hướng thời trang mùa hè 2025",
+    link: "/product",
   },
   {
     id: 2,
     image: img_banner2,
-
-    link: "/product"
+    headline: "Phong Cách Hiện Đại",
+    subtitle: "Nâng tầm phong cách với những thiết kế độc đáo",
+    link: "/product",
   },
   {
     id: 3,
     image: img_banner3,
-
-    link: "/product"
-  }
+    headline: "Sale Đến 50%",
+    subtitle: "Ưu đãi đặc biệt cho các sản phẩm được yêu thích nhất",
+    link: "/product",
+  },
 ];
 
 const BannerSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Auto slide - tự chạy liên tục
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isHovered) {
         setCurrentSlide((prev) => (prev + 1) % bannerData.length);
       }
-    }, 3000); // Chuyển slide mỗi 4 giây
+    }, 4500);
 
     return () => clearInterval(interval);
   }, [isHovered]);
@@ -55,33 +57,70 @@ const BannerSlider = () => {
         {bannerData.map((slide, index) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-all duration-1000 ${index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105"
-              }`}
+            className={`absolute inset-0 transition-all duration-1000 ${
+              index === currentSlide
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-105"
+            }`}
           >
             <img
-              className="w-full h-full object-cover transition-transform duration-[6000ms] hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-[8000ms] ease-out"
               src={slide.image}
-              alt={`Banner ${index + 1}`}
+              alt={slide.headline}
+              style={{
+                transform: index === currentSlide ? "scale(1.05)" : "scale(1)",
+              }}
             />
 
             {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/50" />
 
             {/* Content */}
-            <div className="absolute w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center px-4">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+              {/* Headline */}
+              <h2
+                className={`!text-white text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-tight drop-shadow-lg transition-all duration-700 ${
+                  index === currentSlide
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-8"
+                }`}
+              >
+                {slide.headline}
+              </h2>
 
+              {/* Subtitle */}
+              <p
+                className={`mt-4 lg:mt-6 !text-white/90 text-base sm:text-lg lg:text-xl font-light max-w-lg drop-shadow transition-all duration-700 delay-150 ${
+                  index === currentSlide
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
+                }`}
+              >
+                {slide.subtitle}
+              </p>
 
-              {/* Shop now button - chỉ hiện khi hover */}
+              {/* CTA Button */}
               <Link
                 to={slide.link}
-                className={`inline-flex items-center h-12 px-8 bg-white text-black font-semibold rounded-full text-base hover:bg-black hover:text-white transition-all duration-500 transform shadow-lg ${isHovered
-                  ? "opacity-100 translate-y-0 scale-100"
-                  : "opacity-0 translate-y-8 scale-95"
-                  }`}
+                className={`mt-8 lg:mt-10 inline-flex items-center h-12 lg:h-14 px-8 lg:px-10 bg-gradient-to-r from-gray-900 to-slate-800 !text-white font-semibold rounded-full text-sm lg:text-base hover:from-gray-800 hover:to-slate-700 transition-all duration-500 shadow-xl hover:shadow-2xl hover:scale-105 ${
+                  index === currentSlide
+                    ? "opacity-100 translate-y-0 delay-300"
+                    : "opacity-0 translate-y-8"
+                }`}
               >
-                Shop now
-                <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                Khám phá ngay
+                <svg
+                  className="ml-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
                 </svg>
               </Link>
             </div>
@@ -90,30 +129,30 @@ const BannerSlider = () => {
       </div>
 
       {/* Dots Indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-3">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-3">
         {bannerData.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
-              ? "!bg-white w-8"
-              : "!bg-white/50 hover:bg-white/75"
-              }`}
+            className={`h-2 rounded-full transition-all duration-500 ${
+              index === currentSlide
+                ? "!bg-white w-10"
+                : "!bg-white/40 w-2 hover:bg-white/60"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
 
-      {/* Progress Bar tự chạy */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-black/20">
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/10">
         <div
-          className="h-full bg-white transition-all duration-100 ease-linear"
+          className="h-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-300 ease-linear"
           style={{
-            width: `${((currentSlide + 1) / bannerData.length) * 100}%`
+            width: `${((currentSlide + 1) / bannerData.length) * 100}%`,
           }}
         />
       </div>
-
-
     </section>
   );
 };

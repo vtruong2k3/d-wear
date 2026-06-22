@@ -17,6 +17,7 @@ const statisticRouter = require("./statistics.routes");
 const userRouter = require("./user.routes");
 const reviewRouter = require("./review.routes");
 const messageRouter = require("./message.routes");
+const notificationRouter = require("./notification.routes");
 
 const routerManager = express.Router();
 
@@ -38,4 +39,5 @@ routerManager.use("/api", statisticRouter);
 routerManager.use("/api", userRouter);
 routerManager.use("/api", reviewRouter);
 routerManager.use("/api", messageRouter);
+routerManager.use("/api/notifications", notificationRouter);
 module.exports = routerManager;

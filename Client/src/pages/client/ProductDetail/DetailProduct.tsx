@@ -173,7 +173,7 @@ const DetailProduct = () => {
             <li><a className="text-sm">{dataDetail.product_name}</a></li>
           </ul>
 
-          <div className="lg:grid grid-cols-5 gap-7 mt-4 ml-15">
+          <div className="grid grid-cols-12 gap-8 lg:gap-12 mt-6">
             <ProductImageGallery
               imageUrls={dataDetail.imageUrls}
               productName={dataDetail.product_name}

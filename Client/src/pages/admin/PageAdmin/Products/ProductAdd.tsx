@@ -12,8 +12,12 @@ import {
   Select,
   Upload,
   type UploadFile,
+  Card,
+  Table,
+  Space,
+  Divider,
 } from "antd";
-import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { PlusOutlined, UploadOutlined, DeleteOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import type { IProductAdd } from "../../../../types/IProducts";
 import type { Category } from "../../../../types/IProducts";
 import type { Brand } from "../../../../types/IProducts";
@@ -22,12 +26,10 @@ import "../../../../styles/addProduct.css";
 import type { UploadChangeParam } from "antd/es/upload";
 import type { ErrorType } from "../../../../types/error/IError";
 
-import { DeleteOutlined } from "@ant-design/icons";
 import { createProduct } from "../../../../services/admin/productService";
 import type { VariantForm } from "../../../../types/IVariants";
 import type { SizeOption } from "../../../../types/size/ISize";
 import type { ColorOption } from "../../../../types/color/IColor";
-
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -44,19 +46,20 @@ const ProductAdd = () => {
   const [variantErrors, setVariantErrors] = useState<{
     [index: number]: string[];
   }>({});
-  const [variants, setVariants] = useState<VariantForm[]>([
-    {
-      size: "",
-      color: "",
-      price: undefined,
-      stock: 0,
-      image: [],
-    },
-  ]);
+  const [variants, setVariants] = useState<VariantForm[]>([]);
+
+  // Bulk Generator State
+  const [bulkColors, setBulkColors] = useState<string[]>([]);
+  const [bulkSizes, setBulkSizes] = useState<string[]>([]);
+  const [bulkPrice, setBulkPrice] = useState<number | null>(null);
+  const [bulkStock, setBulkStock] = useState<number | null>(null);
 
   // check validate variant
-
   const validateVariants = () => {
+    if (variants.length === 0) {
+      message.error("Vui lòng thêm ít nhất 1 biến thể!");
+      return false;
+    }
     const errors: { [index: number]: string[] } = {};
     let isValid = true;
 
@@ -87,6 +90,7 @@ const ProductAdd = () => {
     setVariantErrors(errors); // Cập nhật lỗi vào state
     return isValid;
   };
+
   // Validate ảnh sản phẩm
   const beforeUploadProductImage = (file: File) => {
     const isValidType =
@@ -170,17 +174,14 @@ const ProductAdd = () => {
     fetchSelectOptions();
   }, []);
 
-
   const onFinish = async (values: IProductAdd) => {
     try {
-
       if (!validateVariants()) {
-        message.error("Vui lòng nhập đầy đủ thông tin cho các biến thể!");
+        message.error("Vui lòng kiểm tra lại thông tin các biến thể!");
         return;
       }
 
       setLoading(true);
-
       const formData = new FormData();
 
       //  Thông tin sản phẩm
@@ -210,22 +211,17 @@ const ProductAdd = () => {
 
       //  Ảnh biến thể — KÈM INDEX để backend biết ảnh nào của biến thể nào
       variants.forEach((variant, idx) => {
-        variant.image.forEach((imgFile) => {
-          if (imgFile.originFileObj) {
-            // ⚡ Tách riêng cho từng biến thể theo index
-            formData.append(`imageVariant_${idx}[]`, imgFile.originFileObj);
-          }
-        });
+        if (variant.image && variant.image.length > 0) {
+          variant.image.forEach((imgFile) => {
+            if (imgFile.originFileObj) {
+              formData.append(`imageVariant_${idx}[]`, imgFile.originFileObj);
+            }
+          });
+        }
       });
 
-
-
-
-
       // Gửi request
-      const data = await createProduct(formData)
-
-
+      const data = await createProduct(formData);
       message.success(data.message);
       navigate("/admin/products");
     } catch (error) {
@@ -239,19 +235,53 @@ const ProductAdd = () => {
     }
   };
 
-
-
-
   const handleImageChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.fileList.length > 8) {
       message.warning("Chỉ được tải tối đa 8 ảnh!");
       return;
     }
-
     setImageList(info.fileList);
   };
 
-  //variant
+  // Variant generator
+  const generateBulkVariants = () => {
+    if (bulkColors.length === 0 || bulkSizes.length === 0) {
+      message.warning("Vui lòng chọn ít nhất 1 màu và 1 size!");
+      return;
+    }
+    if (!bulkPrice || bulkPrice <= 0) {
+      message.warning("Vui lòng nhập giá chung hợp lệ!");
+      return;
+    }
+    if (bulkStock === null || bulkStock < 0) {
+      message.warning("Vui lòng nhập tồn kho chung hợp lệ!");
+      return;
+    }
+
+    const newVariants: VariantForm[] = [];
+    bulkColors.forEach((c) => {
+      bulkSizes.forEach((s) => {
+        const exists = variants.find((v) => v.color === c && v.size === s);
+        if (!exists) {
+          newVariants.push({
+            size: s,
+            color: c,
+            price: bulkPrice,
+            stock: bulkStock,
+            image: [],
+          });
+        }
+      });
+    });
+
+    if (newVariants.length > 0) {
+      setVariants([...variants, ...newVariants]);
+      message.success(`Đã tạo thành công ${newVariants.length} biến thể!`);
+    } else {
+      message.info("Các biến thể này đã tồn tại!");
+    }
+  };
+
   const addVariant = () => {
     setVariants([
       ...variants,
@@ -274,485 +304,392 @@ const ProductAdd = () => {
     updated[index].image = fileList;
     setVariants(updated);
   };
+
   const removeVariant = (index: number) => {
     const updated = [...variants];
     updated.splice(index, 1);
     setVariants(updated);
   };
 
+  // Table columns for variants
+  const columns = [
+    {
+      title: "Màu",
+      dataIndex: "color",
+      width: 150,
+      render: (_: any, record: VariantForm, index: number) => (
+        <Select
+          className={`w-full ${variantErrors[index]?.includes("color") ? "border-red-500" : ""}`}
+          placeholder="Chọn màu"
+          value={record.color || undefined}
+          onChange={(value) => handleVariantChange(index, "color", value)}
+          showSearch
+          optionFilterProp="children"
+        >
+          {colors.map((item) => (
+            <Option key={item._id} value={item.color_name}>
+              {item.color_name}
+            </Option>
+          ))}
+        </Select>
+      ),
+    },
+    {
+      title: "Size",
+      dataIndex: "size",
+      width: 150,
+      render: (_: any, record: VariantForm, index: number) => (
+        <Select
+          className={`w-full ${variantErrors[index]?.includes("size") ? "border-red-500" : ""}`}
+          placeholder="Chọn size"
+          value={record.size || undefined}
+          onChange={(value) => handleVariantChange(index, "size", value)}
+          showSearch
+          optionFilterProp="children"
+        >
+          {sizes.map((item) => (
+            <Option key={item._id} value={item.size_name}>
+              {item.size_name}
+            </Option>
+          ))}
+        </Select>
+      ),
+    },
+    {
+      title: "Giá (VNĐ)",
+      dataIndex: "price",
+      width: 150,
+      render: (_: any, record: VariantForm, index: number) => (
+        <InputNumber
+          className={`w-full ${variantErrors[index]?.includes("price") ? "border-red-500" : ""}`}
+          value={record.price}
+          onChange={(value) => handleVariantChange(index, "price", value || 0)}
+          min={0}
+          formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+          parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, "") || 0)}
+        />
+      ),
+    },
+    {
+      title: "Tồn kho",
+      dataIndex: "stock",
+      width: 120,
+      render: (_: any, record: VariantForm, index: number) => (
+        <InputNumber
+          className={`w-full ${variantErrors[index]?.includes("stock") ? "border-red-500" : ""}`}
+          value={record.stock}
+          onChange={(value) => handleVariantChange(index, "stock", value || 0)}
+          min={0}
+        />
+      ),
+    },
+    {
+      title: "Hình ảnh",
+      dataIndex: "image",
+      render: (_: any, record: VariantForm, index: number) => (
+        <Upload
+          listType="picture-card"
+          fileList={record.image}
+          onChange={(info) => handleVariantImageChange(index, info.fileList)}
+          beforeUpload={beforeUploadVariantImage}
+          maxCount={5}
+        >
+          {record.image && record.image.length >= 5 ? null : (
+            <div>
+              <UploadOutlined />
+              <div style={{ marginTop: 8, fontSize: '12px' }}>Tải ảnh</div>
+            </div>
+          )}
+        </Upload>
+      ),
+    },
+    {
+      title: "",
+      key: "action",
+      width: 60,
+      render: (_: any, __: any, index: number) => (
+        <Button
+          danger
+          type="text"
+          icon={<DeleteOutlined />}
+          onClick={() => removeVariant(index)}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg mb-8">
-          <div className="px-8 py-6">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
-                <PlusOutlined className="text-white text-lg" />
-              </div>
-              Thêm Sản Phẩm
-            </h1>
-            <p className="text-gray-600 mt-2 ml-14">
-              Điền thông tin chi tiết để thêm sản phẩm
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4 shadow-md">
+              <PlusOutlined className="text-white text-lg" />
+            </div>
+            Thêm Sản Phẩm Mới
+          </h1>
         </div>
 
-        {/* Form */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <Form
-            layout="vertical"
-            form={form}
-            onFinish={onFinish}
-            className="p-8"
-            requiredMark={false}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Cột trái */}
-              <div className="space-y-8">
-                {/* Thông tin cơ bản */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                    Thông Tin Cơ Bản
-                  </h3>
+        <Form
+          layout="vertical"
+          form={form}
+          onFinish={onFinish}
+          requiredMark={false}
+        >
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Cột trái (Chiếm 2/3) */}
+            <div className="xl:col-span-2 flex flex-col gap-8">
+              {/* Card: Thông tin cơ bản */}
+              <Card bordered={false} className="shadow-sm rounded-xl" title={<span className="text-lg font-bold text-gray-800">Thông Tin Cơ Bản</span>}>
+                <Form.Item
+                  label={<span className="font-semibold">Tên sản phẩm</span>}
+                  name="product_name"
+                  rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
+                >
+                  <Input placeholder="Nhập tên sản phẩm..." size="large" className="rounded-lg" />
+                </Form.Item>
 
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Tên sản phẩm
-                      </span>
-                    }
-                    name="product_name"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Vui lòng nhập tên sản phẩm!",
-                      },
-                    ]}
+                <Form.Item
+                  label={<span className="font-semibold">Mô tả chi tiết</span>}
+                  name="description"
+                  rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
+                >
+                  <TextArea
+                    rows={6}
+                    placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                    className="rounded-lg resize-none"
+                  />
+                </Form.Item>
+              </Card>
+
+              {/* Card: Hình ảnh sản phẩm */}
+              <Card bordered={false} className="shadow-sm rounded-xl" title={<span className="text-lg font-bold text-gray-800">Hình Ảnh Sản Phẩm (Tối đa 8 ảnh)</span>}>
+                <Form.Item
+                  name="productImage"
+                  rules={[{ required: true, message: "Vui lòng tải lên ít nhất 1 ảnh!" }]}
+                >
+                  <Upload
+                    listType="picture-card"
+                    fileList={imageList}
+                    onChange={handleImageChange}
+                    multiple
+                    beforeUpload={beforeUploadProductImage}
+                    accept="image/*"
                   >
-                    <Input
-                      placeholder="Nhập tên sản phẩm..."
-                      className="h-12 text-base rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      size="large"
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Mô tả sản phẩm
-                      </span>
-                    }
-                    name="description"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập mô tả!" },
-                    ]}
-                  >
-                    <TextArea
-                      rows={4}
-                      placeholder="Mô tả chi tiết về sản phẩm..."
-                      className="text-base rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Giá bán (VNĐ)
-                      </span>
-                    }
-                    name="basePrice"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập giá!" },
-                      { type: "number", min: 1000, message: "Số tiền phải lớn hơn 1000đ" }
-                    ]}
-                  >
-                    <InputNumber<number>
-                      min={0}
-                      className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                      size="large"
-                      style={{ height: "48px" }}
-                      formatter={(value) =>
-                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                      }
-                      parser={(value) =>
-                        Number(value?.replace(/\$\s?|(,*)/g, "") || 0)
-                      }
-                      placeholder="0"
-                    />
-                  </Form.Item>
-                </div>
-
-                {/* Phân loại */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                    Phân Loại
-                  </h3>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Brand
-                      </span>
-                    }
-                    name="brand_id"
-                    rules={[
-                      { required: true, message: "Vui lòng chọn brand!" },
-                    ]}
-                  >
-                    <Select
-                      placeholder="Chọn brand..."
-                      size="large"
-                      className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                      showSearch
-                      optionFilterProp="children"
-                      style={{ height: "48px" }}
-                    >
-                      {brands.map((brand) => (
-                        <Option key={brand._id} value={brand._id}>
-                          {brand.brand_name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Category
-                      </span>
-                    }
-                    name="category_id"
-                    rules={[
-                      { required: true, message: "Vui lòng chọn category!" },
-                    ]}
-                  >
-                    <Select
-                      placeholder="Chọn category..."
-                      size="large"
-                      className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                      showSearch
-                      optionFilterProp="children"
-                      style={{ height: "48px" }}
-                    >
-                      {categories.map((cat) => (
-                        <Option key={cat._id} value={cat._id}>
-                          {cat.category_name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </div>
-              </div>
-
-              {/* Cột phải */}
-              <div className="space-y-8">
-                {/* Thuộc tính sản phẩm */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                    Thuộc Tính
-                  </h3>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Giới tính
-                      </span>
-                    }
-                    name="gender"
-                    rules={[
-                      { required: true, message: "Vui lòng chọn giới tính!" },
-                    ]}
-                  >
-                    <Select
-                      placeholder="Chọn giới tính..."
-                      size="large"
-                      className="w-full rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                      style={{ height: "48px" }}
-                    >
-                      <Option value="male">Nam</Option>
-                      <Option value="female">Nữ</Option>
-                      <Option value="unisex">Unisex</Option>
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Chất liệu
-                      </span>
-                    }
-                    name="material"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập chất liệu!" },
-                    ]}
-                  >
-                    <Input
-                      placeholder="Nhập chất liệu..."
-                      className="h-12 text-base rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      size="large"
-                    />
-                  </Form.Item>
-                </div>
-
-                {/* Hình ảnh sản phẩm - Fixed CSS */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
-                    Hình Ảnh Sản Phẩm
-                  </h3>
-
-                  <Form.Item
-                    label={
-                      <span className="text-gray-800 font-semibold text-sm">
-                        Ảnh sản phẩm
-                      </span>
-                    }
-                    name="productImage"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Vui lòng tải lên ít nhất 1 ảnh!",
-                      },
-                    ]}
-                  >
-                    <div className="ant-upload-wrapper">
-                      <Upload
-                        listType="picture-card"
-                        fileList={imageList}
-                        onChange={handleImageChange}
-                        multiple
-                        beforeUpload={beforeUploadProductImage}
-                        className="product-image-upload"
-                        accept="image/*"
-                      >
-                        {imageList.length >= 8 ? null : (
-                          <div className="ant-upload-select">
-                            <div className="flex flex-col items-center justify-center p-4">
-                              <UploadOutlined className="text-2xl text-gray-400 mb-2" />
-
-                              <div className="text-sm font-medium text-gray-600">
-                                Tải ảnh lên
-                              </div>
-                              <div className="text-xs text-gray-400 mt-1">
-                                PNG, JPG, GIF
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </Upload>
-                    </div>
-                  </Form.Item>
-
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-700 flex items-start">
-                      <span className="mr-2">💡</span>
-
-                      <span>
-                        Có thể tải lên nhiều ảnh (tối đa 8 ảnh). Ảnh đầu tiên sẽ
-                        là ảnh chính.
-                      </span>
-                    </p>
-                  </div>
-                  {/* Biến thể */}
-                  <div className="bg-gray-50 rounded-xl p-6 mt-8">
-                    <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                      <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-                      Biến Thể Sản Phẩm
-                    </h3>
-
-                    {variants.map((variant, index) => (
-                      <div
-                        key={index}
-                        className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-white"
-                      >
-                        {/* Nút xoá */}
-                        <div className="absolute top-2 right-2 z-10">
-                          <Button
-                            danger
-                            type="primary"
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={() => removeVariant(index)}
-                          >
-                            Xoá
-                          </Button>
-                        </div>
-
-                        {/* Size */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Size
-                          </label>
-                          <Select
-                            className={`w-full ${variantErrors[index]?.includes("size")
-                              ? "border-red-500"
-                              : ""
-                              }`}
-                            placeholder="Chọn size"
-                            value={variant.size}
-                            onChange={(value) =>
-                              handleVariantChange(index, "size", value)
-                            }
-                            size="large"
-                            showSearch
-                            optionFilterProp="children"
-                          >
-                            {sizes.map((item) => (
-                              <Option key={item._id} value={item.size_name}>
-                                {item.size_name}
-                              </Option>
-                            ))}
-                          </Select>
-                          {variantErrors[index]?.includes("size") && (
-                            <div className="text-red-500 text-xs mt-1">
-                              Vui lòng chọn size
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Màu */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Màu
-                          </label>
-                          <Select
-                            className={`w-full ${variantErrors[index]?.includes("color")
-                              ? "border-red-500"
-                              : ""
-                              }`}
-                            placeholder="Chọn màu"
-                            value={variant.color}
-                            onChange={(value) =>
-                              handleVariantChange(index, "color", value)
-                            }
-                            size="large"
-                            showSearch
-                            optionFilterProp="children"
-                          >
-                            {colors.map((item) => (
-                              <Option key={item._id} value={item.color_name}>
-                                {item.color_name}
-                              </Option>
-                            ))}
-                          </Select>
-                          {variantErrors[index]?.includes("color") && (
-                            <div className="text-red-500 text-xs mt-1">
-                              Vui lòng chọn màu
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Giá */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Giá (VNĐ)
-                          </label>
-                          <InputNumber
-                            className={`w-full ${variantErrors[index]?.includes("price")
-                              ? "border border-red-500"
-                              : ""
-                              }`}
-                            placeholder="Giá biến thể"
-                            value={variant.price}
-                            onChange={(value) =>
-                              handleVariantChange(index, "price", value || 0)
-                            }
-                            min={0}
-                          />
-                          {variantErrors[index]?.includes("price") && (
-                            <div className="text-red-500 text-xs mt-1">
-                              Giá phải lớn hơn 0
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Tồn kho */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tồn kho
-                          </label>
-                          <InputNumber
-                            className={`w-full ${variantErrors[index]?.includes("stock")
-                              ? "border border-red-500"
-                              : ""
-                              }`}
-                            placeholder="Số lượng tồn kho"
-                            value={variant.stock}
-                            onChange={(value) =>
-                              handleVariantChange(index, "stock", value || 0)
-                            }
-                            min={0}
-                          />
-                          {variantErrors[index]?.includes("stock") && (
-                            <div className="text-red-500 text-xs mt-1">
-                              Không được để trống
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Ảnh biến thể */}
-                        <div className="col-span-full md:col-span-2 lg:col-span-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ảnh biến thể
-                          </label>
-                          <Upload
-                            listType="picture"
-                            fileList={variant.image}
-                            onChange={(info) =>
-                              handleVariantImageChange(index, info.fileList)
-                            }
-                            beforeUpload={beforeUploadVariantImage}
-                          >
-                            <Button icon={<UploadOutlined />}>
-                              Tải ảnh biến thể
-                            </Button>
-                          </Upload>
-                        </div>
+                    {imageList.length >= 8 ? null : (
+                      <div className="flex flex-col items-center">
+                        <UploadOutlined className="text-2xl text-gray-400 mb-2" />
+                        <div className="text-sm font-medium text-gray-600">Tải ảnh lên</div>
                       </div>
-                    ))}
+                    )}
+                  </Upload>
+                </Form.Item>
+              </Card>
 
-                    {/* Nút thêm biến thể */}
-                    <div className="flex items-center gap-4 mt-4">
-                      <Button
-                        onClick={addVariant}
-                        icon={<PlusOutlined />}
-                        type="primary"
-                      >
-                        Thêm biến thể
-                      </Button>
-                    </div>
+              {/* Card: Sinh biến thể nhanh */}
+              <Card bordered={false} className="shadow-sm rounded-xl border-t-4 border-t-blue-500" title={
+                <span className="text-lg font-bold text-blue-700 flex items-center">
+                  <ThunderboltOutlined className="mr-2" /> Sinh Biến Thể Nhanh
+                </span>
+              }>
+                <div className="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-800">
+                  Chọn nhiều Màu và Size, sau đó nhập giá và tồn kho để hệ thống tự động tạo hàng loạt biến thể.
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Chọn Màu sắc</label>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      className="w-full"
+                      placeholder="VD: Đen, Trắng..."
+                      value={bulkColors}
+                      onChange={setBulkColors}
+                      size="large"
+                    >
+                      {colors.map(c => <Option key={c._id} value={c.color_name}>{c.color_name}</Option>)}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Chọn Size</label>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      className="w-full"
+                      placeholder="VD: S, M, L..."
+                      value={bulkSizes}
+                      onChange={setBulkSizes}
+                      size="large"
+                    >
+                      {sizes.map(s => <Option key={s._id} value={s.size_name}>{s.size_name}</Option>)}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Giá chung (VNĐ)</label>
+                    <InputNumber
+                      className="w-full"
+                      size="large"
+                      min={0}
+                      value={bulkPrice}
+                      onChange={setBulkPrice}
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, "") || 0)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Tồn kho chung</label>
+                    <InputNumber
+                      className="w-full"
+                      size="large"
+                      min={0}
+                      value={bulkStock}
+                      onChange={setBulkStock}
+                    />
                   </div>
                 </div>
-              </div>
+                <div className="mt-4 flex justify-end">
+                  <Button type="primary" className="bg-blue-600" size="large" icon={<ThunderboltOutlined />} onClick={generateBulkVariants}>
+                    Tạo Hàng Loạt
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Card: Danh sách biến thể */}
+              <Card bordered={false} className="shadow-sm rounded-xl" title={
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-800">Danh Sách Biến Thể</span>
+                  <Button onClick={addVariant} icon={<PlusOutlined />} type="dashed">
+                    Thêm thủ công
+                  </Button>
+                </div>
+              }>
+                {variants.length > 0 ? (
+                  <Table 
+                    dataSource={variants.map((v, i) => ({ ...v, key: i }))}
+                    columns={columns}
+                    pagination={false}
+                    bordered
+                    scroll={{ x: 800 }}
+                  />
+                ) : (
+                  <div className="text-center py-10 text-gray-400">
+                    Chưa có biến thể nào. Hãy sử dụng công cụ Sinh Biến Thể Nhanh ở trên.
+                  </div>
+                )}
+              </Card>
+
             </div>
 
-            {/* Fixed Buttons Section */}
-            <div className="mt-12 pt-6 pb-8 mx-5 border-t border-blue-300">
-              <div className="flex items-center justify-end gap-4">
-                <Button
-                  size="large"
-                  className="min-w-[120px] h-12 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 rounded-xl font-medium"
-                  onClick={() => navigate("/admin/products")}
+            {/* Cột phải (Chiếm 1/3) */}
+            <div className="flex flex-col gap-8">
+              {/* Card: Trạng thái & Giá cơ bản */}
+              <Card bordered={false} className="shadow-sm rounded-xl" title={<span className="text-lg font-bold text-gray-800">Mức Giá Cơ Bản</span>}>
+                <Form.Item
+                  label={<span className="font-semibold">Giá bán (VNĐ)</span>}
+                  name="basePrice"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập giá!" },
+                    { type: "number", min: 1000, message: "Số tiền phải lớn hơn 1000đ" }
+                  ]}
                 >
-                  Hủy bỏ
-                </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  size="large"
-                  className="min-w-[140px] h-12 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  <InputNumber<number>
+                    min={0}
+                    className="w-full rounded-lg"
+                    size="large"
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, "") || 0)}
+                    placeholder="VD: 250,000"
+                  />
+                </Form.Item>
+              </Card>
+
+              {/* Card: Phân loại */}
+              <Card bordered={false} className="shadow-sm rounded-xl" title={<span className="text-lg font-bold text-gray-800">Phân Loại</span>}>
+                <Form.Item
+                  label={<span className="font-semibold">Thương hiệu (Brand)</span>}
+                  name="brand_id"
+                  rules={[{ required: true, message: "Vui lòng chọn brand!" }]}
                 >
-                  {loading ? "Đang tạo..." : "Thêm sản phẩm"}
-                </Button>
-              </div>
+                  <Select
+                    placeholder="Chọn thương hiệu..."
+                    size="large"
+                    className="rounded-lg"
+                    showSearch
+                    optionFilterProp="children"
+                  >
+                    {brands.map((brand) => (
+                      <Option key={brand._id} value={brand._id}>
+                        {brand.brand_name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label={<span className="font-semibold">Danh mục (Category)</span>}
+                  name="category_id"
+                  rules={[{ required: true, message: "Vui lòng chọn category!" }]}
+                >
+                  <Select
+                    placeholder="Chọn danh mục..."
+                    size="large"
+                    className="rounded-lg"
+                    showSearch
+                    optionFilterProp="children"
+                  >
+                    {categories.map((cat) => (
+                      <Option key={cat._id} value={cat._id}>
+                        {cat.category_name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Card>
+
+              {/* Card: Thuộc tính */}
+              <Card bordered={false} className="shadow-sm rounded-xl" title={<span className="text-lg font-bold text-gray-800">Thuộc Tính Bổ Sung</span>}>
+                <Form.Item
+                  label={<span className="font-semibold">Giới tính</span>}
+                  name="gender"
+                  rules={[{ required: true, message: "Vui lòng chọn giới tính!" }]}
+                >
+                  <Select placeholder="Chọn giới tính..." size="large" className="rounded-lg">
+                    <Option value="male">Nam</Option>
+                    <Option value="female">Nữ</Option>
+                    <Option value="unisex">Unisex</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label={<span className="font-semibold">Chất liệu</span>}
+                  name="material"
+                  rules={[{ required: true, message: "Vui lòng nhập chất liệu!" }]}
+                >
+                  <Input placeholder="VD: Cotton 100%, Polyester..." size="large" className="rounded-lg" />
+                </Form.Item>
+              </Card>
             </div>
-          </Form>
-        </div>
+          </div>
+
+          <div className="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 z-50 flex justify-end gap-4 px-8 xl:px-32">
+            <Button
+              size="large"
+              className="min-w-[120px] rounded-lg font-medium"
+              onClick={() => navigate("/admin/products")}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              size="large"
+              className="min-w-[150px] bg-blue-600 rounded-lg font-semibold shadow-lg"
+            >
+              {loading ? "Đang xử lý..." : "Lưu Sản Phẩm"}
+            </Button>
+          </div>
+        </Form>
       </div>
     </div>
   );

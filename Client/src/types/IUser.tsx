@@ -1,4 +1,5 @@
 export interface UserType {
+    [x: string]: any;
     _id: string;
     username: string;
     email: string;
@@ -7,6 +8,7 @@ export interface UserType {
     createdAt: string;
     phone?: string;
     isDeleted?: boolean; // Thêm field xóa mềm
+    avatar?: string;
 }
 
 export interface IUsers {
